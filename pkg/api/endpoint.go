@@ -26,18 +26,26 @@ func (e Endpoint) Build(args ...interface{}) string {
 
 // EndpointGroup is a collection of endpoints for a resource
 type EndpointGroup struct {
-	List         Endpoint
-	Get          Endpoint
-	GetByID      Endpoint
-	Create       Endpoint
-	Update       Endpoint
-	Delete       Endpoint
-	Test         Endpoint
-	Merge        Endpoint
-	Comment      Endpoint
-	SearchRepos  Endpoint
-	SearchIssues Endpoint
-	SearchUsers  Endpoint
+	List                    Endpoint
+	Get                     Endpoint
+	GetByID                 Endpoint
+	Create                  Endpoint
+	Update                  Endpoint
+	Delete                  Endpoint
+	Test                    Endpoint
+	Merge                   Endpoint
+	Comment                 Endpoint
+	SearchRepos             Endpoint
+	SearchIssues            Endpoint
+	SearchUsers             Endpoint
+	ListLicenses            Endpoint
+	GetLicense              Endpoint
+	GetLicenseRaw           Endpoint
+	GetRepoLicense          Endpoint
+	ListGitignoreTemplates  Endpoint
+	GetGitignoreTemplate    Endpoint
+	GetGitignoreTemplateRaw Endpoint
+	RenderMarkdown          Endpoint
 }
 
 // Repo endpoints
@@ -106,4 +114,16 @@ var Search = EndpointGroup{
 	SearchRepos:  Endpoint{GET, "/search/repositories"},
 	SearchIssues: Endpoint{GET, "/search/issues"},
 	SearchUsers:  Endpoint{GET, "/search/users"},
+}
+
+// Miscellaneous endpoints
+var Miscellaneous = EndpointGroup{
+	ListLicenses:            Endpoint{GET, "/licenses"},
+	GetLicense:              Endpoint{GET, "/licenses/%s"},
+	GetLicenseRaw:           Endpoint{GET, "/licenses/%s/raw"},
+	GetRepoLicense:          Endpoint{GET, "/repos/%s/%s/license"},
+	ListGitignoreTemplates:  Endpoint{GET, "/gitignore/templates"},
+	GetGitignoreTemplate:    Endpoint{GET, "/gitignore/templates/%s"},
+	GetGitignoreTemplateRaw: Endpoint{GET, "/gitignore/templates/%s/raw"},
+	RenderMarkdown:          Endpoint{POST, "/markdown"},
 }

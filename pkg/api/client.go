@@ -30,6 +30,11 @@ func NewClient(host, token string) *Client {
 	}
 }
 
+// BoolPtr returns a pointer to a bool value
+func BoolPtr(b bool) *bool {
+	return &b
+}
+
 // Token returns the client's auth token (needed by api command for raw requests).
 func (c *Client) Token() string {
 	return c.token

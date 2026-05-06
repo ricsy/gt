@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ricsy/gt/pkg/api"
@@ -10,6 +11,9 @@ import (
 func newWebhookCmd() *cobra.Command {
 	var repoFlag string
 	var page, perPage int
+	var webhookURL, webhookTitle, password string
+	var encryptionType int
+	var pushEventsFlag, tagPushEventsFlag, issuesEventsFlag, noteEventsFlag, mergeRequestsEventsFlag bool
 
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -83,13 +87,47 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
+			if webhookURL == "" {
+				return fmt.Errorf("url is required: use --url")
+			}
+
 			client, err := getClient()
 			if err != nil {
 				return err
 			}
 
+			pushEvents := api.BoolPtr(false)
+			tagPushEvents := api.BoolPtr(false)
+			issuesEvents := api.BoolPtr(false)
+			noteEvents := api.BoolPtr(false)
+			mergeRequestsEvents := api.BoolPtr(false)
+
+			if pushEventsFlag {
+				pushEvents = api.BoolPtr(true)
+			}
+			if tagPushEventsFlag {
+				tagPushEvents = api.BoolPtr(true)
+			}
+			if issuesEventsFlag {
+				issuesEvents = api.BoolPtr(true)
+			}
+			if noteEventsFlag {
+				noteEvents = api.BoolPtr(true)
+			}
+			if mergeRequestsEventsFlag {
+				mergeRequestsEvents = api.BoolPtr(true)
+			}
+
 			webhook, err := client.CreateWebhook(owner, repoName, api.CreateWebhookOptions{
-				URL: "https://example.com/webhook",
+				URL:                 webhookURL,
+				Title:               webhookTitle,
+				EncryptionType:      encryptionType,
+				Password:            password,
+				PushEvents:          pushEvents,
+				TagPushEvents:       tagPushEvents,
+				IssuesEvents:        issuesEvents,
+				NoteEvents:          noteEvents,
+				MergeRequestsEvents: mergeRequestsEvents,
 			})
 			if err != nil {
 				return err
@@ -100,6 +138,15 @@ func newWebhookCmd() *cobra.Command {
 		},
 	}
 	createCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
+	createCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL (required)")
+	createCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title")
+	createCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0=none, 1=secret, 2=signature)")
+	createCmd.Flags().StringVar(&password, "password", "", "Password")
+	createCmd.Flags().BoolVar(&pushEventsFlag, "push-events", false, "Trigger on push events")
+	createCmd.Flags().BoolVar(&tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")
+	createCmd.Flags().BoolVar(&issuesEventsFlag, "issues-events", false, "Trigger on issues events")
+	createCmd.Flags().BoolVar(&noteEventsFlag, "note-events", false, "Trigger on note events")
+	createCmd.Flags().BoolVar(&mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
 
 	deleteCmd := &cobra.Command{
 		Use:   "delete <id>",

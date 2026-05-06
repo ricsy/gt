@@ -44,13 +44,6 @@ type Issue struct {
 	} `json:"pull_request"`
 }
 
-// Label represents a Gitee label
-type Label struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
-}
-
 // Milestone represents a Gitee milestone
 type Milestone struct {
 	URL          string `json:"url"`

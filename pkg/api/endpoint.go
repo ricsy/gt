@@ -31,6 +31,7 @@ type EndpointGroup struct {
 	GetByID                 Endpoint
 	Create                  Endpoint
 	Update                  Endpoint
+	Replace                 Endpoint
 	Delete                  Endpoint
 	Test                    Endpoint
 	Merge                   Endpoint
@@ -135,4 +136,35 @@ var Milestones = EndpointGroup{
 	Get:    Endpoint{GET, "/repos/%s/%s/milestones/%d"},
 	Update: Endpoint{PATCH, "/repos/%s/%s/milestones/%d"},
 	Delete: Endpoint{DELETE, "/repos/%s/%s/milestones/%d"},
+}
+
+// Labels Label endpoints
+var Labels = EndpointGroup{
+	List:   Endpoint{GET, "/repos/%s/%s/labels"},
+	Create: Endpoint{POST, "/repos/%s/%s/labels"},
+	Get:    Endpoint{GET, "/repos/%s/%s/labels/%s"},
+	Update: Endpoint{PATCH, "/repos/%s/%s/labels/%s"},
+	Delete: Endpoint{DELETE, "/repos/%s/%s/labels/%s"},
+}
+
+// IssueLabels Issue labels endpoints
+var IssueLabels = EndpointGroup{
+	List:    Endpoint{GET, "/repos/%s/%s/issues/%s/labels"},
+	Create:  Endpoint{POST, "/repos/%s/%s/issues/%s/labels"},
+	Replace: Endpoint{PUT, "/repos/%s/%s/issues/%s/labels"},
+	Delete:  Endpoint{DELETE, "/repos/%s/%s/issues/%s/labels"},
+}
+
+// ProjectLabels Project labels endpoints
+var ProjectLabels = EndpointGroup{
+	List:    Endpoint{GET, "/repos/%s/%s/project_labels"},
+	Create:  Endpoint{POST, "/repos/%s/%s/project_labels"},
+	Replace: Endpoint{PUT, "/repos/%s/%s/project_labels"},
+	Delete:  Endpoint{DELETE, "/repos/%s/%s/project_labels"},
+}
+
+// EnterpriseLabels Enterprise labels endpoints
+var EnterpriseLabels = EndpointGroup{
+	List: Endpoint{GET, "/enterprises/%s/labels"},
+	Get:  Endpoint{GET, "/enterprises/%s/labels/%s"},
 }

@@ -18,7 +18,7 @@ func (c *Client) ListOrgs() ([]Org, error) {
 // GetOrg gets an organization by login
 func (c *Client) GetOrg(login string) (*Org, error) {
 	var org Org
-	err := c.DoFromEndpoint(Orgs.List, []interface{}{login}, nil, &org)
+	err := c.DoFromEndpoint(Orgs.Get, []interface{}{login}, nil, &org)
 	if err != nil {
 		return nil, err
 	}

@@ -28,6 +28,7 @@ func (e Endpoint) Build(args ...interface{}) string {
 type EndpointGroup struct {
 	List    Endpoint
 	Get     Endpoint
+	GetByID Endpoint
 	Create  Endpoint
 	Update  Endpoint
 	Delete  Endpoint
@@ -43,7 +44,7 @@ var Repo = EndpointGroup{
 
 // Orgs Org endpoints
 var Orgs = EndpointGroup{
-	List: Endpoint{GET, "/orgs/%s"},
+	Get: Endpoint{GET, "/orgs/%s"},
 }
 
 // UserOrgs UserOrg endpoints
@@ -74,11 +75,17 @@ var PRs = EndpointGroup{
 
 // Releases Release endpoints
 var Releases = EndpointGroup{
-	List:   Endpoint{GET, "/repos/%s/%s/releases"},
-	Create: Endpoint{POST, "/repos/%s/%s/releases"},
-	Get:    Endpoint{GET, "/repos/%s/%s/releases/tags/%s"},
-	Delete: Endpoint{DELETE, "/repos/%s/%s/releases/%d"},
-	Update: Endpoint{PATCH, "/repos/%s/%s/releases/%d"},
+	List:    Endpoint{GET, "/repos/%s/%s/releases"},
+	Create:  Endpoint{POST, "/repos/%s/%s/releases"},
+	Get:     Endpoint{GET, "/repos/%s/%s/releases/tags/%s"},
+	GetByID: Endpoint{GET, "/repos/%s/%s/releases/%d"},
+	Delete:  Endpoint{DELETE, "/repos/%s/%s/releases/%d"},
+	Update:  Endpoint{PATCH, "/repos/%s/%s/releases/%d"},
+}
+
+// UserReposByName User repos by username endpoints
+var UserReposByName = EndpointGroup{
+	List: Endpoint{GET, "/users/%s/repos"},
 }
 
 // Webhooks Webhook endpoints

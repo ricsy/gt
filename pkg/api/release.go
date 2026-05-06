@@ -31,6 +31,16 @@ func (c *Client) GetRelease(owner, repo, tag string) (*Release, error) {
 	return &release, nil
 }
 
+// GetReleaseByID gets a release by ID
+func (c *Client) GetReleaseByID(owner, repo string, id int64) (*Release, error) {
+	var release Release
+	err := c.DoFromEndpoint(Releases.GetByID, []interface{}{owner, repo, id}, nil, &release)
+	if err != nil {
+		return nil, err
+	}
+	return &release, nil
+}
+
 // CreateRelease creates a new release
 func (c *Client) CreateRelease(owner, repo string, opts CreateReleaseOptions) (*Release, error) {
 	var release Release

@@ -34,7 +34,7 @@ func (c *Client) GetRepo(owner, repo string) (*Repository, error) {
 // CreateRepo creates a new repository
 func (c *Client) CreateRepo(opts CreateRepoOptions) (*Repository, error) {
 	var result Repository
-	err := c.DoFromEndpoint(UserRepos.List, nil, opts, &result)
+	err := c.DoFromEndpoint(UserRepos.Create, nil, opts, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (c *Client) CreateRepo(opts CreateRepoOptions) (*Repository, error) {
 // ListUserRepos lists repositories for a specific user
 func (c *Client) ListUserRepos(username string) ([]Repository, error) {
 	var repos []Repository
-	err := c.DoFromEndpoint(UserRepos.List, []interface{}{username}, nil, &repos)
+	err := c.DoFromEndpoint(UserReposByName.List, []interface{}{username}, nil, &repos)
 	if err != nil {
 		return nil, err
 	}

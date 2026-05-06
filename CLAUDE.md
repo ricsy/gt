@@ -68,7 +68,7 @@ When implementing or updating an API endpoint, verify against `data/api-1.json` 
 ### 1. Endpoint Definition (`pkg/api/endpoint.go`)
 - [ ] Path matches swagger: `/v5/repos/{owner}/{repo}/issues`
 - [ ] HTTP method matches swagger: GET, POST, PATCH, DELETE, PUT
-- [ ] EndpointGroup action name is correct: List, Get, Create, Update, Delete, Merge, Comment, Test
+- [ ] EndpointGroup action name is correct: List, Get, GetByID, Create, Update, Delete, Merge, Comment, Test
 
 ### 2. Request Parameters (`pkg/api/response/{domain}.go`)
 For each query/path/form parameter in swagger:

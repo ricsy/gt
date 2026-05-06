@@ -107,9 +107,7 @@ func newWebhookCmd() *cobra.Command {
 			return nil
 		},
 	}
-	createCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
-	createCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL (required)")
-	registerWebhookFlags(createCmd, &webhookURL, &webhookTitle, &encryptionType, &password,
+	registerWebhookFlags(createCmd, &repoFlag, &webhookURL, &webhookTitle, &encryptionType, &password,
 		&pushEventsFlag, &tagPushEventsFlag, &issuesEventsFlag, &noteEventsFlag, &mergeRequestsEventsFlag)
 
 	updateCmd := &cobra.Command{
@@ -143,8 +141,7 @@ func newWebhookCmd() *cobra.Command {
 			return nil
 		},
 	}
-	updateCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
-	registerWebhookFlags(updateCmd, &webhookURL, &webhookTitle, &encryptionType, &password,
+	registerWebhookFlags(updateCmd, &repoFlag, &webhookURL, &webhookTitle, &encryptionType, &password,
 		&pushEventsFlag, &tagPushEventsFlag, &issuesEventsFlag, &noteEventsFlag, &mergeRequestsEventsFlag)
 
 	deleteCmd := &cobra.Command{
@@ -246,8 +243,9 @@ func buildWebhookUpdateOpts(url, title string, encType int, pwd string,
 	}
 }
 
-func registerWebhookFlags(cmd *cobra.Command, webhookURL, webhookTitle *string, encryptionType *int, password *string,
+func registerWebhookFlags(cmd *cobra.Command, repoFlag, webhookURL, webhookTitle *string, encryptionType *int, password *string,
 	pushEventsFlag, tagPushEventsFlag, issuesEventsFlag, noteEventsFlag, mergeRequestsEventsFlag *bool) {
+	cmd.Flags().StringVar(repoFlag, "repo", "", "Repository (owner/repo)")
 	cmd.Flags().StringVar(webhookURL, "url", "", "Webhook URL")
 	cmd.Flags().StringVar(webhookTitle, "title", "", "Webhook title (max 191 chars)")
 	cmd.Flags().IntVar(encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")

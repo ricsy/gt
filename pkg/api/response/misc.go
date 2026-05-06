@@ -2,11 +2,7 @@ package response
 
 // License represents a license template
 type License struct {
-	Key     string `json:"key"`
-	Name    string `json:"name"`
-	SPDXID  string `json:"spdx_id"`
-	URL     string `json:"url"`
-	HTMLURL string `json:"html_url"`
+	License string `json:"license"`
 	Source  string `json:"source"`
 }
 

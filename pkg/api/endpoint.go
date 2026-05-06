@@ -47,6 +47,20 @@ type EndpointGroup struct {
 	GetGitignoreTemplate    Endpoint
 	GetGitignoreTemplateRaw Endpoint
 	RenderMarkdown          Endpoint
+	Starred                 Endpoint
+	Star                    Endpoint
+	StarPut                 Endpoint
+	StarDel                 Endpoint
+	Forks                   Endpoint
+	Fork                    Endpoint
+	Commits                 Endpoint
+	Comments                Endpoint
+	CreateComment           Endpoint
+	UpdateComment           Endpoint
+	DeleteComment           Endpoint
+	GetAnnotations          Endpoint
+	GetCommitCheckRuns      Endpoint
+	Patch                   Endpoint
 }
 
 // Repo endpoints
@@ -167,4 +181,82 @@ var ProjectLabels = EndpointGroup{
 var EnterpriseLabels = EndpointGroup{
 	List: Endpoint{GET, "/enterprises/%s/labels"},
 	Get:  Endpoint{GET, "/enterprises/%s/labels/%s"},
+}
+
+// Emails Email endpoints
+var Emails = EndpointGroup{
+	List: Endpoint{GET, "/emails"},
+}
+
+// RepoStats Repo statistics endpoints
+var RepoStats = EndpointGroup{
+	Get: Endpoint{POST, "/repos/%s/%s/traffic-data"},
+}
+
+// RepoLanguages Language statistics endpoints
+var RepoLanguages = EndpointGroup{
+	Get: Endpoint{GET, "/repos/%s/%s/languages"},
+}
+
+// RepoContributors Contributor endpoints
+var RepoContributors = EndpointGroup{
+	Get: Endpoint{GET, "/repos/%s/%s/contributors"},
+}
+
+// Gists Gist endpoints
+var Gists = EndpointGroup{
+	List:          Endpoint{GET, "/gists"},
+	Create:        Endpoint{POST, "/gists"},
+	Get:           Endpoint{GET, "/gists/%s"},
+	Update:        Endpoint{PATCH, "/gists/%s"},
+	Delete:        Endpoint{DELETE, "/gists/%s"},
+	Starred:       Endpoint{GET, "/gists/starred"},
+	Star:          Endpoint{GET, "/gists/%s/star"},
+	StarPut:       Endpoint{PUT, "/gists/%s/star"},
+	StarDel:       Endpoint{DELETE, "/gists/%s/star"},
+	Forks:         Endpoint{GET, "/gists/%s/forks"},
+	Fork:          Endpoint{POST, "/gists/%s/forks"},
+	Commits:       Endpoint{GET, "/gists/%s/commits"},
+	Comments:      Endpoint{GET, "/gists/%s/comments"},
+	Comment:       Endpoint{GET, "/gists/%s/comments/%d"},
+	CreateComment: Endpoint{POST, "/gists/%s/comments"},
+	UpdateComment: Endpoint{PATCH, "/gists/%s/comments/%d"},
+	DeleteComment: Endpoint{DELETE, "/gists/%s/comments/%d"},
+}
+
+// CheckRuns Check runs endpoints
+var CheckRuns = EndpointGroup{
+	Create:             Endpoint{POST, "/repos/%s/%s/check-runs"},
+	Get:                Endpoint{GET, "/repos/%s/%s/check-runs/%d"},
+	Update:             Endpoint{PATCH, "/repos/%s/%s/check-runs/%d"},
+	GetAnnotations:     Endpoint{GET, "/repos/%s/%s/check-runs/%d/annotations"},
+	GetCommitCheckRuns: Endpoint{GET, "/repos/%s/%s/commits/%s/check-runs"},
+}
+
+// RepoNotifications repo notification endpoints
+var RepoNotifications = EndpointGroup{
+	List:   Endpoint{GET, "/repos/%s/%s/notifications"},
+	Update: Endpoint{PUT, "/repos/%s/%s/notifications"},
+}
+
+// NotificationThreads notification threads endpoints
+var NotificationThreads = EndpointGroup{
+	List:   Endpoint{GET, "/notifications/threads"},
+	Update: Endpoint{PUT, "/notifications/threads"},
+	Get:    Endpoint{GET, "/notifications/threads/%s"},
+	Patch:  Endpoint{PATCH, "/notifications/threads/%s"},
+}
+
+// NotificationCount notification count endpoints
+var NotificationCount = EndpointGroup{
+	Get: Endpoint{GET, "/notifications/count"},
+}
+
+// Messages message endpoints
+var Messages = EndpointGroup{
+	List:   Endpoint{GET, "/notifications/messages"},
+	Create: Endpoint{POST, "/notifications/messages"},
+	Update: Endpoint{PUT, "/notifications/messages"},
+	Get:    Endpoint{GET, "/notifications/messages/%s"},
+	Patch:  Endpoint{PATCH, "/notifications/messages/%s"},
 }

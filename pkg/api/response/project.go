@@ -1,5 +1,13 @@
 package response
 
+// ProjectBasic represents basic project info
+type ProjectBasic struct {
+	ID        int64  `json:"id"`
+	FullName  string `json:"full_name"`
+	HumanName string `json:"human_name"`
+	URL       string `json:"url"`
+}
+
 // Project represents a Gitee project/repository
 type Project struct {
 	ID              int64     `json:"id"`

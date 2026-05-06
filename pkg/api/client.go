@@ -12,7 +12,6 @@ import (
 const (
 	apiPathRepos       = "/repos/%s/%s"
 	apiPathOrgs        = "/orgs/%s"
-	apiPathUser        = "/user"
 	apiPathUserOrgs    = "/user/orgs"
 	apiPathUserRepos   = "/user/repos"
 	apiPathUsersRepos  = "/users/%s/repos"

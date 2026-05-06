@@ -79,3 +79,37 @@ func (c *Client) ListUserRepos(username string) ([]Repository, error) {
 	}
 	return repos, nil
 }
+
+// UpdateRepoOptions contains options for updating a repository
+type UpdateRepoOptions struct {
+	Name                 string `json:"name,omitempty"`
+	Description          string `json:"description,omitempty"`
+	Homepage             string `json:"homepage,omitempty"`
+	HasIssues            *bool  `json:"has_issues,omitempty"`
+	HasWiki              *bool  `json:"has_wiki,omitempty"`
+	CanComment           *bool  `json:"can_comment,omitempty"`
+	IssueComment         *bool  `json:"issue_comment,omitempty"`
+	SecurityHoleEnabled  *bool  `json:"security_hole_enabled,omitempty"`
+	Private              *bool  `json:"private,omitempty"`
+	Path                 string `json:"path,omitempty"`
+	DefaultBranch        string `json:"default_branch,omitempty"`
+	PullRequestsEnabled  *bool  `json:"pull_requests_enabled,omitempty"`
+	OnlineEditEnabled    *bool  `json:"online_edit_enabled,omitempty"`
+	LightweightPrEnabled *bool  `json:"lightweight_pr_enabled,omitempty"`
+	MergeEnabled         *bool  `json:"merge_enabled,omitempty"`
+	SquashEnabled        *bool  `json:"squash_enabled,omitempty"`
+	RebaseEnabled        *bool  `json:"rebase_enabled,omitempty"`
+	DefaultMergeMethod   string `json:"default_merge_method,omitempty"`
+	IssueTemplateSource  string `json:"issue_template_source,omitempty"`
+}
+
+// UpdateRepo updates a repository
+func (c *Client) UpdateRepo(owner, repo string, opts UpdateRepoOptions) (*Repository, error) {
+	var result Repository
+	path := fmt.Sprintf(apiPathRepos, owner, repo)
+	err := c.Do("PATCH", path, opts, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}

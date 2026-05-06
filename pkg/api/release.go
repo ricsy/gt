@@ -42,6 +42,7 @@ type CreateReleaseOptions struct {
 	Name            string `json:"name"`
 	Body            string `json:"body"`
 	TargetCommitish string `json:"target_commitish,omitempty"`
+	Prerelease      bool   `json:"prerelease,omitempty"`
 }
 
 // CreateRelease creates a new release
@@ -63,4 +64,23 @@ func (c *Client) DeleteRelease(owner, repo, tag string) error {
 	}
 	path := fmt.Sprintf(apiPathReleases+"/%d", owner, repo, release.ID)
 	return c.Do("DELETE", path, nil, nil)
+}
+
+// UpdateReleaseOptions contains options for updating a release
+type UpdateReleaseOptions struct {
+	TagName    string `json:"tag_name"`
+	Name       string `json:"name"`
+	Body       string `json:"body"`
+	Prerelease *bool  `json:"prerelease,omitempty"`
+}
+
+// UpdateRelease updates a release
+func (c *Client) UpdateRelease(owner, repo string, releaseID int64, opts UpdateReleaseOptions) (*Release, error) {
+	var release Release
+	path := fmt.Sprintf(apiPathReleases+"/%d", owner, repo, releaseID)
+	err := c.Do("PATCH", path, opts, &release)
+	if err != nil {
+		return nil, err
+	}
+	return &release, nil
 }

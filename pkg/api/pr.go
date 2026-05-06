@@ -2,6 +2,13 @@ package api
 
 import "fmt"
 
+const (
+	PRStateOpen   = "open"
+	PRStateClosed = "closed"
+	PRStateMerged = "merged"
+	PRStateAll    = "all"
+)
+
 // PullRequest represents a Gitee pull request
 type PullRequest struct {
 	ID      int64  `json:"id"`

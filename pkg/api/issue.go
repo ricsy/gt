@@ -3,14 +3,17 @@ package api
 import "fmt"
 
 const (
-	StateOpen   = "open"
-	StateClosed = "closed"
+	StateOpen        = "open"
+	StateClosed      = "closed"
+	StateProgressing = "progressing"
+	StateRejected    = "rejected"
+	StateAll         = "all"
 )
 
 // Issue represents a Gitee issue
 type Issue struct {
 	ID      int64  `json:"id"`
-	Number  string `json:"number"`
+	Number  int64  `json:"number"`
 	State   string `json:"state"`
 	Title   string `json:"title"`
 	Body    string `json:"body"`

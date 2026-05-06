@@ -122,7 +122,7 @@ func issueList(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, issue := range issues {
-		fmt.Printf("#%s [%s] %s (by %s)\n", issue.Number, issue.State, issue.Title, issue.User.Login)
+		fmt.Printf("#%d [%s] %s (by %s)\n", issue.Number, issue.State, issue.Title, issue.User.Login)
 	}
 	return nil
 }
@@ -140,7 +140,7 @@ func issueView(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get issue: %w", err)
 	}
 
-	fmt.Printf("#%s %s\n", issue.Number, issue.Title)
+	fmt.Printf("#%d %s\n", issue.Number, issue.Title)
 	fmt.Printf("State: %s | Comments: %d\n", issue.State, issue.Comments)
 	fmt.Printf("Author: %s | Created: %s\n", issue.User.Login, issue.CreatedAt)
 	fmt.Println("\n--- Body ---")
@@ -174,7 +174,7 @@ func issueCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create issue: %w", err)
 	}
 
-	fmt.Printf("Issue created successfully: #%s %s\n", issue.Number, issue.Title)
+	fmt.Printf("Issue created successfully: #%d %s\n", issue.Number, issue.Title)
 	fmt.Printf("URL: %s\n", issue.HTMLURL)
 	return nil
 }
@@ -192,7 +192,7 @@ func issueClose(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to close issue: %w", err)
 	}
 
-	fmt.Printf("Issue #%s closed successfully\n", issue.Number)
+	fmt.Printf("Issue #%d closed successfully\n", issue.Number)
 	return nil
 }
 
@@ -209,7 +209,7 @@ func issueReopen(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to reopen issue: %w", err)
 	}
 
-	fmt.Printf("Issue #%s reopened successfully\n", issue.Number)
+	fmt.Printf("Issue #%d reopened successfully\n", issue.Number)
 	return nil
 }
 

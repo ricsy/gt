@@ -109,3 +109,50 @@ go build ./...
 # 5. Verify lint passes
 golangci-lint run ./...
 ```
+
+## New Module Development Workflow
+
+When implementing a new API module (e.g., milestones, labels), follow this directory structure:
+
+### File Locations
+
+| Purpose                | File Path                                                                         |
+|------------------------|-----------------------------------------------------------------------------------|
+| Endpoint definitions   | `pkg/api/endpoint.go` — add to `EndpointGroup` struct and `var XXX`               |
+| Request/Response types | `pkg/api/response/{domain}.go` — struct definitions for API responses and options |
+| API client methods     | `pkg/api/{domain}.go` — type aliases + client methods using `DoFromEndpoint`      |
+| CLI commands           | `internal/cmd/{domain}.go` — Cobra commands                                       |
+| CLI tests              | `internal/cmd/{domain}_test.go` — unit tests for commands and flags               |
+
+### Development Steps
+
+1. **Add endpoints to `pkg/api/endpoint.go`**
+   - Add new fields to `EndpointGroup` struct if needed (rare, most use List/Get/Create/Update/Delete)
+   - Add `var XXX = EndpointGroup{...}` with all endpoint paths
+
+2. **Define types in `pkg/api/response/{domain}.go`**
+   - Response structs (e.g., `Milestone`, `License`)
+   - Options structs (e.g., `ListXxxOptions`, `CreateXxxOptions`)
+   - Use `json:"field_name"` tags matching swagger exactly
+
+3. **Implement API methods in `pkg/api/{domain}.go`**
+   - Use type aliases: `type ListXxxOptions = response.ListXxxOptions`
+   - Use `DoFromEndpoint()` for all API calls
+   - Return response types from `response` package
+
+4. **Implement CLI in `internal/cmd/{domain}.go`**
+   - Follow existing patterns (see `issue.go`, `webhook.go`)
+   - Use `newXxxCmd()` pattern for command creation
+   - Group related flags and use `resolveRepoFlag()` for repo resolution
+
+5. **Add tests in `internal/cmd/{domain}_test.go`**
+   - Test command structure (Use string, number of subcommands)
+   - Test flags exist
+   - Reference `webhook_test.go` for patterns
+
+### Common Mistakes to Avoid
+
+- **Do NOT** define types in `pkg/api/{domain}.go` — they go in `pkg/api/response/{domain}.go`
+- **Do NOT** use `Do()` directly — use `DoFromEndpoint()` with endpoint definitions
+- **Do NOT** build query strings manually — use `util.BuildQuery()`
+- **Do NOT** print errors before `os.Exit()` — cobra handles error output

@@ -1,0 +1,119 @@
+package api
+
+import (
+	"strconv"
+
+	"github.com/ricsy/gt/pkg/util"
+)
+
+// SearchReposOptions contains optional parameters for SearchRepos
+type SearchReposOptions struct {
+	Q        string
+	Owner    string
+	Fork     *bool
+	Language string
+	Sort     string // last_push_at, stars_count, forks_count, watches_count
+	Order    string // asc, desc
+	Page     int
+	PerPage  int
+}
+
+// SearchIssuesOptions contains optional parameters for SearchIssues
+type SearchIssuesOptions struct {
+	Q        string
+	Repo     string
+	Language string
+	Label    string
+	State    string // open, progressing, closed, rejected
+	Author   string
+	Assignee string
+	Sort     string // created_at, updated_at, notes_count
+	Order    string // asc, desc
+	Page     int
+	PerPage  int
+}
+
+// SearchUsersOptions contains optional parameters for SearchUsers
+type SearchUsersOptions struct {
+	Q       string
+	Sort    string // joined_at
+	Order   string // asc, desc
+	Page    int
+	PerPage int
+}
+
+// SearchRepos searches repositories
+func (c *Client) SearchRepos(opts SearchReposOptions) ([]Repository, error) {
+	path := Search.SearchRepos.Path
+	query := buildSearchQuery("q", opts.Q, opts.Sort, opts.Order, opts.Page, opts.PerPage,
+		"owner", opts.Owner,
+		"fork", opts.Fork,
+		"language", opts.Language)
+	var repos []Repository
+	err := c.Do("GET", path+query, nil, &repos)
+	if err != nil {
+		return nil, err
+	}
+	return repos, nil
+}
+
+// SearchIssues searches issues
+func (c *Client) SearchIssues(opts SearchIssuesOptions) ([]Issue, error) {
+	path := Search.SearchIssues.Path
+	query := buildSearchQuery("q", opts.Q, opts.Sort, opts.Order, opts.Page, opts.PerPage,
+		"repo", opts.Repo,
+		"language", opts.Language,
+		"label", opts.Label,
+		"state", opts.State,
+		"author", opts.Author,
+		"assignee", opts.Assignee)
+	var issues []Issue
+	err := c.Do("GET", path+query, nil, &issues)
+	if err != nil {
+		return nil, err
+	}
+	return issues, nil
+}
+
+// SearchUsers searches users
+func (c *Client) SearchUsers(opts SearchUsersOptions) ([]User, error) {
+	path := Search.SearchUsers.Path
+	query := buildSearchQuery("q", opts.Q, opts.Sort, opts.Order, opts.Page, opts.PerPage)
+	var users []User
+	err := c.Do("GET", path+query, nil, &users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func buildSearchQuery(qKey, qVal, sort, order string, page, perPage int, kvPairs ...interface{}) string {
+	params := []string{qKey, qVal}
+	for i := 0; i < len(kvPairs); i += 2 {
+		if i+1 < len(kvPairs) {
+			switch v := kvPairs[i+1].(type) {
+			case string:
+				if v != "" {
+					params = append(params, kvPairs[i].(string), v)
+				}
+			case *bool:
+				if v != nil {
+					params = append(params, kvPairs[i].(string), strconv.FormatBool(*v))
+				}
+			}
+		}
+	}
+	if sort != "" {
+		params = append(params, "sort", sort)
+	}
+	if order != "" {
+		params = append(params, "order", order)
+	}
+	if page > 0 {
+		params = append(params, "page", strconv.Itoa(page))
+	}
+	if perPage > 0 {
+		params = append(params, "per_page", strconv.Itoa(perPage))
+	}
+	return util.BuildQuery(params...)
+}

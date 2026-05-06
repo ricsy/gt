@@ -26,15 +26,18 @@ func (e Endpoint) Build(args ...interface{}) string {
 
 // EndpointGroup is a collection of endpoints for a resource
 type EndpointGroup struct {
-	List    Endpoint
-	Get     Endpoint
-	GetByID Endpoint
-	Create  Endpoint
-	Update  Endpoint
-	Delete  Endpoint
-	Test    Endpoint
-	Merge   Endpoint
-	Comment Endpoint
+	List         Endpoint
+	Get          Endpoint
+	GetByID      Endpoint
+	Create       Endpoint
+	Update       Endpoint
+	Delete       Endpoint
+	Test         Endpoint
+	Merge        Endpoint
+	Comment      Endpoint
+	SearchRepos  Endpoint
+	SearchIssues Endpoint
+	SearchUsers  Endpoint
 }
 
 // Repo endpoints
@@ -96,4 +99,11 @@ var Webhooks = EndpointGroup{
 	Update: Endpoint{PATCH, "/repos/%s/%s/hooks/%d"},
 	Delete: Endpoint{DELETE, "/repos/%s/%s/hooks/%d"},
 	Test:   Endpoint{POST, "/repos/%s/%s/hooks/%d/tests"},
+}
+
+// Search endpoints
+var Search = EndpointGroup{
+	SearchRepos:  Endpoint{GET, "/search/repositories"},
+	SearchIssues: Endpoint{GET, "/search/issues"},
+	SearchUsers:  Endpoint{GET, "/search/users"},
 }

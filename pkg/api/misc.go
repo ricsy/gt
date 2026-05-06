@@ -5,8 +5,8 @@ import (
 )
 
 // ListLicenses lists available licenses
-func (c *Client) ListLicenses() ([]response.License, error) {
-	var licenses []response.License
+func (c *Client) ListLicenses() ([]string, error) {
+	var licenses []string
 	err := c.DoFromEndpoint(Miscellaneous.ListLicenses, nil, nil, &licenses)
 	if err != nil {
 		return nil, err
@@ -26,12 +26,12 @@ func (c *Client) GetLicense(license string) (*response.License, error) {
 
 // GetLicenseRaw gets a license raw content
 func (c *Client) GetLicenseRaw(license string) (string, error) {
-	var result map[string]string
+	var result string
 	err := c.DoFromEndpoint(Miscellaneous.GetLicenseRaw, []interface{}{license}, nil, &result)
 	if err != nil {
 		return "", err
 	}
-	return result["license"], nil
+	return result, nil
 }
 
 // GetRepoLicense gets the license key for a repo
@@ -66,20 +66,20 @@ func (c *Client) GetGitignoreTemplate(name string) (*response.GitignoreTemplate,
 
 // GetGitignoreTemplateRaw gets a gitignore template raw content
 func (c *Client) GetGitignoreTemplateRaw(name string) (string, error) {
-	var result map[string]string
+	var result string
 	err := c.DoFromEndpoint(Miscellaneous.GetGitignoreTemplateRaw, []interface{}{name}, nil, &result)
 	if err != nil {
 		return "", err
 	}
-	return result["gitignore"], nil
+	return result, nil
 }
 
 // RenderMarkdown renders Markdown text
 func (c *Client) RenderMarkdown(text string) (string, error) {
-	var result map[string]string
+	var result string
 	err := c.DoFromEndpoint(Miscellaneous.RenderMarkdown, nil, response.MarkdownRenderRequest{Text: text}, &result)
 	if err != nil {
 		return "", err
 	}
-	return result["content"], nil
+	return result, nil
 }

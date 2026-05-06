@@ -49,22 +49,3 @@ export GITEE_TOKEN="your_token_here"
 ```bash
 gt auth login
 ```
-
-## 使用
-
-```bash
-# 查看仓库
-gt repo view owner/repo
-
-# 管理 Issue
-gt issue list --owner owner --repo repo
-gt issue create --owner owner --repo repo --title "标题" --body "内容"
-
-# 管理 PR
-gt pr list --repo owner/repo
-gt pr create --repo owner/repo --title "标题" --head branch --base main
-
-# 管理 Release
-gt release list --repo owner/repo
-gt release create --repo owner/repo --name "v1.0.0" --body "更新内容" tag
-```

@@ -38,7 +38,7 @@ func (c *Client) ListWebhooks(owner, repo string, opts ListWebhooksOptions) ([]W
 }
 
 func buildWebhookQuery(opts ListWebhooksOptions) string {
-	params := []string{}
+	var params []string
 	if opts.Page > 0 {
 		params = append(params, "page", strconv.Itoa(opts.Page))
 	}

@@ -22,6 +22,6 @@ build
 .cache
 .omc
 .claude
+.mcp.json
 gt
 gt.exe
-CLAUDE.md

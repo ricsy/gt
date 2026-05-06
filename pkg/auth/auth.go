@@ -21,14 +21,12 @@ func Login(host, token, username string) error {
 	hosts[host] = config.HostAuth{
 		Token: token,
 		User:  username,
-		Host:  host,
 	}
 
 	if err := config.SaveHosts(hosts); err != nil {
 		return err
 	}
 
-	// Invalidate cache after login
 	invalidateAuthCache()
 
 	return nil
@@ -47,7 +45,6 @@ func Logout(host string) error {
 		return err
 	}
 
-	// Invalidate cache after logout
 	invalidateAuthCache()
 
 	return nil

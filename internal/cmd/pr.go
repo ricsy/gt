@@ -2,12 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/ricsy/gt/pkg/api"
-	"github.com/ricsy/gt/pkg/auth"
-	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +69,7 @@ func init() {
 	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prCloseCmd, prCommentCmd)
 
 	prListCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
-	prListCmd.Flags().StringVar(&prState, "state", "open", "Filter by state: open, closed, all")
+	prListCmd.Flags().StringVar(&prState, "state", api.StateOpen, "Filter by state: open, closed, all")
 
 	prViewCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 
@@ -91,18 +88,16 @@ func init() {
 }
 
 func prList(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	prs, err := client.ListPRs(owner, repo, prState)
 	if err != nil {
 		return err
@@ -120,7 +115,7 @@ func prList(cmd *cobra.Command, args []string) error {
 }
 
 func prView(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
@@ -130,13 +125,11 @@ func prView(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid PR number: %w", err)
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	pr, err := client.GetPR(owner, repo, number)
 	if err != nil {
 		return err
@@ -151,7 +144,7 @@ func prView(cmd *cobra.Command, args []string) error {
 }
 
 func prCreate(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
@@ -160,13 +153,11 @@ func prCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("title is required: use --title")
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	pr, err := client.CreatePR(owner, repo, prTitle, prBody, prHead, prBase)
 	if err != nil {
 		return err
@@ -177,7 +168,7 @@ func prCreate(cmd *cobra.Command, args []string) error {
 }
 
 func prMerge(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
@@ -187,13 +178,11 @@ func prMerge(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid PR number: %w", err)
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	err = client.MergePR(owner, repo, number)
 	if err != nil {
 		return err
@@ -204,7 +193,7 @@ func prMerge(cmd *cobra.Command, args []string) error {
 }
 
 func prClose(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
@@ -214,13 +203,11 @@ func prClose(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid PR number: %w", err)
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	_, err = client.ClosePR(owner, repo, number)
 	if err != nil {
 		return err
@@ -231,7 +218,7 @@ func prClose(cmd *cobra.Command, args []string) error {
 }
 
 func prComment(cmd *cobra.Command, args []string) error {
-	owner, repo, err := prResolveRepo(prRepo)
+	owner, repo, err := resolveRepoFlag(prRepo)
 	if err != nil {
 		return err
 	}
@@ -245,13 +232,11 @@ func prComment(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid PR number: %w", err)
 	}
 
-	host := config.DefaultHost
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(host, token)
 	err = client.CreatePRComment(owner, repo, number, prBody)
 	if err != nil {
 		return err
@@ -259,16 +244,4 @@ func prComment(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Comment added to PR #%d\n", number)
 	return nil
-}
-
-func prResolveRepo(repoFlag string) (owner, repo string, err error) {
-	repo = repoFlag
-	if repo == "" {
-		repo = os.Getenv("GT_REPO")
-	}
-	if repo == "" {
-		return "", "", fmt.Errorf("repo is required: use --repo or set GT_REPO")
-	}
-
-	return ResolveRepo(repo)
 }

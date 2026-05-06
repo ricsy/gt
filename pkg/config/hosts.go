@@ -4,8 +4,11 @@ package config
 type HostAuth struct {
 	Token string `yaml:"token"`
 	User  string `yaml:"user"`
-	Host  string `yaml:"host"`
 }
 
-// DefaultHost is the default host (gitee.com)
 const DefaultHost = "gitee.com"
+
+// ApiUrl returns the base API URL for a given host.
+func ApiUrl(host string) string {
+	return "https://" + host + "/api/v5"
+}

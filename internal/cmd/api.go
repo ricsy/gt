@@ -3,15 +3,16 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
+
+var apiHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 func newApiCmd() *cobra.Command {
 	var bodyFlag string
@@ -32,22 +33,19 @@ Examples:
 			method := strings.ToUpper(args[0])
 			path := args[1]
 
-			// Get auth token
-			token, err := auth.GetToken(config.DefaultHost)
+			client, err := getClient()
 			if err != nil {
-				return fmt.Errorf("authentication required: %w", err)
+				return err
 			}
+			token := client.Token()
 
-			// Build URL
-			url := fmt.Sprintf("https://gitee.com/api/v5%s", path)
+			url := config.ApiUrl(config.DefaultHost) + path
 
-			// Prepare body
 			var bodyReader io.Reader
 			if bodyFlag != "" {
 				bodyReader = bytes.NewBufferString(bodyFlag)
 			}
 
-			// Create request
 			req, err := http.NewRequest(method, url, bodyReader)
 			if err != nil {
 				return err
@@ -56,27 +54,22 @@ Examples:
 			req.Header.Set("Authorization", "token "+token)
 			req.Header.Set("Content-Type", "application/json")
 
-			// Execute request
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := apiHTTPClient.Do(req)
 			if err != nil {
 				return err
 			}
 			defer func() { _ = resp.Body.Close() }()
 
-			// Read response
 			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return err
 			}
 
 			if rawFlag {
-				// Output raw response
 				cmd.Println(string(respBody))
 			} else {
-				// Pretty print JSON
 				var prettyJSON bytes.Buffer
 				if err := json.Indent(&prettyJSON, respBody, "", "  "); err != nil {
-					// If not valid JSON, just output raw
 					cmd.Println(string(respBody))
 				} else {
 					cmd.Println(prettyJSON.String())

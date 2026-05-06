@@ -2,14 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
-
-const defaultHost = config.DefaultHost
 
 var authCmd = &cobra.Command{
 	Use:   "auth",
@@ -23,20 +20,22 @@ var loginFlags struct {
 	username string
 }
 
+func resolveAuthHost() string {
+	if loginFlags.host != "" {
+		return loginFlags.host
+	}
+	return config.DefaultHost
+}
+
 var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "Login to a host",
 	Long:  `Login to a git host with a token.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		host := loginFlags.host
-		if host == "" {
-			host = defaultHost
-		}
-
+		host := resolveAuthHost()
 		token := loginFlags.token
 		username := loginFlags.username
 
-		// Interactive mode: prompt for token if not provided
 		if token == "" {
 			fmt.Printf("Enter token for %s: ", host)
 			_, err := fmt.Scanln(&token)
@@ -45,7 +44,6 @@ var loginCmd = &cobra.Command{
 			}
 		}
 
-		// If username not provided, use a placeholder
 		if username == "" {
 			username = "user"
 		}
@@ -64,10 +62,7 @@ var logoutCmd = &cobra.Command{
 	Short: "Logout from a host",
 	Long:  `Remove authentication for a git host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		host := loginFlags.host
-		if host == "" {
-			host = defaultHost
-		}
+		host := resolveAuthHost()
 
 		if !auth.IsLoggedIn(host) {
 			return fmt.Errorf("not logged in to %s", host)
@@ -87,21 +82,14 @@ var statusCmd = &cobra.Command{
 	Short: "Show authentication status",
 	Long:  `Show the current authentication status for a host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		host := loginFlags.host
-		if host == "" {
-			host = defaultHost
-		}
+		host := resolveAuthHost()
 
-		if auth.IsLoggedIn(host) {
-			user, err := auth.CurrentUser(host)
-			if err != nil {
-				fmt.Printf("Logged in to %s\n", host)
-			} else {
-				fmt.Printf("Logged in to %s as %s\n", host, user)
-			}
-		} else {
+		a, err := auth.GetAuth(host)
+		if err != nil {
 			fmt.Printf("Not logged in to %s\n", host)
+			return nil
 		}
+		fmt.Printf("Logged in to %s as %s\n", host, a.User)
 		return nil
 	},
 }
@@ -111,10 +99,7 @@ var tokenCmd = &cobra.Command{
 	Short: "Show or set authentication token",
 	Long:  `Show or set the authentication token for a host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		host := loginFlags.host
-		if host == "" {
-			host = defaultHost
-		}
+		host := resolveAuthHost()
 
 		token, err := auth.GetToken(host)
 		if err != nil {
@@ -143,6 +128,4 @@ func init() {
 	statusCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 
 	tokenCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
-
-	_ = os.Stdin // suppress unused variable warning
 }

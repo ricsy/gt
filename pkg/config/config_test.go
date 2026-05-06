@@ -41,12 +41,10 @@ func TestLoadSaveHosts(t *testing.T) {
 		"gitee.com": {
 			Token: "test-token",
 			User:  "testuser",
-			Host:  "gitee.com",
 		},
 		"github.com": {
 			Token: "gh-token",
 			User:  "ghuser",
-			Host:  "github.com",
 		},
 	}
 
@@ -110,7 +108,7 @@ func TestLoadHostsNonExistent(t *testing.T) {
 		t.Fatalf("LoadHosts failed for non-existent file: %v", err)
 	}
 
-	if hosts["gitee.com"].Host != "gitee.com" {
-		t.Errorf("expected default gitee.com host, got %s", hosts["gitee.com"].Host)
+	if _, ok := hosts["gitee.com"]; !ok {
+		t.Errorf("expected default gitee.com entry in hosts map")
 	}
 }

@@ -1,11 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/ricsy/gt/pkg/api"
-	"github.com/ricsy/gt/pkg/auth"
-	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -14,12 +9,11 @@ func newOrgCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List organizations for the current user",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token, err := auth.GetToken(config.DefaultHost)
+			client, err := getClient()
 			if err != nil {
-				return fmt.Errorf("authentication required: %w", err)
+				return err
 			}
 
-			client := api.NewClient(config.DefaultHost, token)
 			orgs, err := client.ListOrgs()
 			if err != nil {
 				return err
@@ -39,12 +33,11 @@ func newOrgCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			orgLogin := args[0]
 
-			token, err := auth.GetToken(config.DefaultHost)
+			client, err := getClient()
 			if err != nil {
-				return fmt.Errorf("authentication required: %w", err)
+				return err
 			}
 
-			client := api.NewClient(config.DefaultHost, token)
 			org, err := client.GetOrg(orgLogin)
 			if err != nil {
 				return err

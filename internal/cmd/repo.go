@@ -6,9 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/ricsy/gt/pkg/api"
-	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
-	"github.com/ricsy/gt/pkg/util"
 	"github.com/spf13/cobra"
 )
 
@@ -71,14 +69,10 @@ func init() {
 }
 
 func repoListCommand(cmd *cobra.Command, args []string) error {
-	host := config.DefaultHost
-
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
-		return fmt.Errorf("not logged in: %w", err)
+		return err
 	}
-
-	client := api.NewClient(host, token)
 
 	var repos []api.Repository
 	var err2 error
@@ -117,25 +111,23 @@ func repoListCommand(cmd *cobra.Command, args []string) error {
 }
 
 func repoViewCommand(cmd *cobra.Command, args []string) error {
-	host := config.DefaultHost
-
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
-		return fmt.Errorf("not logged in: %w", err)
+		return err
 	}
-
-	client := api.NewClient(host, token)
 
 	var repo *api.Repository
 
 	if len(args) == 1 {
-		owner, repoName := util.SplitOwnerRepo(args[0])
+		owner, repoName, err := ResolveRepo(args[0])
+		if err != nil {
+			return err
+		}
 		repo, err = client.GetRepo(owner, repoName)
 		if err != nil {
 			return fmt.Errorf("failed to get repo: %w", err)
 		}
 	} else {
-		// List current user's repos and show the first one as default
 		repos, err := client.ListRepos()
 		if err != nil {
 			return fmt.Errorf("failed to list repos: %w", err)
@@ -157,14 +149,10 @@ func repoViewCommand(cmd *cobra.Command, args []string) error {
 }
 
 func repoCreateCommand(cmd *cobra.Command, args []string) error {
-	host := config.DefaultHost
-
-	token, err := auth.GetToken(host)
+	client, err := getClient()
 	if err != nil {
-		return fmt.Errorf("not logged in: %w", err)
+		return err
 	}
-
-	client := api.NewClient(host, token)
 
 	opts := api.CreateRepoOptions{
 		Name:        repoCreateOpts.Name,
@@ -184,16 +172,17 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 }
 
 func repoCloneCommand(cmd *cobra.Command, args []string) error {
-	repoArg := args[0]
+	owner, repoName, err := ResolveRepo(args[0])
+	if err != nil {
+		return err
+	}
 
 	var directory string
 	if len(args) > 1 {
 		directory = args[1]
 	}
 
-	owner, repoName := util.SplitOwnerRepo(repoArg)
-
-	cloneURL := fmt.Sprintf("https://gitee.com/%s/%s.git", owner, repoName)
+	cloneURL := fmt.Sprintf("https://%s/%s/%s.git", config.DefaultHost, owner, repoName)
 
 	var gitArgs []string
 	gitArgs = append(gitArgs, "clone", cloneURL)
@@ -205,7 +194,7 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 	gitExec.Stdout = os.Stdout
 	gitExec.Stderr = os.Stderr
 
-	err := gitExec.Run()
+	err = gitExec.Run()
 	if err != nil {
 		return fmt.Errorf("git clone failed: %w", err)
 	}

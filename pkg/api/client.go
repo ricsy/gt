@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sync"
+	"time"
+
+	"github.com/ricsy/gt/pkg/config"
 )
 
 const (
@@ -20,37 +22,30 @@ const (
 	apiPathIssueUpdate = "/repos/%s/issues/%s"
 	apiPathPRs         = "/repos/%s/%s/pulls"
 	apiPathReleases    = "/repos/%s/%s/releases"
+
+	authHeaderPrefix = "token "
+	defaultTimeout   = 30 * time.Second
 )
 
-// Client is the Gitee API client
 type Client struct {
-	Host       string
-	Token      string
+	host       string
+	token      string
 	HTTPClient *http.Client
 }
 
-var (
-	defaultHTTPClient     *http.Client
-	defaultHTTPClientOnce sync.Once
-)
-
-func getDefaultHTTPClient() *http.Client {
-	defaultHTTPClientOnce.Do(func() {
-		defaultHTTPClient = &http.Client{}
-	})
-	return defaultHTTPClient
-}
-
-// NewClient creates a new Gitee API client
 func NewClient(host, token string) *Client {
 	return &Client{
-		Host:       host,
-		Token:      token,
-		HTTPClient: getDefaultHTTPClient(),
+		host:       host,
+		token:      token,
+		HTTPClient: &http.Client{Timeout: defaultTimeout},
 	}
 }
 
-// Do performs an HTTP request to the Gitee API
+// Token returns the client's auth token (needed by api command for raw requests).
+func (c *Client) Token() string {
+	return c.token
+}
+
 func (c *Client) Do(method, path string, body interface{}, response interface{}) error {
 	var reqBody io.Reader
 	if body != nil {
@@ -61,13 +56,13 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 		reqBody = bytes.NewReader(data)
 	}
 
-	url := fmt.Sprintf("https://%s/api/v5%s", c.Host, path)
+	url := config.ApiUrl(c.host) + path
 	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+c.Token)
+	req.Header.Set("Authorization", authHeaderPrefix+c.token)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, err := c.HTTPClient.Do(req)

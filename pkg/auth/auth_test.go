@@ -163,8 +163,8 @@ func TestGetAuth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetAuth failed: %v", err)
 	}
-	if auth.Token != "test-token" || auth.User != "testuser" || auth.Host != host {
-		t.Errorf("GetAuth = %+v, want {Token:test-token User:testuser Host:%s}", auth, host)
+	if auth.Token != "test-token" || auth.User != "testuser" {
+		t.Errorf("GetAuth = %+v, want {Token:test-token User:testuser}", auth)
 	}
 }
 

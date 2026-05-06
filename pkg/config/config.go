@@ -118,8 +118,6 @@ func SaveConfig(cfg *Config) error {
 // defaultHosts returns default hosts map with gitee.com
 func defaultHosts() map[string]HostAuth {
 	return map[string]HostAuth{
-		"gitee.com": {
-			Host: "gitee.com",
-		},
+		"gitee.com": {},
 	}
 }

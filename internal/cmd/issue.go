@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ricsy/gt/pkg/api"
-	"github.com/ricsy/gt/pkg/auth"
-	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -69,7 +67,7 @@ func init() {
 
 	issueListCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueListCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueListCmd.Flags().StringVar(&issueState, "state", "open", "Filter by state (open, closed, all)")
+	issueListCmd.Flags().StringVar(&issueState, "state", api.StateOpen, "Filter by state (open, closed, all)")
 	issueListCmd.Flags().IntVarP(&issueLimit, "limit", "l", 10, "Maximum number of issues to list")
 	_ = issueListCmd.MarkFlagRequired("repo")
 	_ = issueListCmd.MarkFlagRequired("owner")
@@ -107,16 +105,8 @@ func init() {
 	rootCmd.AddCommand(issueCmd)
 }
 
-func getIssueClient() (*api.Client, error) {
-	token, err := auth.GetToken(config.DefaultHost)
-	if err != nil {
-		return nil, fmt.Errorf("authentication required: %w", err)
-	}
-	return api.NewClient(config.DefaultHost, token), nil
-}
-
 func issueList(cmd *cobra.Command, args []string) error {
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
@@ -140,7 +130,7 @@ func issueList(cmd *cobra.Command, args []string) error {
 func issueView(cmd *cobra.Command, args []string) error {
 	number := args[0]
 
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
@@ -160,11 +150,13 @@ func issueView(cmd *cobra.Command, args []string) error {
 		fmt.Println("(No description)")
 	}
 
-	comments, err := client.ListIssueComments(issueOwner, issueRepo, number)
-	if err == nil && len(comments) > 0 {
-		fmt.Println("\n--- Comments ---")
-		for _, c := range comments {
-			fmt.Printf("[%s] %s: %s\n", c.CreatedAt, c.User.Login, c.Body)
+	if issue.Comments > 0 {
+		comments, err := client.ListIssueComments(issueOwner, issueRepo, number)
+		if err == nil && len(comments) > 0 {
+			fmt.Println("--- Comments ---")
+			for _, c := range comments {
+				fmt.Printf("[%s] %s: %s", c.CreatedAt, c.User.Login, c.Body)
+			}
 		}
 	}
 
@@ -172,7 +164,7 @@ func issueView(cmd *cobra.Command, args []string) error {
 }
 
 func issueCreate(cmd *cobra.Command, args []string) error {
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
@@ -190,7 +182,7 @@ func issueCreate(cmd *cobra.Command, args []string) error {
 func issueClose(cmd *cobra.Command, args []string) error {
 	number := args[0]
 
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
@@ -207,7 +199,7 @@ func issueClose(cmd *cobra.Command, args []string) error {
 func issueReopen(cmd *cobra.Command, args []string) error {
 	number := args[0]
 
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}
@@ -224,7 +216,7 @@ func issueReopen(cmd *cobra.Command, args []string) error {
 func issueAddComment(cmd *cobra.Command, args []string) error {
 	number := args[0]
 
-	client, err := getIssueClient()
+	client, err := getClient()
 	if err != nil {
 		return err
 	}

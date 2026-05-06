@@ -2,11 +2,14 @@ package api
 
 import "fmt"
 
+// PRState represents the state of a pull request.
+type PRState string
+
 const (
-	PRStateOpen   = "open"
-	PRStateClosed = "closed"
-	PRStateMerged = "merged"
-	PRStateAll    = "all"
+	PRStateOpen   PRState = "open"
+	PRStateClosed PRState = "closed"
+	PRStateMerged PRState = "merged"
+	PRStateAll    PRState = "all"
 )
 
 // PullRequest represents a Gitee pull request
@@ -93,10 +96,10 @@ func (c *Client) MergePR(owner, repo string, number int) error {
 	return c.Do("PUT", path, nil, nil)
 }
 
-// ClosePR closes a pull request
-func (c *Client) ClosePR(owner, repo string, number int) (*PullRequest, error) {
+// UpdatePRState updates a pull request's state (open/closed)
+func (c *Client) UpdatePRState(owner, repo string, number int, state PRState) (*PullRequest, error) {
 	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
-	updateReq := map[string]string{"state": PRStateClosed}
+	updateReq := map[string]string{"state": string(state)}
 	var pr PullRequest
 	err := c.Do("PATCH", path, updateReq, &pr)
 	if err != nil {

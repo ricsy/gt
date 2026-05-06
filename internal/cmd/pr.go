@@ -9,12 +9,13 @@ import (
 )
 
 var (
-	prRepo  string
-	prState string
-	prTitle string
-	prBody  string
-	prHead  string
-	prBase  string
+	prRepo        string
+	prFilterState string
+	prTitle       string
+	prBody        string
+	prHead        string
+	prBase        string
+	prNewState    string
 )
 
 var prCmd = &cobra.Command{
@@ -63,13 +64,20 @@ var prCommentCmd = &cobra.Command{
 	RunE:  prComment,
 }
 
+var prStateCmd = &cobra.Command{
+	Use:   "state <number>",
+	Short: "Set PR state",
+	Args:  cobra.ExactArgs(1),
+	RunE:  prState,
+}
+
 func init() {
 	rootCmd.AddCommand(prCmd)
 
-	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prCloseCmd, prCommentCmd)
+	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prCloseCmd, prCommentCmd, prStateCmd)
 
 	prListCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
-	prListCmd.Flags().StringVar(&prState, "state", api.StateOpen, "Filter by state: open, closed, merged, all")
+	prListCmd.Flags().StringVar(&prFilterState, "state", string(api.PRStateOpen), "Filter by state: open, closed, merged, all")
 
 	prViewCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 
@@ -85,6 +93,9 @@ func init() {
 
 	prCommentCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 	prCommentCmd.Flags().StringVar(&prBody, "body", "", "Comment body")
+
+	prStateCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
+	prStateCmd.Flags().StringVar(&prNewState, "state", "", "Target state (open, closed)")
 }
 
 func prList(cmd *cobra.Command, args []string) error {
@@ -98,7 +109,7 @@ func prList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	prs, err := client.ListPRs(owner, repo, prState)
+	prs, err := client.ListPRs(owner, repo, prFilterState)
 	if err != nil {
 		return err
 	}
@@ -208,12 +219,37 @@ func prClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = client.ClosePR(owner, repo, number)
+	_, err = client.UpdatePRState(owner, repo, number, api.PRStateClosed)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Closed PR #%d\n", number)
+	return nil
+}
+
+func prState(cmd *cobra.Command, args []string) error {
+	owner, repo, err := resolveRepoFlag(prRepo)
+	if err != nil {
+		return err
+	}
+
+	number, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("invalid PR number: %w", err)
+	}
+
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+
+	pr, err := client.UpdatePRState(owner, repo, number, api.PRState(prNewState))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("PR #%d state set to %s\n", pr.Number, pr.State)
 	return nil
 }
 

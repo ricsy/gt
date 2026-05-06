@@ -2,12 +2,15 @@ package api
 
 import "fmt"
 
+// IssueState represents the state of an issue.
+type IssueState string
+
 const (
-	StateOpen        = "open"
-	StateClosed      = "closed"
-	StateProgressing = "progressing"
-	StateRejected    = "rejected"
-	StateAll         = "all"
+	IssueStateOpen        IssueState = "open"
+	IssueStateClosed      IssueState = "closed"
+	IssueStateProgressing IssueState = "progressing"
+	IssueStateRejected    IssueState = "rejected"
+	IssueStateAll         IssueState = "all"
 )
 
 // Issue represents a Gitee issue
@@ -91,25 +94,15 @@ func (c *Client) CreateIssue(owner, repo, title, body string) (*Issue, error) {
 }
 
 // UpdateIssueState updates an issue's state (open/closed)
-func (c *Client) UpdateIssueState(owner, repo, number, state string) (*Issue, error) {
+func (c *Client) UpdateIssueState(owner, repo, number string, state IssueState) (*Issue, error) {
 	path := fmt.Sprintf(apiPathIssueUpdate, owner, number)
-	req := map[string]string{"state": state, "repo": repo}
+	req := map[string]string{"state": string(state), "repo": repo}
 	var issue Issue
 	err := c.Do("PATCH", path, req, &issue)
 	if err != nil {
 		return nil, err
 	}
 	return &issue, nil
-}
-
-// CloseIssue closes an issue
-func (c *Client) CloseIssue(owner, repo, number string) (*Issue, error) {
-	return c.UpdateIssueState(owner, repo, number, StateClosed)
-}
-
-// ReopenIssue reopens a closed issue
-func (c *Client) ReopenIssue(owner, repo, number string) (*Issue, error) {
-	return c.UpdateIssueState(owner, repo, number, StateOpen)
 }
 
 // IssueComment represents a comment on an issue

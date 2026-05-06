@@ -8,12 +8,13 @@ import (
 )
 
 var (
-	issueRepo  string
-	issueOwner string
-	issueState string
-	issueLimit int
-	issueTitle string
-	issueBody  string
+	issueRepo        string
+	issueOwner       string
+	issueFilterState string
+	issueLimit       int
+	issueTitle       string
+	issueBody        string
+	issueNewState    string
 )
 
 var issueCmd = &cobra.Command{
@@ -41,18 +42,11 @@ var issueCreateCmd = &cobra.Command{
 	RunE:  issueCreate,
 }
 
-var issueCloseCmd = &cobra.Command{
-	Use:   "close <number>",
-	Short: "Close an issue",
+var issueStateCmd = &cobra.Command{
+	Use:   "state <number>",
+	Short: "Set issue state",
 	Args:  cobra.ExactArgs(1),
-	RunE:  issueClose,
-}
-
-var issueReopenCmd = &cobra.Command{
-	Use:   "reopen <number>",
-	Short: "Reopen a closed issue",
-	Args:  cobra.ExactArgs(1),
-	RunE:  issueReopen,
+	RunE:  issueState,
 }
 
 var issueCommentCmd = &cobra.Command{
@@ -63,11 +57,11 @@ var issueCommentCmd = &cobra.Command{
 }
 
 func init() {
-	issueCmd.AddCommand(issueListCmd, issueViewCmd, issueCreateCmd, issueCloseCmd, issueReopenCmd, issueCommentCmd)
+	issueCmd.AddCommand(issueListCmd, issueViewCmd, issueCreateCmd, issueStateCmd, issueCommentCmd)
 
 	issueListCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueListCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueListCmd.Flags().StringVar(&issueState, "state", api.StateOpen, "Filter by state (open, closed, progressing, rejected, all)")
+	issueListCmd.Flags().StringVar(&issueFilterState, "state", string(api.IssueStateOpen), "Filter by state (open, closed, progressing, rejected, all)")
 	issueListCmd.Flags().IntVarP(&issueLimit, "limit", "l", 10, "Maximum number of issues to list")
 	_ = issueListCmd.MarkFlagRequired("repo")
 	_ = issueListCmd.MarkFlagRequired("owner")
@@ -85,15 +79,12 @@ func init() {
 	_ = issueCreateCmd.MarkFlagRequired("owner")
 	_ = issueCreateCmd.MarkFlagRequired("title")
 
-	issueCloseCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
-	issueCloseCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	_ = issueCloseCmd.MarkFlagRequired("repo")
-	_ = issueCloseCmd.MarkFlagRequired("owner")
-
-	issueReopenCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
-	issueReopenCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	_ = issueReopenCmd.MarkFlagRequired("repo")
-	_ = issueReopenCmd.MarkFlagRequired("owner")
+	issueStateCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
+	issueStateCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
+	issueStateCmd.Flags().StringVarP(&issueNewState, "state", "s", "", "Target state (open, closed, progressing, rejected)")
+	_ = issueStateCmd.MarkFlagRequired("repo")
+	_ = issueStateCmd.MarkFlagRequired("owner")
+	_ = issueStateCmd.MarkFlagRequired("state")
 
 	issueCommentCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueCommentCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
@@ -111,7 +102,7 @@ func issueList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	issues, err := client.ListIssues(issueOwner, issueRepo, issueState, 1, issueLimit)
+	issues, err := client.ListIssues(issueOwner, issueRepo, issueFilterState, 1, issueLimit)
 	if err != nil {
 		return fmt.Errorf("failed to list issues: %w", err)
 	}
@@ -179,7 +170,7 @@ func issueCreate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func issueClose(cmd *cobra.Command, args []string) error {
+func issueState(cmd *cobra.Command, args []string) error {
 	number := args[0]
 
 	client, err := getClient()
@@ -187,29 +178,12 @@ func issueClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	issue, err := client.CloseIssue(issueOwner, issueRepo, number)
+	issue, err := client.UpdateIssueState(issueOwner, issueRepo, number, api.IssueState(issueNewState))
 	if err != nil {
-		return fmt.Errorf("failed to close issue: %w", err)
+		return fmt.Errorf("failed to update issue state: %w", err)
 	}
 
-	fmt.Printf("Issue #%d closed successfully\n", issue.Number)
-	return nil
-}
-
-func issueReopen(cmd *cobra.Command, args []string) error {
-	number := args[0]
-
-	client, err := getClient()
-	if err != nil {
-		return err
-	}
-
-	issue, err := client.ReopenIssue(issueOwner, issueRepo, number)
-	if err != nil {
-		return fmt.Errorf("failed to reopen issue: %w", err)
-	}
-
-	fmt.Printf("Issue #%d reopened successfully\n", issue.Number)
+	fmt.Printf("Issue #%d state set to %s\n", issue.Number, issue.State)
 	return nil
 }
 

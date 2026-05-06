@@ -60,3 +60,52 @@ Use `getClient()` to get an authenticated API client. Use `resolveRepoFlag(flag)
 - All command handlers use `getClient()` + `resolveRepoFlag()` — never call `auth.GetToken` + `api.NewClient` directly
 - URL construction always goes through `config.ApiUrl(host)` — no hardcoded `https://gitee.com`
 - `api.StateOpen` constant exists for issue/PR state filtering (value: "open")
+
+## API Implementation Checklist
+
+When implementing or updating an API endpoint, verify against `data/api-1.json` or using `swagger-gitee` MCP:
+
+### 1. Endpoint Definition (`pkg/api/endpoint.go`)
+- [ ] Path matches swagger: `/v5/repos/{owner}/{repo}/issues`
+- [ ] HTTP method matches swagger: GET, POST, PATCH, DELETE, PUT
+- [ ] EndpointGroup action name is correct: List, Get, Create, Update, Delete, Merge, Comment, Test
+
+### 2. Request Parameters (`pkg/api/response/{domain}.go`)
+For each query/path/form parameter in swagger:
+- [ ] Parameter name matches exactly (case-sensitive)
+- [ ] Parameter type matches: string, int, bool, array
+- [ ] Required vs optional is correct
+- [ ] Enum values are validated if specified
+
+### 3. Request Body (`pkg/api/response/{domain}.go`)
+For POST/PATCH/PUT requests:
+- [ ] All form fields are defined in request struct
+- [ ] JSON tags match swagger field names
+- [ ] `omitempty` is used correctly for optional fields
+- [ ] Field types match swagger spec
+
+### 4. Response Struct (`pkg/api/response/{domain}.go`)
+For each response field in swagger definition:
+- [ ] Field name matches exactly (case-sensitive)
+- [ ] JSON tag matches swagger
+- [ ] Field type is correct: string, int, bool, array, object
+- [ ] Nested objects have proper struct definitions
+- [ ] All optional fields have pointer types or omitempty
+
+### 5. Verification Steps
+```bash
+# 1. Search swagger for the endpoint
+mcp__swagger-gitee__search_apis tag:"Issues"
+
+# 2. Get full API details
+mcp__swagger-gitee__get_api_detail --path "/v5/repos/{owner}/{repo}/issues" --method "get"
+
+# 3. Get response schema
+mcp__swagger-gitee__get_schema --ref "Issue"
+
+# 4. Verify build passes
+go build ./...
+
+# 5. Verify lint passes
+golangci-lint run ./...
+```

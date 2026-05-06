@@ -12,31 +12,48 @@ const (
 
 // PullRequest represents a Gitee pull request
 type PullRequest struct {
-	ID      int64  `json:"id"`
-	Number  int    `json:"number"`
-	State   string `json:"state"`
-	Title   string `json:"title"`
-	Body    string `json:"body"`
-	HTMLURL string `json:"html_url"`
-	User    struct {
+	ID                int64  `json:"id"`
+	Number            int    `json:"number"`
+	State             string `json:"state"`
+	Title             string `json:"title"`
+	Body              string `json:"body"`
+	HTMLURL           string `json:"html_url"`
+	URL               string `json:"url"`
+	DiffURL           string `json:"diff_url"`
+	PatchURL          string `json:"patch_url"`
+	IssueURL          string `json:"issue_url"`
+	CommitsURL        string `json:"commits_url"`
+	ReviewCommentsURL string `json:"review_comments_url"`
+	ReviewCommentURL  string `json:"review_comment_url"`
+	CommentsURL       string `json:"comments_url"`
+	User              struct {
 		ID    int64  `json:"id"`
 		Login string `json:"login"`
 	} `json:"user"`
-	Labels       []Label `json:"labels"`
-	Assignee     *User   `json:"assignee"`
-	Assignees    []User  `json:"assignees"`
-	Comments     int     `json:"comments"`
-	Commits      int     `json:"commits"`
-	Additions    int     `json:"additions"`
-	Deletions    int     `json:"deletions"`
-	FilesChanged int     `json:"files_changed"`
-	CreatedAt    string  `json:"created_at"`
-	UpdatedAt    string  `json:"updated_at"`
-	ClosedAt     string  `json:"closed_at"`
-	MergedAt     string  `json:"merged_at"`
-	Merged       bool    `json:"merged"`
-	Mergeable    bool    `json:"mergeable"`
-	Head         struct {
+	Labels             []Label     `json:"labels"`
+	Assignee           *UserBasic  `json:"assignee"`
+	Assignees          []UserBasic `json:"assignees"`
+	Testers            []UserBasic `json:"testers"`
+	CloseRelatedIssue  int         `json:"close_related_issue"`
+	PruneBranch        bool        `json:"prune_branch"`
+	AssigneesNumber    int         `json:"assignees_number"`
+	TestersNumber      int         `json:"testers_number"`
+	APIReviewersNumber int         `json:"api_reviewers_number"`
+	APIReviewers       []UserBasic `json:"api_reviewers"`
+	Milestone          *Milestone  `json:"milestone"`
+	Locked             bool        `json:"locked"`
+	Comments           int         `json:"comments"`
+	Commits            int         `json:"commits"`
+	Additions          int         `json:"additions"`
+	Deletions          int         `json:"deletions"`
+	FilesChanged       int         `json:"files_changed"`
+	CreatedAt          string      `json:"created_at"`
+	UpdatedAt          string      `json:"updated_at"`
+	ClosedAt           string      `json:"closed_at"`
+	MergedAt           string      `json:"merged_at"`
+	Merged             bool        `json:"merged"`
+	Mergeable          bool        `json:"mergeable"`
+	Head               struct {
 		Ref string `json:"ref"`
 		Sha string `json:"sha"`
 	} `json:"head"`

@@ -24,11 +24,17 @@ type Issue = response.Issue
 // Label is an alias for response.Label
 type Label = response.Label
 
-// User is an alias for response.User
-type User = response.User
+// User is an alias for response.UserBasic
+type User = response.UserBasic
 
 // IssueComment is an alias for response.IssueComment
 type IssueComment = response.IssueComment
+
+// Milestone is an alias for response.Milestone
+type Milestone = response.Milestone
+
+// Project is an alias for response.Project
+type Project = response.Project
 
 // ListIssuesOptions is an alias for response.ListIssuesOptions
 type ListIssuesOptions = response.ListIssuesOptions
@@ -75,6 +81,21 @@ func buildQuery(opts ListIssuesOptions) string {
 	}
 	if opts.PerPage > 0 {
 		params = append(params, "per_page", fmt.Sprintf("%d", opts.PerPage))
+	}
+	if opts.Since != "" {
+		params = append(params, "since", opts.Since)
+	}
+	if opts.Schedule != "" {
+		params = append(params, "schedule", opts.Schedule)
+	}
+	if opts.Deadline != "" {
+		params = append(params, "deadline", opts.Deadline)
+	}
+	if opts.CreatedAt != "" {
+		params = append(params, "created_at", opts.CreatedAt)
+	}
+	if opts.FinishedAt != "" {
+		params = append(params, "finished_at", opts.FinishedAt)
 	}
 	return util.BuildQuery(params...)
 }

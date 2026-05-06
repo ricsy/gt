@@ -1,14 +1,9 @@
 package api
 
-// Org represents a Gitee organization
-type Org struct {
-	Login    string `json:"login"`
-	Name     string `json:"name"`
-	Blog     string `json:"blog"`
-	Email    string `json:"email"`
-	HtmlUrl  string `json:"html_url"`
-	Location string `json:"location"`
-}
+import "github.com/ricsy/gt/pkg/api/response"
+
+// Org is an alias for response.Org
+type Org = response.Org
 
 // ListOrgs lists organizations for the current user
 func (c *Client) ListOrgs() ([]Org, error) {

@@ -1,16 +1,15 @@
 package api
 
-// Release represents a Gitee release
-type Release struct {
-	ID           int64  `json:"id"`
-	TagName      string `json:"tag_name"`
-	Name         string `json:"name"`
-	Body         string `json:"body"`
-	TargetCommit string `json:"target_commitish"`
-	CreatedAt    string `json:"created_at"`
-	PublishedAt  string `json:"published_at"`
-	HtmlUrl      string `json:"html_url"`
-}
+import "github.com/ricsy/gt/pkg/api/response"
+
+// Release is an alias for response.Release
+type Release = response.Release
+
+// CreateReleaseOptions is an alias for response.CreateReleaseOptions
+type CreateReleaseOptions = response.CreateReleaseOptions
+
+// UpdateReleaseOptions is an alias for response.UpdateReleaseOptions
+type UpdateReleaseOptions = response.UpdateReleaseOptions
 
 // ListReleases lists releases for a repository
 func (c *Client) ListReleases(owner, repo string) ([]Release, error) {
@@ -32,15 +31,6 @@ func (c *Client) GetRelease(owner, repo, tag string) (*Release, error) {
 	return &release, nil
 }
 
-// CreateReleaseOptions contains options for creating a release
-type CreateReleaseOptions struct {
-	TagName         string `json:"tag_name"`
-	Name            string `json:"name"`
-	Body            string `json:"body"`
-	TargetCommitish string `json:"target_commitish,omitempty"`
-	Prerelease      bool   `json:"prerelease,omitempty"`
-}
-
 // CreateRelease creates a new release
 func (c *Client) CreateRelease(owner, repo string, opts CreateReleaseOptions) (*Release, error) {
 	var release Release
@@ -58,14 +48,6 @@ func (c *Client) DeleteRelease(owner, repo, tag string) error {
 		return err
 	}
 	return c.DoFromEndpoint(Releases.Delete, []interface{}{owner, repo, release.ID}, nil, nil)
-}
-
-// UpdateReleaseOptions contains options for updating a release
-type UpdateReleaseOptions struct {
-	TagName    string `json:"tag_name"`
-	Name       string `json:"name"`
-	Body       string `json:"body"`
-	Prerelease *bool  `json:"prerelease,omitempty"`
 }
 
 // UpdateRelease updates a release

@@ -1,21 +1,15 @@
 package api
 
-// Webhook represents a Gitee webhook
-type Webhook struct {
-	ID                  int64  `json:"id"`
-	URL                 string `json:"url"`
-	Password            string `json:"password"`
-	Result              string `json:"result"`
-	ProjectID           int64  `json:"project_id"`
-	ResultCode          int    `json:"result_code"`
-	CreatedAt           string `json:"created_at"`
-	PushEvents          bool   `json:"push_events"`
-	TagPushEvents       bool   `json:"tag_push_events"`
-	IssuesEvents        bool   `json:"issues_events"`
-	NoteEvents          bool   `json:"note_events"`
-	MergeRequestsEvents bool   `json:"merge_requests_events"`
-	Title               string `json:"title"`
-}
+import "github.com/ricsy/gt/pkg/api/response"
+
+// Webhook is an alias for response.Webhook
+type Webhook = response.Webhook
+
+// CreateWebhookOptions is an alias for response.CreateWebhookOptions
+type CreateWebhookOptions = response.CreateWebhookOptions
+
+// UpdateWebhookOptions is an alias for response.UpdateWebhookOptions
+type UpdateWebhookOptions = response.UpdateWebhookOptions
 
 // ListWebhooks lists webhooks for a repository
 func (c *Client) ListWebhooks(owner, repo string) ([]Webhook, error) {
@@ -37,19 +31,6 @@ func (c *Client) GetWebhook(owner, repo string, id int64) (*Webhook, error) {
 	return &webhook, nil
 }
 
-// CreateWebhookOptions contains options for creating a webhook
-type CreateWebhookOptions struct {
-	URL                 string `json:"url"`
-	Title               string `json:"title,omitempty"`
-	EncryptionType      int    `json:"encryption_type,omitempty"`
-	Password            string `json:"password,omitempty"`
-	PushEvents          *bool  `json:"push_events,omitempty"`
-	TagPushEvents       *bool  `json:"tag_push_events,omitempty"`
-	IssuesEvents        *bool  `json:"issues_events,omitempty"`
-	NoteEvents          *bool  `json:"note_events,omitempty"`
-	MergeRequestsEvents *bool  `json:"merge_requests_events,omitempty"`
-}
-
 // CreateWebhook creates a new webhook
 func (c *Client) CreateWebhook(owner, repo string, opts CreateWebhookOptions) (*Webhook, error) {
 	var webhook Webhook
@@ -58,19 +39,6 @@ func (c *Client) CreateWebhook(owner, repo string, opts CreateWebhookOptions) (*
 		return nil, err
 	}
 	return &webhook, nil
-}
-
-// UpdateWebhookOptions contains options for updating a webhook
-type UpdateWebhookOptions struct {
-	URL                 string `json:"url"`
-	Title               string `json:"title,omitempty"`
-	EncryptionType      int    `json:"encryption_type,omitempty"`
-	Password            string `json:"password,omitempty"`
-	PushEvents          *bool  `json:"push_events,omitempty"`
-	TagPushEvents       *bool  `json:"tag_push_events,omitempty"`
-	IssuesEvents        *bool  `json:"issues_events,omitempty"`
-	NoteEvents          *bool  `json:"note_events,omitempty"`
-	MergeRequestsEvents *bool  `json:"merge_requests_events,omitempty"`
 }
 
 // UpdateWebhook updates a webhook

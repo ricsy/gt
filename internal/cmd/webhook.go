@@ -139,8 +139,8 @@ func newWebhookCmd() *cobra.Command {
 	}
 	createCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
 	createCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL (required)")
-	createCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title")
-	createCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0: 密码, 1: 签名密钥)")
+	createCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title (max 191 chars)")
+	createCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")
 	createCmd.Flags().StringVar(&password, "password", "", "Password")
 	createCmd.Flags().BoolVar(&pushEventsFlag, "push-events", false, "Trigger on push events")
 	createCmd.Flags().BoolVar(&tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")

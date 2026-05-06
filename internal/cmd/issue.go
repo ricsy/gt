@@ -67,7 +67,7 @@ func init() {
 
 	issueListCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueListCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueListCmd.Flags().StringVar(&issueState, "state", api.StateOpen, "Filter by state (open, closed, all)")
+	issueListCmd.Flags().StringVar(&issueState, "state", api.StateOpen, "Filter by state (open, closed, progressing, rejected, all)")
 	issueListCmd.Flags().IntVarP(&issueLimit, "limit", "l", 10, "Maximum number of issues to list")
 	_ = issueListCmd.MarkFlagRequired("repo")
 	_ = issueListCmd.MarkFlagRequired("owner")

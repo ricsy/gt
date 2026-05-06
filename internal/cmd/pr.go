@@ -69,7 +69,7 @@ func init() {
 	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prCloseCmd, prCommentCmd)
 
 	prListCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
-	prListCmd.Flags().StringVar(&prState, "state", api.StateOpen, "Filter by state: open, closed, all")
+	prListCmd.Flags().StringVar(&prState, "state", api.StateOpen, "Filter by state: open, closed, merged, all")
 
 	prViewCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 

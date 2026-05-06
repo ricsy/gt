@@ -96,7 +96,7 @@ func (c *Client) MergePR(owner, repo string, number int) error {
 // ClosePR closes a pull request
 func (c *Client) ClosePR(owner, repo string, number int) (*PullRequest, error) {
 	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
-	updateReq := map[string]string{"state": "closed"}
+	updateReq := map[string]string{"state": PRStateClosed}
 	var pr PullRequest
 	err := c.Do("PATCH", path, updateReq, &pr)
 	if err != nil {

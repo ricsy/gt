@@ -3,44 +3,18 @@ package api
 import (
 	"strconv"
 
+	"github.com/ricsy/gt/pkg/api/response"
 	"github.com/ricsy/gt/pkg/util"
 )
 
-// SearchReposOptions contains optional parameters for SearchRepos
-type SearchReposOptions struct {
-	Q        string
-	Owner    string
-	Fork     *bool
-	Language string
-	Sort     string // last_push_at, stars_count, forks_count, watches_count
-	Order    string // asc, desc
-	Page     int
-	PerPage  int
-}
+// SearchReposOptions is an alias for response.SearchReposOptions
+type SearchReposOptions = response.SearchReposOptions
 
-// SearchIssuesOptions contains optional parameters for SearchIssues
-type SearchIssuesOptions struct {
-	Q        string
-	Repo     string
-	Language string
-	Label    string
-	State    string // open, progressing, closed, rejected
-	Author   string
-	Assignee string
-	Sort     string // created_at, updated_at, notes_count
-	Order    string // asc, desc
-	Page     int
-	PerPage  int
-}
+// SearchIssuesOptions is an alias for response.SearchIssuesOptions
+type SearchIssuesOptions = response.SearchIssuesOptions
 
-// SearchUsersOptions contains optional parameters for SearchUsers
-type SearchUsersOptions struct {
-	Q       string
-	Sort    string // joined_at
-	Order   string // asc, desc
-	Page    int
-	PerPage int
-}
+// SearchUsersOptions is an alias for response.SearchUsersOptions
+type SearchUsersOptions = response.SearchUsersOptions
 
 // SearchRepos searches repositories
 func (c *Client) SearchRepos(opts SearchReposOptions) ([]Repository, error) {

@@ -9,6 +9,7 @@ import (
 
 func newWebhookCmd() *cobra.Command {
 	var repoFlag string
+	var page, perPage int
 
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -24,7 +25,10 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			webhooks, err := client.ListWebhooks(owner, repoName)
+			webhooks, err := client.ListWebhooks(owner, repoName, api.ListWebhooksOptions{
+				Page:    page,
+				PerPage: perPage,
+			})
 			if err != nil {
 				return err
 			}
@@ -36,6 +40,8 @@ func newWebhookCmd() *cobra.Command {
 		},
 	}
 	listCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
+	listCmd.Flags().IntVar(&page, "page", 0, "Page number")
+	listCmd.Flags().IntVar(&perPage, "per-page", 0, "Items per page")
 
 	viewCmd := &cobra.Command{
 		Use:   "view <id>",

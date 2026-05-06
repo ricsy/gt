@@ -1,6 +1,11 @@
 package api
 
-import "github.com/ricsy/gt/pkg/api/response"
+import (
+	"strconv"
+
+	"github.com/ricsy/gt/pkg/api/response"
+	"github.com/ricsy/gt/pkg/util"
+)
 
 // Webhook is an alias for response.Webhook
 type Webhook = response.Webhook
@@ -11,14 +16,36 @@ type CreateWebhookOptions = response.CreateWebhookOptions
 // UpdateWebhookOptions is an alias for response.UpdateWebhookOptions
 type UpdateWebhookOptions = response.UpdateWebhookOptions
 
+// ListWebhooksOptions contains optional parameters for ListWebhooks
+type ListWebhooksOptions struct {
+	Page    int
+	PerPage int
+}
+
 // ListWebhooks lists webhooks for a repository
-func (c *Client) ListWebhooks(owner, repo string) ([]Webhook, error) {
+func (c *Client) ListWebhooks(owner, repo string, opts ListWebhooksOptions) ([]Webhook, error) {
+	path := Webhooks.List.Build(owner, repo)
+	query := buildWebhookQuery(opts)
+	if query != "" {
+		path += "?" + query
+	}
 	var webhooks []Webhook
-	err := c.DoFromEndpoint(Webhooks.List, []interface{}{owner, repo}, nil, &webhooks)
+	err := c.Do("GET", path, nil, &webhooks)
 	if err != nil {
 		return nil, err
 	}
 	return webhooks, nil
+}
+
+func buildWebhookQuery(opts ListWebhooksOptions) string {
+	params := []string{}
+	if opts.Page > 0 {
+		params = append(params, "page", strconv.Itoa(opts.Page))
+	}
+	if opts.PerPage > 0 {
+		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
+	}
+	return util.BuildQuery(params...)
 }
 
 // GetWebhook gets a single webhook

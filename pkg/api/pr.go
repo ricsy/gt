@@ -1,6 +1,11 @@
 package api
 
-import "github.com/ricsy/gt/pkg/api/response"
+import (
+	"fmt"
+
+	"github.com/ricsy/gt/pkg/api/response"
+	"github.com/ricsy/gt/pkg/util"
+)
 
 // PRState is an alias for response.PRState
 type PRState = response.PRState
@@ -24,14 +29,50 @@ type MergePRRequest = response.MergePRRequest
 // UpdatePRRequest is an alias for response.UpdatePRRequest
 type UpdatePRRequest = response.UpdatePRRequest
 
+// ListPRsOptions is an alias for response.ListPRsOptions
+type ListPRsOptions = response.ListPRsOptions
+
 // ListPRs lists pull requests in a repository
-func (c *Client) ListPRs(owner, repo, state string) ([]PullRequest, error) {
+func (c *Client) ListPRs(owner, repo string, opts ListPRsOptions) ([]PullRequest, error) {
+	path := PRs.List.Build(owner, repo)
+	query := buildPRQuery(opts)
+	if query != "" {
+		path += "?" + query
+	}
 	var prs []PullRequest
-	err := c.DoFromEndpoint(PRs.List, []interface{}{owner, repo}, nil, &prs)
+	err := c.Do("GET", path, nil, &prs)
 	if err != nil {
 		return nil, err
 	}
 	return prs, nil
+}
+
+// buildPRQuery builds query string from ListPRsOptions
+func buildPRQuery(opts ListPRsOptions) string {
+	params := []string{
+		"state", opts.State,
+		"head", opts.Head,
+		"base", opts.Base,
+		"sort", opts.Sort,
+		"direction", opts.Direction,
+		"labels", opts.Labels,
+		"author", opts.Author,
+		"assignee", opts.Assignee,
+		"tester", opts.Tester,
+	}
+	if opts.Since != "" {
+		params = append(params, "since", opts.Since)
+	}
+	if opts.MilestoneNumber > 0 {
+		params = append(params, "milestone_number", fmt.Sprintf("%d", opts.MilestoneNumber))
+	}
+	if opts.Page > 0 {
+		params = append(params, "page", fmt.Sprintf("%d", opts.Page))
+	}
+	if opts.PerPage > 0 {
+		params = append(params, "per_page", fmt.Sprintf("%d", opts.PerPage))
+	}
+	return util.BuildQuery(params...)
 }
 
 // GetPR gets a single pull request

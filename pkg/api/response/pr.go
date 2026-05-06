@@ -108,3 +108,20 @@ type UpdatePRRequest struct {
 	Squash                bool   `json:"squash,omitempty"`
 	SecurityHole          bool   `json:"security_hole,omitempty"`
 }
+
+// ListPRsOptions contains the optional parameters for ListPRs
+type ListPRsOptions struct {
+	State           string
+	Head            string
+	Base            string
+	Sort            string // created, updated, popularity, long-running
+	Since           string
+	Direction       string // asc, desc
+	MilestoneNumber int
+	Labels          string
+	Page            int
+	PerPage         int
+	Author          string
+	Assignee        string
+	Tester          string
+}

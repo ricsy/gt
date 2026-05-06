@@ -109,7 +109,7 @@ func prList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	prs, err := client.ListPRs(owner, repo, prFilterState)
+	prs, err := client.ListPRs(owner, repo, api.ListPRsOptions{State: prFilterState})
 	if err != nil {
 		return err
 	}

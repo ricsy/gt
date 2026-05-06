@@ -127,3 +127,12 @@ var Miscellaneous = EndpointGroup{
 	GetGitignoreTemplateRaw: Endpoint{GET, "/gitignore/templates/%s/raw"},
 	RenderMarkdown:          Endpoint{POST, "/markdown"},
 }
+
+// Milestones Milestone endpoints
+var Milestones = EndpointGroup{
+	List:   Endpoint{GET, "/repos/%s/%s/milestones"},
+	Create: Endpoint{POST, "/repos/%s/%s/milestones"},
+	Get:    Endpoint{GET, "/repos/%s/%s/milestones/%d"},
+	Update: Endpoint{PATCH, "/repos/%s/%s/milestones/%d"},
+	Delete: Endpoint{DELETE, "/repos/%s/%s/milestones/%d"},
+}

@@ -15,9 +15,9 @@ import (
 
 // TestConfig holds test configuration
 type TestConfig struct {
-	Owner   string `json:"owner"`
-	Repo    string `json:"repo"`
-	Issue   struct {
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+	Issue struct {
 		Title   string `json:"title"`
 		Body    string `json:"body"`
 		State   string `json:"state"`
@@ -25,9 +25,9 @@ type TestConfig struct {
 	} `json:"issue"`
 	PR struct {
 		Title string `json:"title"`
-		Body   string `json:"body"`
-		Head   string `json:"head"`
-		Base   string `json:"base"`
+		Body  string `json:"body"`
+		Head  string `json:"head"`
+		Base  string `json:"base"`
 	} `json:"pr"`
 	Release struct {
 		Tag  string `json:"tag"`
@@ -37,13 +37,14 @@ type TestConfig struct {
 }
 
 var (
+	projectDir   string
 	testRepoName string
-	testOwner   string
-	testCLI     string
+	testOwner    string
+	testCLI      string
 )
 
 func loadTestConfig(t *testing.T) *TestConfig {
-	data, err := os.ReadFile(filepath.Join("..", "..", "data", "test_data.json"))
+	data, err := os.ReadFile(filepath.Join(projectDir, "data", "test_data.json"))
 	if err != nil {
 		t.Skipf("Skipping integration test: test data not found: %v", err)
 	}
@@ -57,13 +58,10 @@ func loadTestConfig(t *testing.T) *TestConfig {
 
 func buildCLI(t *testing.T) string {
 	t.Helper()
-	cliPath := filepath.Join("..", "..", "gt")
-	if _, err := os.Stat(cliPath); os.IsNotExist(err) {
-		cliPath = "gt"
-	}
+	cliPath := filepath.Join(projectDir, "gt")
 
-	cmd := exec.Command("go", "build", "-o", cliPath, "./cmd/gt")
-	cmd.Dir = filepath.Join("..", "..")
+	cmd := exec.Command("go", "build", "-o", cliPath, ".")
+	cmd.Dir = projectDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to build CLI: %v\n%s", err, output)
@@ -74,7 +72,7 @@ func buildCLI(t *testing.T) string {
 func runCLI(t *testing.T, cli string, args ...string) (string, error) {
 	t.Helper()
 	cmd := exec.Command(cli, args...)
-	cmd.Dir = filepath.Join("..", "..")
+	cmd.Dir = projectDir
 	output, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(output)), err
 }
@@ -91,7 +89,7 @@ func setupTestRepo(cli string) string {
 	cmd := exec.Command(cli, "repo", "create",
 		"--name", repoName,
 		"--description", "Integration test repository for gt CLI")
-	cmd.Dir = filepath.Join("..", "..")
+	cmd.Dir = projectDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		// Check if it's a "already exists" error
@@ -121,14 +119,19 @@ Please delete it manually after testing:
 
 // TestMain handles setup and teardown for all integration tests
 func TestMain(m *testing.M) {
-	// Build CLI first
-	cliPath := filepath.Join("..", "..", "gt")
-	if _, err := os.Stat(cliPath); os.IsNotExist(err) {
-		cliPath = "gt"
+	// Resolve project dir once
+	var err error
+	projectDir, err = filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		fmt.Printf("Failed to resolve project dir: %v\n", err)
+		os.Exit(1)
 	}
 
-	cmd := exec.Command("go", "build", "-o", cliPath, "./cmd/gt")
-	cmd.Dir = filepath.Join("..", "..")
+	// Build CLI first
+	cliPath := filepath.Join(projectDir, "gt")
+
+	cmd := exec.Command("go", "build", "-o", cliPath, ".")
+	cmd.Dir = projectDir
 	if output, err := cmd.CombinedOutput(); err != nil {
 		fmt.Printf("Failed to build CLI: %v\n%s\n", err, output)
 		os.Exit(1)
@@ -136,7 +139,7 @@ func TestMain(m *testing.M) {
 	testCLI = cliPath
 
 	// Load config to get owner
-	cfg, err := os.ReadFile(filepath.Join("..", "..", "data", "test_data.json"))
+	cfg, err := os.ReadFile(filepath.Join(projectDir, "data", "test_data.json"))
 	if err != nil {
 		fmt.Printf("Failed to read test config: %v\n", err)
 		os.Exit(1)

@@ -10,17 +10,18 @@
   ],
   "scripts": {
     "prepare": "pip install pre-commit && pre-commit install && curl -sfL https://goreleaser.com/install.sh | sh",
+    "build": "go build",
     "test": "go test ./...",
     "test:verbose": "go test -v ./...",
-    "test:integration": "go test -v ./internal/cmd -run TestIntegration",
+    "test:integration": "pnpm run build && go test -v ./internal/cmd -run TestIntegration",
     "format": "go fmt ./...",
     "lint": "npm-run-all2 lint:*",
     "lint:go": "go vet ./...",
     "lint:action": "github-actionlint",
-    "lint:goreleaser": "goreleaser check --config .goreleaser.yaml",
+    "lint:goreleaser": "goreleaser check",
     "release": "node scripts/release.js",
-    "release:local": "goreleaser release --config .goreleaser.yaml --clean",
-    "release:beta": "goreleaser release --config .goreleaser.yaml --clean --snapshot"
+    "release:local": "goreleaser release --clean",
+    "release:beta": "goreleaser release --clean --snapshot"
   },
   "devDependencies": {
     "github-actionlint": "^1.7.12",

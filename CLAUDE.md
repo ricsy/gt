@@ -150,6 +150,8 @@ When implementing a new API module (e.g., milestones, labels), follow this direc
    - Test flags exist
    - Reference `webhook_test.go` for patterns
 
+6. **Verify against [API Implementation Checklist](#api-implementation-checklist)**
+
 ### Common Mistakes to Avoid
 
 - **Do NOT** define types in `pkg/api/{domain}.go` — they go in `pkg/api/response/{domain}.go`

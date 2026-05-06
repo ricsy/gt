@@ -182,7 +182,7 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 		directory = args[1]
 	}
 
-	cloneURL := fmt.Sprintf("https://%s/%s/%s.git", config.DefaultHost, owner, repoName)
+	cloneURL := config.ApiUrl(config.DefaultHost) + "/" + owner + "/" + repoName + ".git"
 
 	var gitArgs []string
 	gitArgs = append(gitArgs, "clone", cloneURL)

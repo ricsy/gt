@@ -16,15 +16,15 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		os.Exit(1)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
-	os.Setenv("HOME", tmpDir)
-	os.Unsetenv("GITEE_TOKEN")
+	_ = os.Setenv("HOME", tmpDir)
+	_ = os.Unsetenv("GITEE_TOKEN")
 	config.SetConfigDirFunc(func() string { return tmpDir })
 
 	code := m.Run()
 
-	os.Setenv("HOME", originalHome)
+	_ = os.Setenv("HOME", originalHome)
 
 	os.Exit(code)
 }

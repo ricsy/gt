@@ -56,19 +56,6 @@ func loadTestConfig(t *testing.T) *TestConfig {
 	return &cfg
 }
 
-func buildCLI(t *testing.T) string {
-	t.Helper()
-	cliPath := filepath.Join(projectDir, "gt")
-
-	cmd := exec.Command("go", "build", "-o", cliPath, ".")
-	cmd.Dir = projectDir
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("Failed to build CLI: %v\n%s", err, output)
-	}
-	return cliPath
-}
-
 func runCLI(t *testing.T, cli string, args ...string) (string, error) {
 	t.Helper()
 	cmd := exec.Command(cli, args...)
@@ -251,7 +238,7 @@ func TestIntegrationRelease(t *testing.T) {
 
 	// Clone repo and create git tag first (release requires git tag)
 	cloneDir := filepath.Join(os.TempDir(), "gt-test-"+testRepoName)
-	defer os.RemoveAll(cloneDir)
+	defer func() { _ = os.RemoveAll(cloneDir) }()
 
 	env := append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	cloneCmd := exec.Command("git", "clone", "https://gitee.com/"+testOwner+"/"+testRepoName+".git", cloneDir)
@@ -344,7 +331,7 @@ func TestIntegrationRepoList(t *testing.T) {
 
 // TestIntegrationPRList tests PR list command
 func TestIntegrationPRList(t *testing.T) {
-	// List PRs (may be empty but should not error)
+	// List PRs (maybe empty but should not error)
 	_, err := runCLI(t, testCLI, "pr", "list",
 		"--repo", testOwner+"/"+testRepoName)
 	if err != nil {
@@ -358,7 +345,7 @@ func TestIntegrationPRCreate(t *testing.T) {
 
 	// First create a branch in the test repo
 	cloneDir := filepath.Join(os.TempDir(), "gt-test-pr-"+testRepoName)
-	defer os.RemoveAll(cloneDir)
+	defer func() { _ = os.RemoveAll(cloneDir) }()
 
 	env := append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	cloneCmd := exec.Command("git", "clone", "https://gitee.com/"+testOwner+"/"+testRepoName+".git", cloneDir)

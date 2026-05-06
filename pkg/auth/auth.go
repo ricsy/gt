@@ -81,7 +81,7 @@ func GetToken(host string) (string, error) {
 }
 
 var (
-	authCache     map[string]config.HostAuth
+	authCache    map[string]config.HostAuth
 	authCacheMu  sync.RWMutex
 	authCacheErr error
 )

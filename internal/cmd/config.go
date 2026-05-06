@@ -66,8 +66,8 @@ func newConfigCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "default_repo: %s\n", cfg.DefaultRepo)
-			fmt.Fprintf(cmd.OutOrStdout(), "default_owner: %s\n", cfg.DefaultOwner)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_repo: %s\n", cfg.DefaultRepo)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_owner: %s\n", cfg.DefaultOwner)
 			return nil
 		},
 	})

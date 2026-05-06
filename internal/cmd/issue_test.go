@@ -9,7 +9,7 @@ func TestIssueCommandHelp(t *testing.T) {
 	buf := new(bytes.Buffer)
 	issueCmd.SetOut(buf)
 	issueCmd.SetArgs([]string{"--help"})
-	issueCmd.Execute()
+	_ = issueCmd.Execute()
 	// Just verify it runs without error
 }
 

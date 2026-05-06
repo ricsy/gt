@@ -67,7 +67,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")
 	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", false, "Create private repository")
 	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Create public repository")
-	repoCreateCmd.MarkFlagRequired("name")
+	_ = repoCreateCmd.MarkFlagRequired("name")
 }
 
 func repoListCommand(cmd *cobra.Command, args []string) error {

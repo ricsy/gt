@@ -272,4 +272,3 @@ func prResolveRepo(repoFlag string) (owner, repo string, err error) {
 
 	return ResolveRepo(repo)
 }
-

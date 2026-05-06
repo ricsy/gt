@@ -61,7 +61,7 @@ Examples:
 			if err != nil {
 				return err
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			// Read response
 			respBody, err := io.ReadAll(resp.Body)

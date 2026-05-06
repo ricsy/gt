@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	issueRepo   string
-	issueOwner  string
-	issueState  string
-	issueLimit  int
-	issueTitle  string
-	issueBody   string
+	issueRepo  string
+	issueOwner string
+	issueState string
+	issueLimit int
+	issueTitle string
+	issueBody  string
 )
 
 var issueCmd = &cobra.Command{
@@ -71,38 +71,38 @@ func init() {
 	issueListCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
 	issueListCmd.Flags().StringVar(&issueState, "state", "open", "Filter by state (open, closed, all)")
 	issueListCmd.Flags().IntVarP(&issueLimit, "limit", "l", 10, "Maximum number of issues to list")
-	issueListCmd.MarkFlagRequired("repo")
-	issueListCmd.MarkFlagRequired("owner")
+	_ = issueListCmd.MarkFlagRequired("repo")
+	_ = issueListCmd.MarkFlagRequired("owner")
 
 	issueViewCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueViewCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueViewCmd.MarkFlagRequired("repo")
-	issueViewCmd.MarkFlagRequired("owner")
+	_ = issueViewCmd.MarkFlagRequired("repo")
+	_ = issueViewCmd.MarkFlagRequired("owner")
 
 	issueCreateCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueCreateCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
 	issueCreateCmd.Flags().StringVarP(&issueTitle, "title", "t", "", "Issue title (required)")
 	issueCreateCmd.Flags().StringVarP(&issueBody, "body", "b", "", "Issue body")
-	issueCreateCmd.MarkFlagRequired("repo")
-	issueCreateCmd.MarkFlagRequired("owner")
-	issueCreateCmd.MarkFlagRequired("title")
+	_ = issueCreateCmd.MarkFlagRequired("repo")
+	_ = issueCreateCmd.MarkFlagRequired("owner")
+	_ = issueCreateCmd.MarkFlagRequired("title")
 
 	issueCloseCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueCloseCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueCloseCmd.MarkFlagRequired("repo")
-	issueCloseCmd.MarkFlagRequired("owner")
+	_ = issueCloseCmd.MarkFlagRequired("repo")
+	_ = issueCloseCmd.MarkFlagRequired("owner")
 
 	issueReopenCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueReopenCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
-	issueReopenCmd.MarkFlagRequired("repo")
-	issueReopenCmd.MarkFlagRequired("owner")
+	_ = issueReopenCmd.MarkFlagRequired("repo")
+	_ = issueReopenCmd.MarkFlagRequired("owner")
 
 	issueCommentCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueCommentCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
 	issueCommentCmd.Flags().StringVarP(&issueBody, "body", "b", "", "Comment body (required)")
-	issueCommentCmd.MarkFlagRequired("repo")
-	issueCommentCmd.MarkFlagRequired("owner")
-	issueCommentCmd.MarkFlagRequired("body")
+	_ = issueCommentCmd.MarkFlagRequired("repo")
+	_ = issueCommentCmd.MarkFlagRequired("owner")
+	_ = issueCommentCmd.MarkFlagRequired("body")
 
 	rootCmd.AddCommand(issueCmd)
 }

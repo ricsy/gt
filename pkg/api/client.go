@@ -10,17 +10,17 @@ import (
 )
 
 const (
-	apiPathRepos           = "/repos/%s/%s"
-	apiPathOrgs            = "/orgs/%s"
-	apiPathUser            = "/user"
-	apiPathUserOrgs        = "/user/orgs"
-	apiPathUserRepos       = "/user/repos"
-	apiPathUsersRepos      = "/users/%s/repos"
-	apiPathIssues          = "/repos/%s/%s/issues"
-	apiPathIssueCreate     = "/repos/%s/issues"
-	apiPathIssueUpdate     = "/repos/%s/issues/%s"
-	apiPathPRs             = "/repos/%s/%s/pulls"
-	apiPathReleases        = "/repos/%s/%s/releases"
+	apiPathRepos       = "/repos/%s/%s"
+	apiPathOrgs        = "/orgs/%s"
+	apiPathUser        = "/user"
+	apiPathUserOrgs    = "/user/orgs"
+	apiPathUserRepos   = "/user/repos"
+	apiPathUsersRepos  = "/users/%s/repos"
+	apiPathIssues      = "/repos/%s/%s/issues"
+	apiPathIssueCreate = "/repos/%s/issues"
+	apiPathIssueUpdate = "/repos/%s/issues/%s"
+	apiPathPRs         = "/repos/%s/%s/pulls"
+	apiPathReleases    = "/repos/%s/%s/releases"
 )
 
 // Client is the Gitee API client
@@ -31,7 +31,7 @@ type Client struct {
 }
 
 var (
-	defaultHTTPClient *http.Client
+	defaultHTTPClient     *http.Client
 	defaultHTTPClientOnce sync.Once
 )
 
@@ -75,7 +75,7 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 	if err != nil {
 		return fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {

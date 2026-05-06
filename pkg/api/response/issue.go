@@ -53,17 +53,17 @@ type Label struct {
 
 // Milestone represents a Gitee milestone
 type Milestone struct {
-	ID           int64  `json:"id"`
-	Number       int    `json:"number"`
-	State        string `json:"state"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	Creator      *User  `json:"creator"`
-	OpenIssues   int    `json:"open_issues"`
-	ClosedIssues int    `json:"closed_issues"`
-	CreatedAt    string `json:"created_at"`
-	UpdatedAt    string `json:"updated_at"`
-	DueOn        string `json:"due_on"`
+	ID           int64      `json:"id"`
+	Number       int        `json:"number"`
+	State        string     `json:"state"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description"`
+	Creator      *UserBasic `json:"creator"`
+	OpenIssues   int        `json:"open_issues"`
+	ClosedIssues int        `json:"closed_issues"`
+	CreatedAt    string     `json:"created_at"`
+	UpdatedAt    string     `json:"updated_at"`
+	DueOn        string     `json:"due_on"`
 }
 
 // IssueComment represents a comment on an issue

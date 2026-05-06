@@ -17,7 +17,8 @@ var (
 	milestoneTitle     string
 	milestoneDesc      string
 	milestoneDueOn     string
-	milestoneLimit     int
+	milestonePage      int
+	milestonePerPage   int
 )
 
 var milestoneCmd = &cobra.Command{
@@ -67,7 +68,8 @@ func init() {
 	milestoneListCmd.Flags().StringVar(&milestoneState, "state", "open", "Filter by state (open, closed, all)")
 	milestoneListCmd.Flags().StringVar(&milestoneSort, "sort", "due_on", "Sort by: due_on")
 	milestoneListCmd.Flags().StringVar(&milestoneDirection, "direction", "asc", "Sort direction: asc, desc")
-	milestoneListCmd.Flags().IntVarP(&milestoneLimit, "limit", "l", 20, "Maximum number of milestones")
+	milestoneListCmd.Flags().IntVar(&milestonePage, "page", 0, "Page number")
+	milestoneListCmd.Flags().IntVar(&milestonePerPage, "per-page", 0, "Items per page (max 100)")
 	_ = milestoneListCmd.MarkFlagRequired("repo")
 	_ = milestoneListCmd.MarkFlagRequired("owner")
 
@@ -79,6 +81,7 @@ func init() {
 	milestoneCreateCmd.Flags().StringVarP(&milestoneRepo, "repo", "r", "", "Repository name (required)")
 	milestoneCreateCmd.Flags().StringVarP(&milestoneOwner, "owner", "o", "", "Owner name (required)")
 	milestoneCreateCmd.Flags().StringVarP(&milestoneTitle, "title", "t", "", "Milestone title (required)")
+	milestoneCreateCmd.Flags().StringVar(&milestoneState, "state", "open", "Filter by state (open, closed, all)")
 	milestoneCreateCmd.Flags().StringVarP(&milestoneDesc, "description", "d", "", "Milestone description")
 	milestoneCreateCmd.Flags().StringVarP(&milestoneDueOn, "due_on", "", "", "Due date (YYYY-MM-DD)")
 	_ = milestoneCreateCmd.MarkFlagRequired("repo")
@@ -112,8 +115,8 @@ func milestoneList(cmd *cobra.Command, args []string) error {
 		State:     milestoneState,
 		Sort:      milestoneSort,
 		Direction: milestoneDirection,
-		Page:      1,
-		PerPage:   milestoneLimit,
+		Page:      milestonePage,
+		PerPage:   milestonePerPage,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to list milestones: %w", err)
@@ -163,6 +166,7 @@ func milestoneCreate(cmd *cobra.Command, args []string) error {
 
 	milestone, err := client.CreateMilestone(milestoneOwner, milestoneRepo, api.CreateMilestoneOptions{
 		Title:       milestoneTitle,
+		State:       milestoneState,
 		Description: milestoneDesc,
 		DueOn:       milestoneDueOn,
 	})

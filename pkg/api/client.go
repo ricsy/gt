@@ -22,6 +22,7 @@ const (
 	apiPathIssueUpdate = "/repos/%s/issues/%s"
 	apiPathPRs         = "/repos/%s/%s/pulls"
 	apiPathReleases    = "/repos/%s/%s/releases"
+	apiPathWebhooks    = "/repos/%s/%s/hooks"
 
 	authHeaderPrefix = "token "
 	defaultTimeout   = 30 * time.Second

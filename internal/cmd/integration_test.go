@@ -84,7 +84,7 @@ func setupTestRepo(cli string) string {
 			fmt.Printf("Using existing test repository: %s\n", repoName)
 			return repoName
 		}
-		fmt.Printf("Failed to create test repo %s: %v\nOutput: %s\n", repoName, err, output)
+		// Output already contains the error message from cobra, just exit
 		os.Exit(1)
 	}
 

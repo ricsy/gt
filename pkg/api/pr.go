@@ -1,7 +1,5 @@
 package api
 
-import "fmt"
-
 // PRState represents the state of a pull request.
 type PRState string
 
@@ -50,9 +48,8 @@ type PullRequest struct {
 
 // ListPRs lists pull requests in a repository
 func (c *Client) ListPRs(owner, repo, state string) ([]PullRequest, error) {
-	path := fmt.Sprintf(apiPathPRs+"?state=%s", owner, repo, state)
 	var prs []PullRequest
-	err := c.Do("GET", path, nil, &prs)
+	err := c.DoFromEndpoint(PRs.List, []interface{}{owner, repo}, nil, &prs)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +58,8 @@ func (c *Client) ListPRs(owner, repo, state string) ([]PullRequest, error) {
 
 // GetPR gets a single pull request
 func (c *Client) GetPR(owner, repo string, number int) (*PullRequest, error) {
-	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
 	var pr PullRequest
-	err := c.Do("GET", path, nil, &pr)
+	err := c.DoFromEndpoint(PRs.List, []interface{}{owner, repo, number}, nil, &pr)
 	if err != nil {
 		return nil, err
 	}
@@ -93,10 +89,9 @@ type CreatePRRequest struct {
 
 // CreatePR creates a new pull request
 func (c *Client) CreatePR(owner, repo, title, body, head, base string) (*PullRequest, error) {
-	path := fmt.Sprintf(apiPathPRs, owner, repo)
 	req := CreatePRRequest{Title: title, Body: body, Head: head, Base: base}
 	var pr PullRequest
-	err := c.Do("POST", path, req, &pr)
+	err := c.DoFromEndpoint(PRs.Create, []interface{}{owner, repo}, req, &pr)
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +109,7 @@ type MergePRRequest struct {
 
 // MergePR merges a pull request
 func (c *Client) MergePR(owner, repo string, number int, req MergePRRequest) error {
-	path := fmt.Sprintf(apiPathPRs+"/%d/merge", owner, repo, number)
-	return c.Do("PUT", path, req, nil)
+	return c.DoFromEndpoint(PRs.Merge, []interface{}{owner, repo, number}, req, nil)
 }
 
 // UpdatePRRequest is the request body for updating a PR
@@ -136,9 +130,8 @@ type UpdatePRRequest struct {
 
 // UpdatePR updates a pull request
 func (c *Client) UpdatePR(owner, repo string, number int, req UpdatePRRequest) (*PullRequest, error) {
-	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
 	var pr PullRequest
-	err := c.Do("PATCH", path, req, &pr)
+	err := c.DoFromEndpoint(PRs.Update, []interface{}{owner, repo, number}, req, &pr)
 	if err != nil {
 		return nil, err
 	}
@@ -147,10 +140,9 @@ func (c *Client) UpdatePR(owner, repo string, number int, req UpdatePRRequest) (
 
 // UpdatePRState updates a pull request's state (open/closed)
 func (c *Client) UpdatePRState(owner, repo string, number int, state PRState) (*PullRequest, error) {
-	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
 	updateReq := map[string]string{"state": string(state)}
 	var pr PullRequest
-	err := c.Do("PATCH", path, updateReq, &pr)
+	err := c.DoFromEndpoint(PRs.Update, []interface{}{owner, repo, number}, updateReq, &pr)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +151,6 @@ func (c *Client) UpdatePRState(owner, repo string, number int, state PRState) (*
 
 // CreatePRComment adds a comment to a pull request
 func (c *Client) CreatePRComment(owner, repo string, number int, body string) error {
-	path := fmt.Sprintf(apiPathPRs+"/%d/comments", owner, repo, number)
 	commentReq := map[string]string{"body": body}
-	return c.Do("POST", path, commentReq, nil)
+	return c.DoFromEndpoint(PRs.Comment, []interface{}{owner, repo, number}, commentReq, nil)
 }

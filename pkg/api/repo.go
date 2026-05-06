@@ -1,7 +1,5 @@
 package api
 
-import "fmt"
-
 // Repository represents a Gitee repository
 type Repository struct {
 	ID       int64  `json:"id"`
@@ -33,7 +31,7 @@ type Repository struct {
 // ListRepos lists user repositories
 func (c *Client) ListRepos() ([]Repository, error) {
 	var repos []Repository
-	err := c.Do("GET", apiPathUserRepos, nil, &repos)
+	err := c.DoFromEndpoint(UserRepos.List, nil, nil, &repos)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +41,7 @@ func (c *Client) ListRepos() ([]Repository, error) {
 // GetRepo gets a single repository
 func (c *Client) GetRepo(owner, repo string) (*Repository, error) {
 	var result Repository
-	path := fmt.Sprintf(apiPathRepos, owner, repo)
-	err := c.Do("GET", path, nil, &result)
+	err := c.DoFromEndpoint(Repo.Get, []interface{}{owner, repo}, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +59,7 @@ type CreateRepoOptions struct {
 // CreateRepo creates a new repository
 func (c *Client) CreateRepo(opts CreateRepoOptions) (*Repository, error) {
 	var result Repository
-	err := c.Do("POST", "/user/repos", opts, &result)
+	err := c.DoFromEndpoint(UserRepos.List, nil, opts, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +69,7 @@ func (c *Client) CreateRepo(opts CreateRepoOptions) (*Repository, error) {
 // ListUserRepos lists repositories for a specific user
 func (c *Client) ListUserRepos(username string) ([]Repository, error) {
 	var repos []Repository
-	path := fmt.Sprintf(apiPathUsersRepos, username)
-	err := c.Do("GET", path, nil, &repos)
+	err := c.DoFromEndpoint(UserRepos.List, []interface{}{username}, nil, &repos)
 	if err != nil {
 		return nil, err
 	}
@@ -106,8 +102,7 @@ type UpdateRepoOptions struct {
 // UpdateRepo updates a repository
 func (c *Client) UpdateRepo(owner, repo string, opts UpdateRepoOptions) (*Repository, error) {
 	var result Repository
-	path := fmt.Sprintf(apiPathRepos, owner, repo)
-	err := c.Do("PATCH", path, opts, &result)
+	err := c.DoFromEndpoint(Repo.Get, []interface{}{owner, repo}, opts, &result)
 	if err != nil {
 		return nil, err
 	}

@@ -12,18 +12,6 @@ import (
 )
 
 const (
-	apiPathRepos       = "/repos/%s/%s"
-	apiPathOrgs        = "/orgs/%s"
-	apiPathUserOrgs    = "/user/orgs"
-	apiPathUserRepos   = "/user/repos"
-	apiPathUsersRepos  = "/users/%s/repos"
-	apiPathIssues      = "/repos/%s/%s/issues"
-	apiPathIssueCreate = "/repos/%s/issues"
-	apiPathIssueUpdate = "/repos/%s/issues/%s"
-	apiPathPRs         = "/repos/%s/%s/pulls"
-	apiPathReleases    = "/repos/%s/%s/releases"
-	apiPathWebhooks    = "/repos/%s/%s/hooks"
-
 	authHeaderPrefix = "token "
 	defaultTimeout   = 30 * time.Second
 )
@@ -88,4 +76,10 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 	}
 
 	return nil
+}
+
+// DoFromEndpoint performs an HTTP request from an Endpoint, auto-extracting method
+func (c *Client) DoFromEndpoint(e Endpoint, pathArgs []interface{}, body interface{}, response interface{}) error {
+	path := e.Build(pathArgs...)
+	return c.Do(string(e.Method), path, body, response)
 }

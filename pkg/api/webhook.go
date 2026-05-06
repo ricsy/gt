@@ -1,25 +1,26 @@
 package api
 
-import "fmt"
-
 // Webhook represents a Gitee webhook
 type Webhook struct {
-	ID         int64  `json:"id"`
-	URL        string `json:"url"`
-	Owner      string `json:"owner"`
-	Repo       string `json:"repo"`
-	CREATEDAT  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
-	Title      string `json:"title"`
-	Type       string `json:"type"`
-	LastTestAt string `json:"last_test_at"`
+	ID                  int64  `json:"id"`
+	URL                 string `json:"url"`
+	Password            string `json:"password"`
+	Result              string `json:"result"`
+	ProjectID           int64  `json:"project_id"`
+	ResultCode          int    `json:"result_code"`
+	CreatedAt           string `json:"created_at"`
+	PushEvents          bool   `json:"push_events"`
+	TagPushEvents       bool   `json:"tag_push_events"`
+	IssuesEvents        bool   `json:"issues_events"`
+	NoteEvents          bool   `json:"note_events"`
+	MergeRequestsEvents bool   `json:"merge_requests_events"`
+	Title               string `json:"title"`
 }
 
 // ListWebhooks lists webhooks for a repository
 func (c *Client) ListWebhooks(owner, repo string) ([]Webhook, error) {
 	var webhooks []Webhook
-	path := fmt.Sprintf(apiPathWebhooks, owner, repo)
-	err := c.Do("GET", path, nil, &webhooks)
+	err := c.DoFromEndpoint(Webhooks.List, []interface{}{owner, repo}, nil, &webhooks)
 	if err != nil {
 		return nil, err
 	}
@@ -29,8 +30,7 @@ func (c *Client) ListWebhooks(owner, repo string) ([]Webhook, error) {
 // GetWebhook gets a single webhook
 func (c *Client) GetWebhook(owner, repo string, id int64) (*Webhook, error) {
 	var webhook Webhook
-	path := fmt.Sprintf(apiPathWebhooks+"/%d", owner, repo, id)
-	err := c.Do("GET", path, nil, &webhook)
+	err := c.DoFromEndpoint(Webhooks.Get, []interface{}{owner, repo, id}, nil, &webhook)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +53,7 @@ type CreateWebhookOptions struct {
 // CreateWebhook creates a new webhook
 func (c *Client) CreateWebhook(owner, repo string, opts CreateWebhookOptions) (*Webhook, error) {
 	var webhook Webhook
-	path := fmt.Sprintf(apiPathWebhooks, owner, repo)
-	err := c.Do("POST", path, opts, &webhook)
+	err := c.DoFromEndpoint(Webhooks.Create, []interface{}{owner, repo}, opts, &webhook)
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +76,7 @@ type UpdateWebhookOptions struct {
 // UpdateWebhook updates a webhook
 func (c *Client) UpdateWebhook(owner, repo string, id int64, opts UpdateWebhookOptions) (*Webhook, error) {
 	var webhook Webhook
-	path := fmt.Sprintf(apiPathWebhooks+"/%d", owner, repo, id)
-	err := c.Do("PATCH", path, opts, &webhook)
+	err := c.DoFromEndpoint(Webhooks.Update, []interface{}{owner, repo, id}, opts, &webhook)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +85,10 @@ func (c *Client) UpdateWebhook(owner, repo string, id int64, opts UpdateWebhookO
 
 // DeleteWebhook deletes a webhook
 func (c *Client) DeleteWebhook(owner, repo string, id int64) error {
-	path := fmt.Sprintf(apiPathWebhooks+"/%d", owner, repo, id)
-	return c.Do("DELETE", path, nil, nil)
+	return c.DoFromEndpoint(Webhooks.Delete, []interface{}{owner, repo, id}, nil, nil)
 }
 
 // TestWebhook tests a webhook
 func (c *Client) TestWebhook(owner, repo string, id int64) error {
-	path := fmt.Sprintf(apiPathWebhooks+"/%d/tests", owner, repo, id)
-	return c.Do("POST", path, nil, nil)
+	return c.DoFromEndpoint(Webhooks.Test, []interface{}{owner, repo, id}, nil, nil)
 }

@@ -1,7 +1,5 @@
 package api
 
-import "fmt"
-
 // Release represents a Gitee release
 type Release struct {
 	ID           int64  `json:"id"`
@@ -17,8 +15,7 @@ type Release struct {
 // ListReleases lists releases for a repository
 func (c *Client) ListReleases(owner, repo string) ([]Release, error) {
 	var releases []Release
-	path := fmt.Sprintf(apiPathReleases, owner, repo)
-	err := c.Do("GET", path, nil, &releases)
+	err := c.DoFromEndpoint(Releases.List, []interface{}{owner, repo}, nil, &releases)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +25,7 @@ func (c *Client) ListReleases(owner, repo string) ([]Release, error) {
 // GetRelease gets a release by tag
 func (c *Client) GetRelease(owner, repo, tag string) (*Release, error) {
 	var release Release
-	path := fmt.Sprintf(apiPathReleases+"/tags/%s", owner, repo, tag)
-	err := c.Do("GET", path, nil, &release)
+	err := c.DoFromEndpoint(Releases.Get, []interface{}{owner, repo, tag}, nil, &release)
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +44,7 @@ type CreateReleaseOptions struct {
 // CreateRelease creates a new release
 func (c *Client) CreateRelease(owner, repo string, opts CreateReleaseOptions) (*Release, error) {
 	var release Release
-	path := fmt.Sprintf(apiPathReleases, owner, repo)
-	err := c.Do("POST", path, opts, &release)
+	err := c.DoFromEndpoint(Releases.Create, []interface{}{owner, repo}, opts, &release)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +57,7 @@ func (c *Client) DeleteRelease(owner, repo, tag string) error {
 	if err != nil {
 		return err
 	}
-	path := fmt.Sprintf(apiPathReleases+"/%d", owner, repo, release.ID)
-	return c.Do("DELETE", path, nil, nil)
+	return c.DoFromEndpoint(Releases.Delete, []interface{}{owner, repo, release.ID}, nil, nil)
 }
 
 // UpdateReleaseOptions contains options for updating a release
@@ -77,8 +71,7 @@ type UpdateReleaseOptions struct {
 // UpdateRelease updates a release
 func (c *Client) UpdateRelease(owner, repo string, releaseID int64, opts UpdateReleaseOptions) (*Release, error) {
 	var release Release
-	path := fmt.Sprintf(apiPathReleases+"/%d", owner, repo, releaseID)
-	err := c.Do("PATCH", path, opts, &release)
+	err := c.DoFromEndpoint(Releases.Update, []interface{}{owner, repo, releaseID}, opts, &release)
 	if err != nil {
 		return nil, err
 	}

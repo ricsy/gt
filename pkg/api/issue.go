@@ -74,7 +74,7 @@ type ListIssuesOptions struct {
 
 // ListIssues lists issues in a repository
 func (c *Client) ListIssues(owner, repo string, opts ListIssuesOptions) ([]Issue, error) {
-	path := fmt.Sprintf(apiPathIssues, owner, repo)
+	path := Issues.List.Build(owner, repo)
 	query := buildQuery(opts)
 	if query != "" {
 		path += "?" + query
@@ -114,7 +114,7 @@ func buildQuery(opts ListIssuesOptions) string {
 
 // GetIssue gets a single issue
 func (c *Client) GetIssue(owner, repo, number string) (*Issue, error) {
-	path := fmt.Sprintf(apiPathIssues+"/%s", owner, repo, number)
+	path := Issues.List.Build(owner, repo) + "/" + number
 	var issue Issue
 	err := c.Do("GET", path, nil, &issue)
 	if err != nil {
@@ -140,10 +140,9 @@ type CreateIssueRequest struct {
 
 // CreateIssue creates a new issue
 func (c *Client) CreateIssue(owner, repo, title, body string) (*Issue, error) {
-	path := fmt.Sprintf(apiPathIssueCreate, owner)
 	req := CreateIssueRequest{Title: title, Body: body, Repo: repo}
 	var issue Issue
-	err := c.Do("POST", path, req, &issue)
+	err := c.DoFromEndpoint(Issues.Create, []interface{}{owner}, req, &issue)
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +166,8 @@ type UpdateIssueRequest struct {
 
 // UpdateIssue updates an issue
 func (c *Client) UpdateIssue(owner, repo, number string, req UpdateIssueRequest) (*Issue, error) {
-	path := fmt.Sprintf(apiPathIssueUpdate, owner, number)
 	var issue Issue
-	err := c.Do("PATCH", path, req, &issue)
+	err := c.DoFromEndpoint(Issues.Update, []interface{}{owner, number}, req, &issue)
 	if err != nil {
 		return nil, err
 	}
@@ -179,10 +177,9 @@ func (c *Client) UpdateIssue(owner, repo, number string, req UpdateIssueRequest)
 // UpdateIssueState updates an issue's state (open/closed/progressing)
 // Note: rejected state is not supported by the API for updates
 func (c *Client) UpdateIssueState(owner, repo, number string, state IssueState) (*Issue, error) {
-	path := fmt.Sprintf(apiPathIssueUpdate, owner, number)
 	req := map[string]string{"state": string(state), "repo": repo}
 	var issue Issue
-	err := c.Do("PATCH", path, req, &issue)
+	err := c.DoFromEndpoint(Issues.Update, []interface{}{owner, number}, req, &issue)
 	if err != nil {
 		return nil, err
 	}
@@ -199,9 +196,8 @@ type IssueComment struct {
 
 // ListIssueComments lists comments for an issue
 func (c *Client) ListIssueComments(owner, repo, number string) ([]IssueComment, error) {
-	path := fmt.Sprintf(apiPathIssues+"/%s/comments", owner, repo, number)
 	var comments []IssueComment
-	err := c.Do("GET", path, nil, &comments)
+	err := c.DoFromEndpoint(Issues.List, []interface{}{owner, repo, number, "comments"}, nil, &comments)
 	if err != nil {
 		return nil, err
 	}
@@ -210,10 +206,9 @@ func (c *Client) ListIssueComments(owner, repo, number string) ([]IssueComment, 
 
 // CreateIssueComment creates a comment on an issue
 func (c *Client) CreateIssueComment(owner, repo, number, body string) (*IssueComment, error) {
-	path := fmt.Sprintf(apiPathIssues+"/%s/comments", owner, repo, number)
 	req := map[string]string{"body": body}
 	var comment IssueComment
-	err := c.Do("POST", path, req, &comment)
+	err := c.DoFromEndpoint(Issues.List, []interface{}{owner, repo, number, "comments"}, req, &comment)
 	if err != nil {
 		return nil, err
 	}

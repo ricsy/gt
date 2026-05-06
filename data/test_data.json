@@ -1,0 +1,21 @@
+{
+  "owner": "ricsy",
+  "repo": "test_cli_gt",
+  "issue": {
+    "title": "Integration Test Issue",
+    "body": "This is an integration test issue created by automated tests",
+    "state": "open",
+    "comment": "This is a test comment"
+  },
+  "pr": {
+    "title": "Integration Test PR",
+    "body": "This is an integration test PR created by automated tests",
+    "head": "test-branch",
+    "base": "main"
+  },
+  "release": {
+    "tag": "v0.0.1",
+    "name": "Test Release v0.0.1",
+    "body": "Integration test release notes"
+  }
+}

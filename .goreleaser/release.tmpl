@@ -1,0 +1,10 @@
+{{ if .Notes }}
+{{ .Notes }}
+{{ else }}
+{{ range .Changes }}
+### {{ .Type | title }}
+{{ range .Commits }}
+- {{ .ShortMessage }}
+{{ end }}
+{{ end }}
+{{ end }}

@@ -1,0 +1,29 @@
+{
+  "name": "gt",
+  "version": "0.1.0-alpha",
+  "description": "Gitee’s command line tool",
+  "author": "ricsy",
+  "license": "MIT",
+  "keywords": [
+    "gitee",
+    "cli"
+  ],
+  "scripts": {
+    "prepare": "pip install pre-commit && pre-commit install && curl -sfL https://goreleaser.com/install.sh | sh",
+    "test": "go test ./...",
+    "test:verbose": "go test -v ./...",
+    "test:integration": "go test -v ./internal/cmd -run TestIntegration",
+    "format": "go fmt ./...",
+    "lint": "npm-run-all2 lint:*",
+    "lint:go": "go vet ./...",
+    "lint:action": "github-actionlint",
+    "lint:goreleaser": "goreleaser check --config .goreleaser.yaml",
+    "release": "node scripts/release.js",
+    "release:local": "goreleaser release --config .goreleaser.yaml --clean",
+    "release:beta": "goreleaser release --config .goreleaser.yaml --clean --snapshot"
+  },
+  "devDependencies": {
+    "github-actionlint": "^1.7.12",
+    "npm-run-all2": "^8.0.4"
+  }
+}

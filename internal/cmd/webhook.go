@@ -45,7 +45,7 @@ func newWebhookCmd() *cobra.Command {
 	}
 	listCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
 	listCmd.Flags().IntVar(&page, "page", 0, "Page number")
-	listCmd.Flags().IntVar(&perPage, "per-page", 0, "Items per page")
+	listCmd.Flags().IntVar(&perPage, "per-page", 0, "Items per page (max 100)")
 
 	viewCmd := &cobra.Command{
 		Use:   "view <id>",
@@ -96,39 +96,9 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			pushEvents := api.BoolPtr(false)
-			tagPushEvents := api.BoolPtr(false)
-			issuesEvents := api.BoolPtr(false)
-			noteEvents := api.BoolPtr(false)
-			mergeRequestsEvents := api.BoolPtr(false)
-
-			if pushEventsFlag {
-				pushEvents = api.BoolPtr(true)
-			}
-			if tagPushEventsFlag {
-				tagPushEvents = api.BoolPtr(true)
-			}
-			if issuesEventsFlag {
-				issuesEvents = api.BoolPtr(true)
-			}
-			if noteEventsFlag {
-				noteEvents = api.BoolPtr(true)
-			}
-			if mergeRequestsEventsFlag {
-				mergeRequestsEvents = api.BoolPtr(true)
-			}
-
-			webhook, err := client.CreateWebhook(owner, repoName, api.CreateWebhookOptions{
-				URL:                 webhookURL,
-				Title:               webhookTitle,
-				EncryptionType:      encryptionType,
-				Password:            password,
-				PushEvents:          pushEvents,
-				TagPushEvents:       tagPushEvents,
-				IssuesEvents:        issuesEvents,
-				NoteEvents:          noteEvents,
-				MergeRequestsEvents: mergeRequestsEvents,
-			})
+			opts := buildWebhookCreateOpts(webhookURL, webhookTitle, encryptionType, password,
+				pushEventsFlag, tagPushEventsFlag, issuesEventsFlag, noteEventsFlag, mergeRequestsEventsFlag)
+			webhook, err := client.CreateWebhook(owner, repoName, opts)
 			if err != nil {
 				return err
 			}
@@ -147,6 +117,48 @@ func newWebhookCmd() *cobra.Command {
 	createCmd.Flags().BoolVar(&issuesEventsFlag, "issues-events", false, "Trigger on issues events")
 	createCmd.Flags().BoolVar(&noteEventsFlag, "note-events", false, "Trigger on note events")
 	createCmd.Flags().BoolVar(&mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
+
+	updateCmd := &cobra.Command{
+		Use:   "update <id>",
+		Short: "Update a webhook",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			id, err := strconv.ParseInt(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			owner, repoName, err := resolveRepoFlag(repoFlag)
+			if err != nil {
+				return err
+			}
+
+			client, err := getClient()
+			if err != nil {
+				return err
+			}
+
+			opts := buildWebhookUpdateOpts(webhookURL, webhookTitle, encryptionType, password,
+				pushEventsFlag, tagPushEventsFlag, issuesEventsFlag, noteEventsFlag, mergeRequestsEventsFlag)
+			webhook, err := client.UpdateWebhook(owner, repoName, id, opts)
+			if err != nil {
+				return err
+			}
+
+			cmd.Printf("Updated webhook: %d - %s\n", webhook.ID, webhook.URL)
+			return nil
+		},
+	}
+	updateCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
+	updateCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL")
+	updateCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title (max 191 chars)")
+	updateCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")
+	updateCmd.Flags().StringVar(&password, "password", "", "Password")
+	updateCmd.Flags().BoolVar(&pushEventsFlag, "push-events", false, "Trigger on push events")
+	updateCmd.Flags().BoolVar(&tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")
+	updateCmd.Flags().BoolVar(&issuesEventsFlag, "issues-events", false, "Trigger on issues events")
+	updateCmd.Flags().BoolVar(&noteEventsFlag, "note-events", false, "Trigger on note events")
+	updateCmd.Flags().BoolVar(&mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
 
 	deleteCmd := &cobra.Command{
 		Use:   "delete <id>",
@@ -212,9 +224,39 @@ func newWebhookCmd() *cobra.Command {
 		Use:   "webhook",
 		Short: "Manage webhooks",
 	}
-	cmd.AddCommand(listCmd, viewCmd, createCmd, deleteCmd, testCmd)
+	cmd.AddCommand(listCmd, viewCmd, createCmd, updateCmd, deleteCmd, testCmd)
 
 	return cmd
+}
+
+func buildWebhookCreateOpts(url, title string, encType int, pwd string,
+	pushEvents, tagPushEvents, issuesEvents, noteEvents, mergeRequestsEvents bool) api.CreateWebhookOptions {
+	return api.CreateWebhookOptions{
+		URL:                 url,
+		Title:               title,
+		EncryptionType:      encType,
+		Password:            pwd,
+		PushEvents:          api.BoolPtr(pushEvents),
+		TagPushEvents:       api.BoolPtr(tagPushEvents),
+		IssuesEvents:        api.BoolPtr(issuesEvents),
+		NoteEvents:          api.BoolPtr(noteEvents),
+		MergeRequestsEvents: api.BoolPtr(mergeRequestsEvents),
+	}
+}
+
+func buildWebhookUpdateOpts(url, title string, encType int, pwd string,
+	pushEvents, tagPushEvents, issuesEvents, noteEvents, mergeRequestsEvents bool) api.UpdateWebhookOptions {
+	return api.UpdateWebhookOptions{
+		URL:                 url,
+		Title:               title,
+		EncryptionType:      encType,
+		Password:            pwd,
+		PushEvents:          api.BoolPtr(pushEvents),
+		TagPushEvents:       api.BoolPtr(tagPushEvents),
+		IssuesEvents:        api.BoolPtr(issuesEvents),
+		NoteEvents:          api.BoolPtr(noteEvents),
+		MergeRequestsEvents: api.BoolPtr(mergeRequestsEvents),
+	}
 }
 
 func init() {

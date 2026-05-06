@@ -72,10 +72,23 @@ func (c *Client) GetPR(owner, repo string, number int) (*PullRequest, error) {
 
 // CreatePRRequest is the request body for creating a PR
 type CreatePRRequest struct {
-	Title string `json:"title"`
-	Body  string `json:"body,omitempty"`
-	Head  string `json:"head"`
-	Base  string `json:"base"`
+	Title                 string `json:"title"`
+	Body                  string `json:"body,omitempty"`
+	Head                  string `json:"head"`
+	Base                  string `json:"base"`
+	MilestoneNumber       int    `json:"milestone_number,omitempty"`
+	Labels                string `json:"labels,omitempty"`
+	Issue                 string `json:"issue,omitempty"`
+	Assignees             string `json:"assignees,omitempty"`
+	Testers               string `json:"testers,omitempty"`
+	AssigneesNumber       int    `json:"assignees_number,omitempty"`
+	TestersNumber         int    `json:"testers_number,omitempty"`
+	RefPullRequestNumbers string `json:"ref_pull_request_numbers,omitempty"`
+	PruneSourceBranch     bool   `json:"prune_source_branch,omitempty"`
+	CloseRelatedIssue     bool   `json:"close_related_issue,omitempty"`
+	Draft                 bool   `json:"draft,omitempty"`
+	Squash                bool   `json:"squash,omitempty"`
+	SecurityHole          bool   `json:"security_hole,omitempty"`
 }
 
 // CreatePR creates a new pull request
@@ -90,10 +103,46 @@ func (c *Client) CreatePR(owner, repo, title, body, head, base string) (*PullReq
 	return &pr, nil
 }
 
+// MergePRRequest is the request body for merging a PR
+type MergePRRequest struct {
+	MergeMethod       string `json:"merge_method,omitempty"`
+	PruneSourceBranch bool   `json:"prune_source_branch,omitempty"`
+	CloseRelatedIssue bool   `json:"close_related_issue,omitempty"`
+	Title             string `json:"title,omitempty"`
+	Description       string `json:"description,omitempty"`
+}
+
 // MergePR merges a pull request
-func (c *Client) MergePR(owner, repo string, number int) error {
+func (c *Client) MergePR(owner, repo string, number int, req MergePRRequest) error {
 	path := fmt.Sprintf(apiPathPRs+"/%d/merge", owner, repo, number)
-	return c.Do("PUT", path, nil, nil)
+	return c.Do("PUT", path, req, nil)
+}
+
+// UpdatePRRequest is the request body for updating a PR
+type UpdatePRRequest struct {
+	Title                 string `json:"title,omitempty"`
+	Body                  string `json:"body,omitempty"`
+	State                 string `json:"state,omitempty"`
+	MilestoneNumber       int    `json:"milestone_number,omitempty"`
+	Labels                string `json:"labels,omitempty"`
+	AssigneesNumber       int    `json:"assignees_number,omitempty"`
+	TestersNumber         int    `json:"testers_number,omitempty"`
+	RefPullRequestNumbers string `json:"ref_pull_request_numbers,omitempty"`
+	CloseRelatedIssue     bool   `json:"close_related_issue,omitempty"`
+	Draft                 bool   `json:"draft,omitempty"`
+	Squash                bool   `json:"squash,omitempty"`
+	SecurityHole          bool   `json:"security_hole,omitempty"`
+}
+
+// UpdatePR updates a pull request
+func (c *Client) UpdatePR(owner, repo string, number int, req UpdatePRRequest) (*PullRequest, error) {
+	path := fmt.Sprintf(apiPathPRs+"/%d", owner, repo, number)
+	var pr PullRequest
+	err := c.Do("PATCH", path, req, &pr)
+	if err != nil {
+		return nil, err
+	}
+	return &pr, nil
 }
 
 // UpdatePRState updates a pull request's state (open/closed)

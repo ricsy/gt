@@ -15,6 +15,13 @@ var (
 	issueTitle       string
 	issueBody        string
 	issueNewState    string
+	issueLabels      string
+	issueSort        string
+	issueDirection   string
+	issueMilestone   string
+	issueAssignee    string
+	issueCreator     string
+	issueSearch      string
 )
 
 var issueCmd = &cobra.Command{
@@ -62,6 +69,13 @@ func init() {
 	issueListCmd.Flags().StringVarP(&issueRepo, "repo", "r", "", "Repository name (required)")
 	issueListCmd.Flags().StringVarP(&issueOwner, "owner", "o", "", "Owner name (required)")
 	issueListCmd.Flags().StringVar(&issueFilterState, "state", string(api.IssueStateOpen), "Filter by state (open, closed, progressing, rejected, all)")
+	issueListCmd.Flags().StringVar(&issueLabels, "labels", "", "Filter by labels (comma-separated)")
+	issueListCmd.Flags().StringVar(&issueSort, "sort", "", "Sort by: created, updated")
+	issueListCmd.Flags().StringVar(&issueDirection, "direction", "", "Sort direction: asc, desc")
+	issueListCmd.Flags().StringVar(&issueMilestone, "milestone", "", "Filter by milestone")
+	issueListCmd.Flags().StringVar(&issueAssignee, "assignee", "", "Filter by assignee")
+	issueListCmd.Flags().StringVar(&issueCreator, "creator", "", "Filter by creator")
+	issueListCmd.Flags().StringVar(&issueSearch, "search", "", "Search keyword")
 	issueListCmd.Flags().IntVarP(&issueLimit, "limit", "l", 10, "Maximum number of issues to list")
 	_ = issueListCmd.MarkFlagRequired("repo")
 	_ = issueListCmd.MarkFlagRequired("owner")
@@ -102,7 +116,18 @@ func issueList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	issues, err := client.ListIssues(issueOwner, issueRepo, issueFilterState, 1, issueLimit)
+	issues, err := client.ListIssues(issueOwner, issueRepo, api.ListIssuesOptions{
+		State:     issueFilterState,
+		Labels:    issueLabels,
+		Sort:      issueSort,
+		Direction: issueDirection,
+		Milestone: issueMilestone,
+		Assignee:  issueAssignee,
+		Creator:   issueCreator,
+		Q:         issueSearch,
+		Page:      1,
+		PerPage:   issueLimit,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to list issues: %w", err)
 	}

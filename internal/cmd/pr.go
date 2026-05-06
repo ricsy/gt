@@ -194,7 +194,7 @@ func prMerge(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = client.MergePR(owner, repo, number)
+	err = client.MergePR(owner, repo, number, api.MergePRRequest{})
 	if err != nil {
 		return err
 	}

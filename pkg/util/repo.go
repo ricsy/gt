@@ -20,3 +20,23 @@ func ExtractDigits(s string) string {
 		return -1
 	}, s)
 }
+
+// BuildQuery builds a query string from key-value pairs.
+func BuildQuery(params ...string) string {
+	if len(params)%2 != 0 {
+		return ""
+	}
+	var q string
+	for i := 0; i < len(params); i += 2 {
+		key, value := params[i], params[i+1]
+		if value == "" {
+			continue
+		}
+		if q == "" {
+			q = key + "=" + value
+		} else {
+			q += "&" + key + "=" + value
+		}
+	}
+	return q
+}

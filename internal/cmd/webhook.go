@@ -109,14 +109,8 @@ func newWebhookCmd() *cobra.Command {
 	}
 	createCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
 	createCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL (required)")
-	createCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title (max 191 chars)")
-	createCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")
-	createCmd.Flags().StringVar(&password, "password", "", "Password")
-	createCmd.Flags().BoolVar(&pushEventsFlag, "push-events", false, "Trigger on push events")
-	createCmd.Flags().BoolVar(&tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")
-	createCmd.Flags().BoolVar(&issuesEventsFlag, "issues-events", false, "Trigger on issues events")
-	createCmd.Flags().BoolVar(&noteEventsFlag, "note-events", false, "Trigger on note events")
-	createCmd.Flags().BoolVar(&mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
+	registerWebhookFlags(createCmd, &webhookURL, &webhookTitle, &encryptionType, &password,
+		&pushEventsFlag, &tagPushEventsFlag, &issuesEventsFlag, &noteEventsFlag, &mergeRequestsEventsFlag)
 
 	updateCmd := &cobra.Command{
 		Use:   "update <id>",
@@ -150,15 +144,8 @@ func newWebhookCmd() *cobra.Command {
 		},
 	}
 	updateCmd.Flags().StringVar(&repoFlag, "repo", "", "Repository (owner/repo)")
-	updateCmd.Flags().StringVar(&webhookURL, "url", "", "Webhook URL")
-	updateCmd.Flags().StringVar(&webhookTitle, "title", "", "Webhook title (max 191 chars)")
-	updateCmd.Flags().IntVar(&encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")
-	updateCmd.Flags().StringVar(&password, "password", "", "Password")
-	updateCmd.Flags().BoolVar(&pushEventsFlag, "push-events", false, "Trigger on push events")
-	updateCmd.Flags().BoolVar(&tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")
-	updateCmd.Flags().BoolVar(&issuesEventsFlag, "issues-events", false, "Trigger on issues events")
-	updateCmd.Flags().BoolVar(&noteEventsFlag, "note-events", false, "Trigger on note events")
-	updateCmd.Flags().BoolVar(&mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
+	registerWebhookFlags(updateCmd, &webhookURL, &webhookTitle, &encryptionType, &password,
+		&pushEventsFlag, &tagPushEventsFlag, &issuesEventsFlag, &noteEventsFlag, &mergeRequestsEventsFlag)
 
 	deleteCmd := &cobra.Command{
 		Use:   "delete <id>",
@@ -257,6 +244,19 @@ func buildWebhookUpdateOpts(url, title string, encType int, pwd string,
 		NoteEvents:          api.BoolPtr(noteEvents),
 		MergeRequestsEvents: api.BoolPtr(mergeRequestsEvents),
 	}
+}
+
+func registerWebhookFlags(cmd *cobra.Command, webhookURL, webhookTitle *string, encryptionType *int, password *string,
+	pushEventsFlag, tagPushEventsFlag, issuesEventsFlag, noteEventsFlag, mergeRequestsEventsFlag *bool) {
+	cmd.Flags().StringVar(webhookURL, "url", "", "Webhook URL")
+	cmd.Flags().StringVar(webhookTitle, "title", "", "Webhook title (max 191 chars)")
+	cmd.Flags().IntVar(encryptionType, "encryption-type", 0, "Encryption type (0=secret, 1=signature)")
+	cmd.Flags().StringVar(password, "password", "", "Password")
+	cmd.Flags().BoolVar(pushEventsFlag, "push-events", false, "Trigger on push events")
+	cmd.Flags().BoolVar(tagPushEventsFlag, "tag-push-events", false, "Trigger on tag push events")
+	cmd.Flags().BoolVar(issuesEventsFlag, "issues-events", false, "Trigger on issues events")
+	cmd.Flags().BoolVar(noteEventsFlag, "note-events", false, "Trigger on note events")
+	cmd.Flags().BoolVar(mergeRequestsEventsFlag, "merge-requests-events", false, "Trigger on merge requests events")
 }
 
 func init() {

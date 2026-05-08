@@ -184,7 +184,9 @@ func (c *Client) ForkRepository(owner, repo string) (*ForkRepository, error) {
 }
 
 func buildListForksQuery(opts ListForksOptions) string {
-	return util.BuildQuery("sort", opts.Sort)
+	params := []string{"sort", opts.Sort}
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
+	return util.BuildQuery(params...)
 }
 
 func buildListBranchesQuery(opts ListBranchesOptions) string {

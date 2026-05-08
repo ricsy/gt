@@ -9,15 +9,16 @@ import (
 )
 
 var (
-	userName    string
-	userBlog    string
-	userWeibo   string
-	userBio     string
-	userPage    int
-	userPerPage int
-	keyTitle    string
-	keyValue    string
-	namespace   string
+	userName      string
+	userBlog      string
+	userWeibo     string
+	userBio       string
+	userPage      int
+	userPerPage   int
+	keyTitle      string
+	keyValue      string
+	namespace     string
+	namespaceMode string
 )
 
 var userCmd = &cobra.Command{
@@ -145,6 +146,7 @@ func init() {
 
 	userNamespaceViewCmd.Flags().StringVar(&namespace, "path", "", "Namespace path")
 	_ = userNamespaceViewCmd.MarkFlagRequired("path")
+	userNamespaceListCmd.Flags().StringVar(&namespaceMode, "mode", "", "Namespace mode: project, intrant, all")
 }
 
 func addUserPaginationFlags(cmd *cobra.Command) {
@@ -338,7 +340,11 @@ func userNamespaceList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	namespaces, err := client.ListNamespaces(userListOptions())
+	namespaces, err := client.ListNamespaces(api.ListNamespacesOptions{
+		Mode:    namespaceMode,
+		Page:    userPage,
+		PerPage: userPerPage,
+	})
 	if err != nil {
 		return err
 	}

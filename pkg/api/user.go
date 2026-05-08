@@ -25,6 +25,9 @@ type CreateSSHKeyOptions = response.CreateSSHKeyOptions
 // Namespace is an alias for response.Namespace.
 type Namespace = response.Namespace
 
+// ListNamespacesOptions is an alias for response.ListNamespacesOptions.
+type ListNamespacesOptions = response.ListNamespacesOptions
+
 // GetAuthenticatedUser gets the authenticated user's profile.
 func (c *Client) GetAuthenticatedUser() (*UserDetail, error) {
 	var user UserDetail
@@ -116,9 +119,9 @@ func (c *Client) DeleteSSHKey(id int64) error {
 }
 
 // ListNamespaces lists namespaces for the authenticated user.
-func (c *Client) ListNamespaces(opts ListUsersOptions) ([]Namespace, error) {
+func (c *Client) ListNamespaces(opts ListNamespacesOptions) ([]Namespace, error) {
 	var namespaces []Namespace
-	err := c.Do("GET", Users.Namespaces.Path+buildUsersQuery(opts), nil, &namespaces)
+	err := c.Do("GET", Users.Namespaces.Path+buildNamespacesQuery(opts), nil, &namespaces)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +189,23 @@ func (c *Client) ListUserSSHKeys(username string, opts ListUsersOptions) ([]SSHK
 
 func buildUsersQuery(opts ListUsersOptions) string {
 	var params []string
+	if opts.Page > 0 {
+		params = append(params, "page", strconv.Itoa(opts.Page))
+	}
+	if opts.PerPage > 0 {
+		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
+	}
+	if len(params) == 0 {
+		return ""
+	}
+	return "?" + util.BuildQuery(params...)
+}
+
+func buildNamespacesQuery(opts ListNamespacesOptions) string {
+	var params []string
+	if opts.Mode != "" {
+		params = append(params, "mode", opts.Mode)
+	}
 	if opts.Page > 0 {
 		params = append(params, "page", strconv.Itoa(opts.Page))
 	}

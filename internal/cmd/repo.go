@@ -132,7 +132,10 @@ var repoCollaboratorPermCmd = &cobra.Command{
 }
 
 var repoForkOpts struct {
-	Repo string
+	Repo    string
+	Sort    string
+	Page    int
+	PerPage int
 }
 
 var repoForkCmd = &cobra.Command{
@@ -184,6 +187,9 @@ func init() {
 	addRepoFlag(repoCollaboratorPermCmd)
 	addRepoFlag(repoForkListCmd)
 	addRepoFlag(repoForkCreateCmd)
+	repoForkListCmd.Flags().StringVar(&repoForkOpts.Sort, "sort", "", "Sort by: newest, oldest, stargazers")
+	repoForkListCmd.Flags().IntVar(&repoForkOpts.Page, "page", 0, "Page number")
+	repoForkListCmd.Flags().IntVar(&repoForkOpts.PerPage, "per-page", 0, "Items per page (max 100)")
 }
 
 func addRepoBranchRepoFlag(cmd *cobra.Command) {
@@ -453,7 +459,11 @@ func repoForkListCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	forks, err := client.ListForks(owner, repoName, api.ListForksOptions{})
+	forks, err := client.ListForks(owner, repoName, api.ListForksOptions{
+		Sort:    repoForkOpts.Sort,
+		Page:    repoForkOpts.Page,
+		PerPage: repoForkOpts.PerPage,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to list forks: %w", err)
 	}

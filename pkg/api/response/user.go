@@ -67,6 +67,13 @@ type ListUsersOptions struct {
 	PerPage int `json:"per_page,omitempty"`
 }
 
+// ListNamespacesOptions contains options for listing namespaces.
+type ListNamespacesOptions struct {
+	Mode    string `json:"mode,omitempty"`
+	Page    int    `json:"page,omitempty"`
+	PerPage int    `json:"per_page,omitempty"`
+}
+
 // SSHKey represents a user SSH public key.
 type SSHKey struct {
 	ID        int64  `json:"id"`

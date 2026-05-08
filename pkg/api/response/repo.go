@@ -122,5 +122,7 @@ type ForkRepository struct {
 
 // ListForksOptions contains options for listing forks.
 type ListForksOptions struct {
-	Sort string `json:"sort,omitempty"`
+	Sort    string `json:"sort,omitempty"`
+	Page    int    `json:"page,omitempty"`
+	PerPage int    `json:"per_page,omitempty"`
 }

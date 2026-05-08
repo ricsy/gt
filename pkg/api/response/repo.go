@@ -92,9 +92,16 @@ type UpdateRepoOptions struct {
 
 // Collaborator represents a repository collaborator.
 type Collaborator struct {
-	ID    int64  `json:"id"`
-	Login string `json:"login"`
-	Name  string `json:"name"`
+	ID           int64  `json:"id"`
+	Login        string `json:"login"`
+	Name         string `json:"name"`
+	AvatarURL    string `json:"avatar_url"`
+	URL          string `json:"url"`
+	HTMLURL      string `json:"html_url"`
+	Remark       string `json:"remark"`
+	FollowersURL string `json:"followers_url"`
+	FollowingURL string `json:"following_url"`
+	GistsURL     string `json:"gists_url"`
 }
 
 // CollaboratorPermission represents a collaborator's permission level.

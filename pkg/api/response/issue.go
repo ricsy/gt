@@ -13,35 +13,48 @@ const (
 
 // Issue represents a Gitee issue
 type Issue struct {
-	ID            int64       `json:"id"`
-	Number        int64       `json:"number"`
-	State         string      `json:"state"`
-	Title         string      `json:"title"`
-	Body          string      `json:"body"`
-	BodyHTML      string      `json:"body_html"`
-	HTMLURL       string      `json:"html_url"`
-	URL           string      `json:"url"`
-	RepositoryURL string      `json:"repository_url"`
-	LabelsURL     string      `json:"labels_url"`
-	CommentsURL   string      `json:"comments_url"`
-	ParentURL     string      `json:"parent_url"`
-	ParentID      int64       `json:"parent_id"`
-	Depth         int         `json:"depth"`
-	User          UserBasic   `json:"user"`
-	Labels        []Label     `json:"labels"`
-	Assignee      *UserBasic  `json:"assignee"`
-	Assignees     []UserBasic `json:"assignees"`
-	Collaborators []UserBasic `json:"collaborators"`
-	Milestone     *Milestone  `json:"milestone"`
-	Repository    *Project    `json:"repository"`
-	Comments      int         `json:"comments"`
-	CreatedAt     string      `json:"created_at"`
-	UpdatedAt     string      `json:"updated_at"`
-	ClosedAt      string      `json:"closed_at"`
-	PullRequest   *struct {
+	ID              int64       `json:"id"`
+	Number          int64       `json:"number"`
+	State           string      `json:"state"`
+	Title           string      `json:"title"`
+	Body            string      `json:"body"`
+	BodyHTML        string      `json:"body_html"`
+	HTMLURL         string      `json:"html_url"`
+	URL             string      `json:"url"`
+	RepositoryURL   string      `json:"repository_url"`
+	LabelsURL       string      `json:"labels_url"`
+	CommentsURL     string      `json:"comments_url"`
+	ParentURL       string      `json:"parent_url"`
+	ParentID        int64       `json:"parent_id"`
+	Depth           int         `json:"depth"`
+	User            UserBasic   `json:"user"`
+	Labels          []Label     `json:"labels"`
+	Assignee        *UserBasic  `json:"assignee"`
+	Assignees       []UserBasic `json:"assignees"`
+	Collaborators   []UserBasic `json:"collaborators"`
+	Milestone       *Milestone  `json:"milestone"`
+	Repository      *Project    `json:"repository"`
+	Comments        int         `json:"comments"`
+	CreatedAt       string      `json:"created_at"`
+	UpdatedAt       string      `json:"updated_at"`
+	ClosedAt        string      `json:"closed_at"`
+	Priority        int         `json:"priority,omitempty"`
+	PlanStartedAt   string      `json:"plan_started_at,omitempty"`
+	ScheduledTime   string      `json:"scheduled_time,omitempty"`
+	IssueTypeDetail *IssueType  `json:"issue_type_detail,omitempty"`
+	FinishedAt      string      `json:"finished_at,omitempty"`
+	PullRequest     *struct {
 		URL     string `json:"url"`
 		HTMLURL string `json:"html_url"`
 	} `json:"pull_request"`
+}
+
+// IssueType represents issue type detail
+type IssueType struct {
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	Color        string `json:"color"`
+	RepositoryID int64  `json:"repository_id"`
 }
 
 // Milestone represents a Gitee milestone
@@ -60,13 +73,17 @@ type Milestone struct {
 	DueOn        string `json:"due_on"`
 }
 
-// IssueComment represents a comment on an issue
+// IssueComment represents a comment on an issue (uses Note schema)
 type IssueComment struct {
-	ID        int64     `json:"id"`
-	Body      string    `json:"body"`
-	BodyHTML  string    `json:"body_html"`
-	CreatedAt string    `json:"created_at"`
-	User      UserBasic `json:"user"`
+	ID          int64     `json:"id"`
+	Body        string    `json:"body"`
+	BodyHTML    string    `json:"body_html"`
+	CreatedAt   string    `json:"created_at"`
+	UpdatedAt   string    `json:"updated_at"`
+	User        UserBasic `json:"user"`
+	Source      string    `json:"source,omitempty"`
+	Target      string    `json:"target,omitempty"`
+	InReplyToID int64     `json:"in_reply_to_id,omitempty"`
 }
 
 // ListIssuesOptions contains the optional parameters for ListIssues

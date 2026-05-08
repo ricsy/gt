@@ -69,3 +69,13 @@ func (c *Client) UpdateRelease(owner, repo string, releaseID int64, opts UpdateR
 	}
 	return &release, nil
 }
+
+// GetLatestRelease gets the latest release for a repository
+func (c *Client) GetLatestRelease(owner, repo string) (*Release, error) {
+	var release Release
+	err := c.DoFromEndpoint(Releases.Latest, []interface{}{owner, repo}, nil, &release)
+	if err != nil {
+		return nil, err
+	}
+	return &release, nil
+}

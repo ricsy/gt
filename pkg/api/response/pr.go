@@ -17,6 +17,7 @@ type PullRequest struct {
 	State             string `json:"state"`
 	Title             string `json:"title"`
 	Body              string `json:"body"`
+	BodyHTML          string `json:"body_html,omitempty"`
 	HTMLURL           string `json:"html_url"`
 	URL               string `json:"url"`
 	DiffURL           string `json:"diff_url"`
@@ -53,6 +54,7 @@ type PullRequest struct {
 	MergedAt           string      `json:"merged_at"`
 	Merged             bool        `json:"merged"`
 	Mergeable          bool        `json:"mergeable"`
+	CanMergeCheck      bool        `json:"can_merge_check,omitempty"`
 	Head               struct {
 		Ref string `json:"ref"`
 		Sha string `json:"sha"`
@@ -124,4 +126,48 @@ type ListPRsOptions struct {
 	Author          string
 	Assignee        string
 	Tester          string
+}
+
+// PullRequestComment represents a comment on a pull request
+type PullRequestComment struct {
+	ID          int64     `json:"id"`
+	Body        string    `json:"body"`
+	BodyHTML    string    `json:"body_html"`
+	CreatedAt   string    `json:"created_at"`
+	UpdatedAt   string    `json:"updated_at"`
+	User        UserBasic `json:"user"`
+	Position    int       `json:"position,omitempty"`
+	Line        int       `json:"line,omitempty"`
+	TreeID      string    `json:"tree_id,omitempty"`
+	InReplyToID int64     `json:"in_reply_to_id,omitempty"`
+}
+
+// PullRequestCommit represents a commit in a pull request
+type PullRequestCommit struct {
+	Sha    string     `json:"sha"`
+	Commit CommitInfo `json:"commit"`
+}
+
+// CommitInfo contains commit details
+type CommitInfo struct {
+	Message string       `json:"message"`
+	Author  CommitAuthor `json:"author"`
+}
+
+// CommitAuthor represents a commit author
+type CommitAuthor struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Date  string `json:"date"`
+}
+
+// PullRequestFile represents a file changed in a pull request
+type PullRequestFile struct {
+	Sha       string `json:"sha"`
+	Filename  string `json:"filename"`
+	Status    string `json:"status"`
+	Additions int    `json:"additions"`
+	Deletions int    `json:"deletions"`
+	Changes   int    `json:"changes"`
+	Patch     string `json:"patch,omitempty"`
 }

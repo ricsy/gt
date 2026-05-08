@@ -16,13 +16,26 @@ type OrgMember = response.OrgMember
 // ListOrgMembersOptions is an alias for response.ListOrgMembersOptions
 type ListOrgMembersOptions = response.ListOrgMembersOptions
 
+// ListOrgsOptions is an alias for response.ListOrgsOptions
+type ListOrgsOptions = response.ListOrgsOptions
+
 // ListOrgReposOptions is an alias for response.ListOrgReposOptions
 type ListOrgReposOptions = response.ListOrgReposOptions
 
 // ListOrgs lists organizations for the current user
-func (c *Client) ListOrgs() ([]Org, error) {
+func (c *Client) ListOrgs(opts ListOrgsOptions) ([]Org, error) {
 	var orgs []Org
-	err := c.DoFromEndpoint(UserOrgs.List, nil, nil, &orgs)
+	err := c.doFromEndpointWithQuery(UserOrgs.List, nil, buildListOrgsQuery(opts), nil, &orgs)
+	if err != nil {
+		return nil, err
+	}
+	return orgs, nil
+}
+
+// GetUserOrgsByUsername gets organizations for a user by username
+func (c *Client) GetUserOrgsByUsername(username string) ([]Org, error) {
+	var orgs []Org
+	err := c.DoFromEndpoint(Orgs.GetUserOrgsByUsername, []interface{}{username}, nil, &orgs)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +74,14 @@ func (c *Client) ListOrgRepos(org string, opts ListOrgReposOptions) ([]Repositor
 
 func buildListOrgMembersQuery(opts ListOrgMembersOptions) string {
 	params := []string{}
+	if opts.Role != "" {
+		params = append(params, "role", opts.Role)
+	}
 	if opts.Page > 0 {
 		params = append(params, "page", strconv.Itoa(opts.Page))
+	}
+	if opts.PerPage > 0 {
+		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
 	}
 	return util.BuildQuery(params...)
 }
@@ -74,6 +93,20 @@ func buildListOrgReposQuery(opts ListOrgReposOptions) string {
 	}
 	if opts.Page > 0 {
 		params = append(params, "page", strconv.Itoa(opts.Page))
+	}
+	return util.BuildQuery(params...)
+}
+
+func buildListOrgsQuery(opts ListOrgsOptions) string {
+	params := []string{}
+	if opts.Admin {
+		params = append(params, "admin", "true")
+	}
+	if opts.Page > 0 {
+		params = append(params, "page", strconv.Itoa(opts.Page))
+	}
+	if opts.PerPage > 0 {
+		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
 	}
 	return util.BuildQuery(params...)
 }

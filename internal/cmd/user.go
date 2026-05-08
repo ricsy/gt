@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ricsy/gt/pkg/api"
+	"github.com/ricsy/gt/pkg/api/response"
 	"github.com/spf13/cobra"
 )
 
@@ -273,18 +274,22 @@ func userKeyList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var keys []api.SSHKey
 	if len(args) == 1 {
-		keys, err = client.ListUserSSHKeys(args[0], userListOptions())
+		keys, err := client.ListUserSSHKeys(args[0], userListOptions())
+		if err != nil {
+			return err
+		}
+		for _, key := range keys {
+			fmt.Printf("%d\t%s\n", key.ID, key.Title)
+		}
 	} else {
-		keys, err = client.ListSSHKeys(userListOptions())
-	}
-	if err != nil {
-		return err
-	}
-
-	for _, key := range keys {
-		fmt.Printf("%d\t%s\n", key.ID, key.Title)
+		keys, err := client.ListSSHKeys(userListOptions())
+		if err != nil {
+			return err
+		}
+		for _, key := range keys {
+			fmt.Printf("%d\t%s\n", key.ID, key.Title)
+		}
 	}
 	return nil
 }
@@ -367,13 +372,24 @@ func userNamespaceView(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func printUser(user api.User) {
-	fmt.Printf("%s (%s)\n", user.Login, user.Name)
-	if user.Email != "" {
-		fmt.Printf("Email: %s\n", user.Email)
-	}
-	if user.HTMLURL != "" {
-		fmt.Printf("URL: %s\n", user.HTMLURL)
+func printUser(user any) {
+	switch u := user.(type) {
+	case response.UserInfo:
+		fmt.Printf("%s (%s)\n", u.Login, u.Name)
+		if u.Email != "" {
+			fmt.Printf("Email: %s\n", u.Email)
+		}
+		if u.HTMLURL != "" {
+			fmt.Printf("URL: %s\n", u.HTMLURL)
+		}
+	case response.UserBasic:
+		fmt.Printf("%s (%s)\n", u.Login, u.Name)
+		if u.Email != "" {
+			fmt.Printf("Email: %s\n", u.Email)
+		}
+		if u.HTMLURL != "" {
+			fmt.Printf("URL: %s\n", u.HTMLURL)
+		}
 	}
 }
 

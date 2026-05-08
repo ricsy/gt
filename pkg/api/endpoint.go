@@ -29,8 +29,11 @@ type EndpointGroup struct {
 	List                    Endpoint
 	Get                     Endpoint
 	GetByID                 Endpoint
+	Latest                  Endpoint
 	Create                  Endpoint
 	Update                  Endpoint
+	Add                     Endpoint
+	Remove                  Endpoint
 	Replace                 Endpoint
 	Delete                  Endpoint
 	Test                    Endpoint
@@ -90,6 +93,7 @@ type EndpointGroup struct {
 	Subscribers             Endpoint
 	OrgMembers              Endpoint
 	OrgRepos                Endpoint
+	GetUserOrgsByUsername   Endpoint
 }
 
 // Repo endpoints
@@ -110,9 +114,10 @@ var Branches = EndpointGroup{
 
 // Orgs Org endpoints
 var Orgs = EndpointGroup{
-	Get:     Endpoint{GET, "/orgs/%s"},
-	Members: Endpoint{GET, "/orgs/%s/members"},
-	Repos:   Endpoint{GET, "/orgs/%s/repos"},
+	Get:                   Endpoint{GET, "/orgs/%s"},
+	Members:               Endpoint{GET, "/orgs/%s/members"},
+	Repos:                 Endpoint{GET, "/orgs/%s/repos"},
+	GetUserOrgsByUsername: Endpoint{GET, "/users/%s/orgs"},
 }
 
 // Collaborators collaborator endpoints
@@ -120,6 +125,8 @@ var Collaborators = EndpointGroup{
 	List:       Endpoint{GET, "/repos/%s/%s/collaborators"},
 	Get:        Endpoint{GET, "/repos/%s/%s/collaborators/%s"},
 	Protection: Endpoint{GET, "/repos/%s/%s/collaborators/%s/permission"},
+	Add:        Endpoint{PUT, "/repos/%s/%s/collaborators/%s"},
+	Remove:     Endpoint{DELETE, "/repos/%s/%s/collaborators/%s"},
 }
 
 // RepoForks fork endpoints
@@ -142,6 +149,7 @@ var UserRepos = EndpointGroup{
 // Issues Issue endpoints
 var Issues = EndpointGroup{
 	List:   Endpoint{GET, "/repos/%s/%s/issues"},
+	Get:    Endpoint{GET, "/repos/%s/%s/issues/%s"},
 	Create: Endpoint{POST, "/repos/%s/issues"},
 	Update: Endpoint{PATCH, "/repos/%s/issues/%s"},
 }
@@ -149,10 +157,27 @@ var Issues = EndpointGroup{
 // PRs PR endpoints
 var PRs = EndpointGroup{
 	List:    Endpoint{GET, "/repos/%s/%s/pulls"},
+	Get:     Endpoint{GET, "/repos/%s/%s/pulls/%d"},
 	Create:  Endpoint{POST, "/repos/%s/%s/pulls"},
 	Merge:   Endpoint{PUT, "/repos/%s/%s/pulls/%d/merge"},
 	Update:  Endpoint{PATCH, "/repos/%s/%s/pulls/%d"},
 	Comment: Endpoint{POST, "/repos/%s/%s/pulls/%d/comments"},
+}
+
+// PRComments PR comment endpoints
+var PRComments = EndpointGroup{
+	List: Endpoint{GET, "/repos/%s/%s/pulls/%d/comments"},
+	Get:  Endpoint{GET, "/repos/%s/%s/pulls/%d/comments/%d"},
+}
+
+// PRCommits PR commit endpoints
+var PRCommits = EndpointGroup{
+	List: Endpoint{GET, "/repos/%s/%s/pulls/%d/commits"},
+}
+
+// PRFiles PR file endpoints
+var PRFiles = EndpointGroup{
+	List: Endpoint{GET, "/repos/%s/%s/pulls/%d/files"},
 }
 
 // Releases Release endpoints
@@ -163,6 +188,7 @@ var Releases = EndpointGroup{
 	GetByID: Endpoint{GET, "/repos/%s/%s/releases/%d"},
 	Delete:  Endpoint{DELETE, "/repos/%s/%s/releases/%d"},
 	Update:  Endpoint{PATCH, "/repos/%s/%s/releases/%d"},
+	Latest:  Endpoint{GET, "/repos/%s/%s/releases/latest"},
 }
 
 // UserReposByName User repos by username endpoints
@@ -225,6 +251,15 @@ var IssueLabels = EndpointGroup{
 	Delete:  Endpoint{DELETE, "/repos/%s/%s/issues/%s/labels"},
 }
 
+// IssueComments Issue comments endpoints
+var IssueComments = EndpointGroup{
+	List:   Endpoint{GET, "/repos/%s/%s/issues/%s/comments"},
+	Get:    Endpoint{GET, "/repos/%s/%s/issues/%s/comments/%d"},
+	Create: Endpoint{POST, "/repos/%s/%s/issues/%s/comments"},
+	Update: Endpoint{PATCH, "/repos/%s/%s/issues/%s/comments/%d"},
+	Delete: Endpoint{DELETE, "/repos/%s/%s/issues/%s/comments/%d"},
+}
+
 // ProjectLabels Project labels endpoints
 var ProjectLabels = EndpointGroup{
 	List:    Endpoint{GET, "/repos/%s/%s/project_labels"},
@@ -250,7 +285,7 @@ var Enterprises = EndpointGroup{
 	Update:        Endpoint{PUT, "/enterprises/%s/members/%s"},
 	Delete:        Endpoint{DELETE, "/enterprises/%s/members/%s"},
 	Repos:         Endpoint{GET, "/enterprises/%s/repos"},
-	PullRequests:  Endpoint{GET, "/enterprise/%s/pull_requests"},
+	PullRequests:  Endpoint{GET, "/enterprises/%s/pull_requests"},
 }
 
 // Emails Email endpoints

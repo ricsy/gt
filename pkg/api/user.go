@@ -140,8 +140,8 @@ func (c *Client) GetNamespace(path string) (*Namespace, error) {
 }
 
 // GetUser gets a public user profile.
-func (c *Client) GetUser(username string) (*User, error) {
-	var user User
+func (c *Client) GetUser(username string) (*response.UserInfo, error) {
+	var user response.UserInfo
 	err := c.DoFromEndpoint(PublicUsers.Get, []interface{}{username}, nil, &user)
 	if err != nil {
 		return nil, err
@@ -177,8 +177,8 @@ func (c *Client) CheckUserFollowing(username, targetUser string) error {
 }
 
 // ListUserSSHKeys lists public SSH keys for username.
-func (c *Client) ListUserSSHKeys(username string, opts ListUsersOptions) ([]SSHKey, error) {
-	var keys []SSHKey
+func (c *Client) ListUserSSHKeys(username string, opts ListUsersOptions) ([]response.SSHKeyBasic, error) {
+	var keys []response.SSHKeyBasic
 	path := PublicUsers.Keys.Build(username)
 	err := c.Do("GET", path+buildUsersQuery(opts), nil, &keys)
 	if err != nil {

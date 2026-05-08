@@ -127,3 +127,43 @@ func (c *Client) CreatePRComment(owner, repo string, number int, body string) er
 	commentReq := map[string]string{"body": body}
 	return c.DoFromEndpoint(PRs.Comment, []interface{}{owner, repo, number}, commentReq, nil)
 }
+
+// ListPRComments lists comments on a pull request
+func (c *Client) ListPRComments(owner, repo string, number int) ([]response.PullRequestComment, error) {
+	var comments []response.PullRequestComment
+	err := c.DoFromEndpoint(PRComments.List, []interface{}{owner, repo, number}, nil, &comments)
+	if err != nil {
+		return nil, err
+	}
+	return comments, nil
+}
+
+// GetPRComment gets a single comment on a pull request
+func (c *Client) GetPRComment(owner, repo string, number, commentID int) (*response.PullRequestComment, error) {
+	var comment response.PullRequestComment
+	err := c.DoFromEndpoint(PRComments.Get, []interface{}{owner, repo, number, commentID}, nil, &comment)
+	if err != nil {
+		return nil, err
+	}
+	return &comment, nil
+}
+
+// ListPRCommits lists commits in a pull request
+func (c *Client) ListPRCommits(owner, repo string, number int) ([]response.PullRequestCommit, error) {
+	var commits []response.PullRequestCommit
+	err := c.DoFromEndpoint(PRCommits.List, []interface{}{owner, repo, number}, nil, &commits)
+	if err != nil {
+		return nil, err
+	}
+	return commits, nil
+}
+
+// ListPRFiles lists changed files in a pull request
+func (c *Client) ListPRFiles(owner, repo string, number int) ([]response.PullRequestFile, error) {
+	var files []response.PullRequestFile
+	err := c.DoFromEndpoint(PRFiles.List, []interface{}{owner, repo, number}, nil, &files)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}

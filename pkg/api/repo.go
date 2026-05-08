@@ -162,6 +162,17 @@ func (c *Client) GetCollaboratorPermission(owner, repo, username string) (*Colla
 	return &perm, nil
 }
 
+// AddCollaborator adds or updates a collaborator on a repository.
+func (c *Client) AddCollaborator(owner, repo, username, permission string) error {
+	req := map[string]string{"permission": permission}
+	return c.DoFromEndpoint(Collaborators.Add, []interface{}{owner, repo, username}, req, nil)
+}
+
+// RemoveCollaborator removes a collaborator from a repository.
+func (c *Client) RemoveCollaborator(owner, repo, username string) error {
+	return c.DoFromEndpoint(Collaborators.Remove, []interface{}{owner, repo, username}, nil, nil)
+}
+
 // ListForks lists repository forks.
 func (c *Client) ListForks(owner, repo string, opts ListForksOptions) ([]ForkRepository, error) {
 	var forks []ForkRepository

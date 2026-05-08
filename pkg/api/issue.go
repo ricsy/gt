@@ -103,7 +103,7 @@ func buildQuery(opts ListIssuesOptions) string {
 // GetIssue gets a single issue
 func (c *Client) GetIssue(owner, repo, number string) (*Issue, error) {
 	var issue Issue
-	err := c.DoFromEndpoint(Issues.List, []interface{}{owner, repo, number}, nil, &issue)
+	err := c.DoFromEndpoint(Issues.Get, []interface{}{owner, repo, number}, nil, &issue)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *Client) UpdateIssueState(owner, repo, number string, state IssueState) 
 // ListIssueComments lists comments for an issue
 func (c *Client) ListIssueComments(owner, repo, number string) ([]IssueComment, error) {
 	var comments []IssueComment
-	err := c.DoFromEndpoint(Issues.List, []interface{}{owner, repo, number, "comments"}, nil, &comments)
+	err := c.DoFromEndpoint(IssueComments.List, []interface{}{owner, repo, number}, nil, &comments)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (c *Client) ListIssueComments(owner, repo, number string) ([]IssueComment, 
 func (c *Client) CreateIssueComment(owner, repo, number, body string) (*IssueComment, error) {
 	req := map[string]string{"body": body}
 	var comment IssueComment
-	err := c.DoFromEndpoint(Issues.List, []interface{}{owner, repo, number, "comments"}, req, &comment)
+	err := c.DoFromEndpoint(IssueComments.Create, []interface{}{owner, repo, number}, req, &comment)
 	if err != nil {
 		return nil, err
 	}

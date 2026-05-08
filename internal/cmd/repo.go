@@ -131,6 +131,24 @@ var repoCollaboratorPermCmd = &cobra.Command{
 	RunE:  repoCollaboratorPermCommand,
 }
 
+var repoCollaboratorAddCmd = &cobra.Command{
+	Use:   "add <user>",
+	Short: "Add a collaborator to repository",
+	Args:  cobra.ExactArgs(1),
+	RunE:  repoCollaboratorAddCommand,
+}
+
+var repoCollaboratorRemoveCmd = &cobra.Command{
+	Use:   "remove <user>",
+	Short: "Remove a collaborator from repository",
+	Args:  cobra.ExactArgs(1),
+	RunE:  repoCollaboratorRemoveCommand,
+}
+
+var repoCollaboratorAddOpts struct {
+	Permission string
+}
+
 var repoForkOpts struct {
 	Repo    string
 	Sort    string
@@ -159,7 +177,7 @@ func init() {
 	rootCmd.AddCommand(repoCmd)
 	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd)
 	repoBranchCmd.AddCommand(repoBranchListCmd, repoBranchViewCmd, repoBranchCreateCmd, repoBranchProtectCmd, repoBranchUnprotectCmd)
-	repoCollaboratorCmd.AddCommand(repoCollaboratorListCmd, repoCollaboratorViewCmd, repoCollaboratorPermCmd)
+	repoCollaboratorCmd.AddCommand(repoCollaboratorListCmd, repoCollaboratorViewCmd, repoCollaboratorPermCmd, repoCollaboratorAddCmd, repoCollaboratorRemoveCmd)
 	repoForkCmd.AddCommand(repoForkListCmd, repoForkCreateCmd)
 
 	repoListCmd.Flags().StringVar(&repoListOpts.Owner, "owner", "", "Owner username")
@@ -185,6 +203,10 @@ func init() {
 	addRepoFlag(repoCollaboratorListCmd)
 	addRepoFlag(repoCollaboratorViewCmd)
 	addRepoFlag(repoCollaboratorPermCmd)
+	addRepoFlag(repoCollaboratorAddCmd)
+	addRepoFlag(repoCollaboratorRemoveCmd)
+	repoCollaboratorAddCmd.Flags().StringVar(&repoCollaboratorAddOpts.Permission, "permission", "push", "Collaborator permission (push, pull, admin)")
+
 	addRepoFlag(repoForkListCmd)
 	addRepoFlag(repoForkCreateCmd)
 	repoForkListCmd.Flags().StringVar(&repoForkOpts.Sort, "sort", "", "Sort by: newest, oldest, stargazers")
@@ -447,6 +469,38 @@ func repoCollaboratorPermCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get collaborator permission: %w", err)
 	}
 	cmd.Printf("Permission: %s\n", perm.Permission)
+	return nil
+}
+
+func repoCollaboratorAddCommand(cmd *cobra.Command, args []string) error {
+	owner, repoName, err := resolveRepoFlag(repoCollaboratorOpts.Repo)
+	if err != nil {
+		return err
+	}
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+	if err := client.AddCollaborator(owner, repoName, args[0], repoCollaboratorAddOpts.Permission); err != nil {
+		return fmt.Errorf("failed to add collaborator: %w", err)
+	}
+	cmd.Printf("Added collaborator: %s\n", args[0])
+	return nil
+}
+
+func repoCollaboratorRemoveCommand(cmd *cobra.Command, args []string) error {
+	owner, repoName, err := resolveRepoFlag(repoCollaboratorOpts.Repo)
+	if err != nil {
+		return err
+	}
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+	if err := client.RemoveCollaborator(owner, repoName, args[0]); err != nil {
+		return fmt.Errorf("failed to remove collaborator: %w", err)
+	}
+	cmd.Printf("Removed collaborator: %s\n", args[0])
 	return nil
 }
 

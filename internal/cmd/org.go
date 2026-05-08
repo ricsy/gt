@@ -15,7 +15,7 @@ func newOrgCmd() *cobra.Command {
 				return err
 			}
 
-			orgs, err := client.ListOrgs()
+			orgs, err := client.ListOrgs(api.ListOrgsOptions{})
 			if err != nil {
 				return err
 			}

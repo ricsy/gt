@@ -25,3 +25,5 @@ build
 .mcp.json
 gt
 gt.exe
+.gocache
+AGENTS.md

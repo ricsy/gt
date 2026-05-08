@@ -6,13 +6,10 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
-
-var apiHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 func newApiCmd() *cobra.Command {
 	var bodyFlag string
@@ -54,7 +51,7 @@ Examples:
 			req.Header.Set("Authorization", "token "+token)
 			req.Header.Set("Content-Type", "application/json")
 
-			resp, err := apiHTTPClient.Do(req)
+			resp, err := newCommandHTTPClient().Do(req)
 			if err != nil {
 				return err
 			}

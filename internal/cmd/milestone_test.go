@@ -28,8 +28,8 @@ func TestMilestoneListCommand(t *testing.T) {
 
 func TestMilestoneViewCommand(t *testing.T) {
 	cmd := milestoneViewCmd
-	if cmd.Use != "view" {
-		t.Errorf("expected use 'view', got %s", cmd.Use)
+	if cmd.Use != "view <number>" {
+		t.Errorf("expected use 'view <number>', got %s", cmd.Use)
 	}
 }
 
@@ -42,15 +42,15 @@ func TestMilestoneCreateCommand(t *testing.T) {
 
 func TestMilestoneUpdateCommand(t *testing.T) {
 	cmd := milestoneUpdateCmd
-	if cmd.Use != "update" {
-		t.Errorf("expected use 'update', got %s", cmd.Use)
+	if cmd.Use != "update <number>" {
+		t.Errorf("expected use 'update <number>', got %s", cmd.Use)
 	}
 }
 
 func TestMilestoneDeleteCommand(t *testing.T) {
 	cmd := milestoneDeleteCmd
-	if cmd.Use != "delete" {
-		t.Errorf("expected use 'delete', got %s", cmd.Use)
+	if cmd.Use != "delete <number>" {
+		t.Errorf("expected use 'delete <number>', got %s", cmd.Use)
 	}
 }
 

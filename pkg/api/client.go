@@ -13,7 +13,8 @@ import (
 
 const (
 	authHeaderPrefix = "token "
-	defaultTimeout   = 30 * time.Second
+	// DefaultTimeout is the default timeout for API requests.
+	DefaultTimeout = 30 * time.Second
 )
 
 type Client struct {
@@ -23,10 +24,19 @@ type Client struct {
 }
 
 func NewClient(host, token string) *Client {
+	return NewClientWithTimeout(host, token, DefaultTimeout)
+}
+
+// NewClientWithTimeout creates a new Gitee API client with the provided timeout.
+func NewClientWithTimeout(host, token string, timeout time.Duration) *Client {
+	if timeout <= 0 {
+		timeout = DefaultTimeout
+	}
+
 	return &Client{
 		host:       host,
 		token:      token,
-		HTTPClient: &http.Client{Timeout: defaultTimeout},
+		HTTPClient: &http.Client{Timeout: timeout},
 	}
 }
 

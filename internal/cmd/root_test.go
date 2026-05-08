@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ func TestVersionCommand(t *testing.T) {
 		t.Errorf("Execute() error = %v", err)
 	}
 
-	expected := "gt version 0.1.0\n"
+	expected := "gt version " + version + "\n"
 	if buf.String() != expected {
 		t.Errorf("expected %q, got %q", expected, buf.String())
 	}
@@ -39,5 +40,26 @@ func TestRootCommandHelp(t *testing.T) {
 	err := Execute()
 	if err != nil {
 		t.Errorf("Execute() error = %v", err)
+	}
+}
+
+func TestRootCommandHasTimeoutFlag(t *testing.T) {
+	flag := rootCmd.PersistentFlags().Lookup("timeout")
+	if flag == nil {
+		t.Fatal("expected root command to define a timeout flag")
+	}
+}
+
+func TestCommandHTTPClientUsesRequestTimeout(t *testing.T) {
+	originalTimeout := requestTimeout
+	t.Cleanup(func() {
+		requestTimeout = originalTimeout
+	})
+
+	requestTimeout = 7 * time.Second
+
+	client := newCommandHTTPClient()
+	if client.Timeout != requestTimeout {
+		t.Fatalf("expected timeout %s, got %s", requestTimeout, client.Timeout)
 	}
 }

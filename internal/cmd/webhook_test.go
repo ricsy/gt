@@ -14,8 +14,8 @@ func TestNewWebhookCmd(t *testing.T) {
 	if cmd.Use != "webhook" {
 		t.Errorf("expected use 'webhook', got %s", cmd.Use)
 	}
-	if len(cmd.Commands()) != 5 {
-		t.Errorf("expected 5 subcommands, got %d", len(cmd.Commands()))
+	if len(cmd.Commands()) != 6 {
+		t.Errorf("expected 6 subcommands, got %d", len(cmd.Commands()))
 	}
 }
 

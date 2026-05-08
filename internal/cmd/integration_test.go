@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ricsy/gt/pkg/auth"
+	"github.com/ricsy/gt/pkg/config"
 	"github.com/ricsy/gt/pkg/util"
 )
 
@@ -42,6 +44,17 @@ var (
 	testOwner    string
 	testCLI      string
 )
+
+func integrationTestsEnabled() bool {
+	return os.Getenv("GT_INTEGRATION_TESTS") == "1"
+}
+
+func requireIntegrationTests(t *testing.T) {
+	t.Helper()
+	if !integrationTestsEnabled() {
+		t.Skip("Skipping integration test: set GT_INTEGRATION_TESTS=1 to enable live Gitee tests")
+	}
+}
 
 func loadTestConfig(t *testing.T) *TestConfig {
 	data, err := os.ReadFile(filepath.Join(projectDir, "data", "test_data.json"))
@@ -114,6 +127,14 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	if !integrationTestsEnabled() {
+		os.Exit(m.Run())
+	}
+	if _, err := auth.GetToken(config.DefaultHost); err != nil {
+		fmt.Printf("Skipping integration setup: authentication required: %v\n", err)
+		os.Exit(m.Run())
+	}
+
 	// Build CLI first
 	cliPath := filepath.Join(projectDir, "gt")
 
@@ -154,6 +175,8 @@ func TestMain(m *testing.M) {
 
 // TestIntegrationRepo tests repository commands
 func TestIntegrationRepo(t *testing.T) {
+	requireIntegrationTests(t)
+
 	stdout, err := runCLI(t, testCLI, "repo", "view", testOwner+"/"+testRepoName)
 	if err != nil {
 		t.Errorf("repo view failed: %v\nOutput: %s", err, stdout)
@@ -165,6 +188,8 @@ func TestIntegrationRepo(t *testing.T) {
 
 // TestIntegrationIssue tests issue commands
 func TestIntegrationIssue(t *testing.T) {
+	requireIntegrationTests(t)
+
 	cfg := loadTestConfig(t)
 
 	// Create issue
@@ -234,6 +259,8 @@ func TestIntegrationIssue(t *testing.T) {
 
 // TestIntegrationRelease tests release commands
 func TestIntegrationRelease(t *testing.T) {
+	requireIntegrationTests(t)
+
 	cfg := loadTestConfig(t)
 
 	// Clone repo and create git tag first (release requires git tag)
@@ -299,6 +326,8 @@ func TestIntegrationRelease(t *testing.T) {
 
 // TestIntegrationOrg tests organization commands
 func TestIntegrationOrg(t *testing.T) {
+	requireIntegrationTests(t)
+
 	// List orgs - just verify it runs
 	_, err := runCLI(t, testCLI, "org", "list")
 	if err != nil {
@@ -308,6 +337,8 @@ func TestIntegrationOrg(t *testing.T) {
 
 // TestIntegrationAuth tests auth status
 func TestIntegrationAuth(t *testing.T) {
+	requireIntegrationTests(t)
+
 	// Verify auth is configured
 	_, err := runCLI(t, testCLI, "auth", "status")
 	if err != nil {
@@ -317,6 +348,8 @@ func TestIntegrationAuth(t *testing.T) {
 
 // TestIntegrationRepoList tests repository list command
 func TestIntegrationRepoList(t *testing.T) {
+	requireIntegrationTests(t)
+
 	// List repos for the owner - just verify it runs without error
 	// Note: Gitee API may not return newly created repos immediately
 	stdout, err := runCLI(t, testCLI, "repo", "list", "--owner", testOwner, "--limit", "100")
@@ -331,6 +364,8 @@ func TestIntegrationRepoList(t *testing.T) {
 
 // TestIntegrationPRList tests PR list command
 func TestIntegrationPRList(t *testing.T) {
+	requireIntegrationTests(t)
+
 	// List PRs (maybe empty but should not error)
 	_, err := runCLI(t, testCLI, "pr", "list",
 		"--repo", testOwner+"/"+testRepoName)
@@ -341,6 +376,8 @@ func TestIntegrationPRList(t *testing.T) {
 
 // TestIntegrationPRCreate tests PR create command
 func TestIntegrationPRCreate(t *testing.T) {
+	requireIntegrationTests(t)
+
 	cfg := loadTestConfig(t)
 
 	// First create a branch in the test repo
@@ -443,6 +480,8 @@ func TestIntegrationPRCreate(t *testing.T) {
 
 // TestIntegrationConfig tests config command
 func TestIntegrationConfig(t *testing.T) {
+	requireIntegrationTests(t)
+
 	// Get config - should not error
 	_, err := runCLI(t, testCLI, "config", "get", "default_repo")
 	if err != nil {

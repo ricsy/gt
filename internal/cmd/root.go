@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
 
+	"github.com/ricsy/gt/pkg/api"
 	"github.com/spf13/cobra"
 )
 
 var version = "0.1.0-alpha"
+var requestTimeout = api.DefaultTimeout
 
 var rootCmd = &cobra.Command{
 	Use:     "gt",
@@ -19,7 +22,21 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+func newCommandAPIClient(host, token string) *api.Client {
+	return api.NewClientWithTimeout(host, token, requestTimeout)
+}
+
+func newCommandHTTPClient() *http.Client {
+	timeout := requestTimeout
+	if timeout <= 0 {
+		timeout = api.DefaultTimeout
+	}
+	return &http.Client{Timeout: timeout}
+}
+
 func init() {
+	rootCmd.PersistentFlags().DurationVar(&requestTimeout, "timeout", api.DefaultTimeout, "HTTP request timeout")
+
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print version",

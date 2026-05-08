@@ -15,7 +15,7 @@ func getClient() (*api.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
-	return api.NewClient(config.DefaultHost, token), nil
+	return newCommandAPIClient(config.DefaultHost, token), nil
 }
 
 func resolveRepoFlag(repoFlag string) (owner, repoName string, err error) {

@@ -18,6 +18,15 @@ func TestRepoCommand(t *testing.T) {
 	}
 }
 
+func TestRepoBranchCommand(t *testing.T) {
+	if repoBranchCmd.Use != "branch" {
+		t.Errorf("expected use 'branch', got %s", repoBranchCmd.Use)
+	}
+	if len(repoBranchCmd.Commands()) != 5 {
+		t.Errorf("expected 5 subcommands, got %d", len(repoBranchCmd.Commands()))
+	}
+}
+
 func TestRepoListCommandFlags(t *testing.T) {
 	cmd := &cobra.Command{Use: "list"}
 	cmd.Flags().String("owner", "", "Owner username")
@@ -49,6 +58,24 @@ func TestRepoCreateCommandFlags(t *testing.T) {
 	}
 	if cmd.Flags().Lookup("public") == nil {
 		t.Error("public flag not found")
+	}
+}
+
+func TestRepoBranchCommandFlags(t *testing.T) {
+	if repoBranchListCmd.Flags().Lookup("repo") == nil {
+		t.Error("repo flag not found")
+	}
+	if repoBranchListCmd.Flags().Lookup("sort") == nil {
+		t.Error("sort flag not found")
+	}
+	if repoBranchListCmd.Flags().Lookup("direction") == nil {
+		t.Error("direction flag not found")
+	}
+	if repoBranchCreateCmd.Flags().Lookup("refs") == nil {
+		t.Error("refs flag not found")
+	}
+	if repoBranchProtectCmd.Flags().Lookup("repo") == nil {
+		t.Error("repo flag not found")
 	}
 }
 

@@ -61,16 +61,71 @@ type EndpointGroup struct {
 	GetAnnotations          Endpoint
 	GetCommitCheckRuns      Endpoint
 	Patch                   Endpoint
+	Followers               Endpoint
+	Following               Endpoint
+	CheckFollowing          Endpoint
+	Follow                  Endpoint
+	Unfollow                Endpoint
+	Keys                    Endpoint
+	Key                     Endpoint
+	Namespaces              Endpoint
+	Namespace               Endpoint
+	Members                 Endpoint
+	Member                  Endpoint
+	SearchMembers           Endpoint
+	Repos                   Endpoint
+	PullRequests            Endpoint
+	Protection              Endpoint
+	Blob                    Endpoint
+	Tree                    Endpoint
+	Metrics                 Endpoint
+	Events                  Endpoint
+	PublicEvents            Endpoint
+	ReceivedEvents          Endpoint
+	ReceivedPublicEvents    Endpoint
+	OrgEvents               Endpoint
+	NetworkEvents           Endpoint
+	Subscriptions           Endpoint
+	Subscription            Endpoint
+	Subscribers             Endpoint
+	OrgMembers              Endpoint
+	OrgRepos                Endpoint
 }
 
 // Repo endpoints
 var Repo = EndpointGroup{
-	Get: Endpoint{GET, "/repos/%s/%s"},
+	Get:    Endpoint{GET, "/repos/%s/%s"},
+	Update: Endpoint{PATCH, "/repos/%s/%s"},
+	Delete: Endpoint{DELETE, "/repos/%s/%s"},
+}
+
+// Branches repository branch endpoints
+var Branches = EndpointGroup{
+	List:       Endpoint{GET, "/repos/%s/%s/branches"},
+	Create:     Endpoint{POST, "/repos/%s/%s/branches"},
+	Get:        Endpoint{GET, "/repos/%s/%s/branches/%s"},
+	Protection: Endpoint{PUT, "/repos/%s/%s/branches/%s/protection"},
+	Delete:     Endpoint{DELETE, "/repos/%s/%s/branches/%s/protection"},
 }
 
 // Orgs Org endpoints
 var Orgs = EndpointGroup{
-	Get: Endpoint{GET, "/orgs/%s"},
+	Get:     Endpoint{GET, "/orgs/%s"},
+	Members: Endpoint{GET, "/orgs/%s/members"},
+	Repos:   Endpoint{GET, "/orgs/%s/repos"},
+}
+
+// Collaborators collaborator endpoints
+var Collaborators = EndpointGroup{
+	List:       Endpoint{GET, "/repos/%s/%s/collaborators"},
+	Get:        Endpoint{GET, "/repos/%s/%s/collaborators/%s"},
+	Protection: Endpoint{GET, "/repos/%s/%s/collaborators/%s/permission"},
+}
+
+// RepoForks fork endpoints
+var RepoForks = EndpointGroup{
+	List: Endpoint{GET, "/repos/%s/%s/forks"},
+	Fork: Endpoint{POST, "/repos/%s/%s/forks"},
 }
 
 // UserOrgs UserOrg endpoints
@@ -80,7 +135,8 @@ var UserOrgs = EndpointGroup{
 
 // UserRepos UserRepo endpoints
 var UserRepos = EndpointGroup{
-	List: Endpoint{GET, "/user/repos"},
+	List:   Endpoint{GET, "/user/repos"},
+	Create: Endpoint{POST, "/user/repos"},
 }
 
 // Issues Issue endpoints
@@ -183,6 +239,20 @@ var EnterpriseLabels = EndpointGroup{
 	Get:  Endpoint{GET, "/enterprises/%s/labels/%s"},
 }
 
+// Enterprises Enterprise endpoints
+var Enterprises = EndpointGroup{
+	List:          Endpoint{GET, "/user/enterprises"},
+	Get:           Endpoint{GET, "/enterprises/%s"},
+	Members:       Endpoint{GET, "/enterprises/%s/members"},
+	Create:        Endpoint{POST, "/enterprises/%s/members"},
+	SearchMembers: Endpoint{GET, "/enterprises/%s/members/search"},
+	Member:        Endpoint{GET, "/enterprises/%s/members/%s"},
+	Update:        Endpoint{PUT, "/enterprises/%s/members/%s"},
+	Delete:        Endpoint{DELETE, "/enterprises/%s/members/%s"},
+	Repos:         Endpoint{GET, "/enterprises/%s/repos"},
+	PullRequests:  Endpoint{GET, "/enterprise/%s/pull_requests"},
+}
+
 // Emails Email endpoints
 var Emails = EndpointGroup{
 	List: Endpoint{GET, "/emails"},
@@ -259,4 +329,54 @@ var Messages = EndpointGroup{
 	Update: Endpoint{PUT, "/notifications/messages"},
 	Get:    Endpoint{GET, "/notifications/messages/%s"},
 	Patch:  Endpoint{PATCH, "/notifications/messages/%s"},
+}
+
+// Users user endpoints
+var Users = EndpointGroup{
+	Get:            Endpoint{GET, "/user"},
+	Update:         Endpoint{PATCH, "/user"},
+	Followers:      Endpoint{GET, "/user/followers"},
+	Following:      Endpoint{GET, "/user/following"},
+	CheckFollowing: Endpoint{GET, "/user/following/%s"},
+	Follow:         Endpoint{PUT, "/user/following/%s"},
+	Unfollow:       Endpoint{DELETE, "/user/following/%s"},
+	Keys:           Endpoint{GET, "/user/keys"},
+	Create:         Endpoint{POST, "/user/keys"},
+	Key:            Endpoint{GET, "/user/keys/%d"},
+	Delete:         Endpoint{DELETE, "/user/keys/%d"},
+	Namespaces:     Endpoint{GET, "/user/namespaces"},
+	Namespace:      Endpoint{GET, "/user/namespace"},
+}
+
+// PublicUsers public user endpoints
+var PublicUsers = EndpointGroup{
+	Get:            Endpoint{GET, "/users/%s"},
+	Followers:      Endpoint{GET, "/users/%s/followers"},
+	Following:      Endpoint{GET, "/users/%s/following"},
+	CheckFollowing: Endpoint{GET, "/users/%s/following/%s"},
+	Keys:           Endpoint{GET, "/users/%s/keys"},
+}
+
+// GitData git data endpoints
+var GitData = EndpointGroup{
+	Blob:    Endpoint{GET, "/repos/%s/%s/git/blobs/%s"},
+	Tree:    Endpoint{GET, "/repos/%s/%s/git/trees/%s"},
+	Metrics: Endpoint{GET, "/repos/%s/%s/git/gitee_metrics"},
+}
+
+// Activity event and subscription endpoints
+var Activity = EndpointGroup{
+	Events:               Endpoint{GET, "/users/%s/events"},
+	PublicEvents:         Endpoint{GET, "/users/%s/events/public"},
+	ReceivedEvents:       Endpoint{GET, "/users/%s/received_events"},
+	ReceivedPublicEvents: Endpoint{GET, "/users/%s/received_events/public"},
+	OrgEvents:            Endpoint{GET, "/orgs/%s/events"},
+	NetworkEvents:        Endpoint{GET, "/networks/%s/%s/events"},
+	List:                 Endpoint{GET, "/repos/%s/%s/events"},
+	Subscriptions:        Endpoint{GET, "/user/subscriptions"},
+	Subscription:         Endpoint{GET, "/user/subscriptions/%s/%s"},
+	StarPut:              Endpoint{PUT, "/user/subscriptions/%s/%s"},
+	StarDel:              Endpoint{DELETE, "/user/subscriptions/%s/%s"},
+	Subscribers:          Endpoint{GET, "/repos/%s/%s/subscribers"},
+	Get:                  Endpoint{GET, "/users/%s/subscriptions"},
 }

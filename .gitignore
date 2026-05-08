@@ -21,9 +21,12 @@ build
 .serverless
 .cache
 .omc
+.omx
 .claude
+.codex
 .mcp.json
 gt
 gt.exe
 .gocache
+openspec
 AGENTS.md

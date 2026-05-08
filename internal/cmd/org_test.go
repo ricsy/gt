@@ -14,8 +14,8 @@ func TestNewOrgCmd(t *testing.T) {
 	if cmd.Use != "org" {
 		t.Errorf("expected use 'org', got %s", cmd.Use)
 	}
-	if len(cmd.Commands()) != 2 {
-		t.Errorf("expected 2 subcommands, got %d", len(cmd.Commands()))
+	if len(cmd.Commands()) != 4 {
+		t.Errorf("expected 4 subcommands, got %d", len(cmd.Commands()))
 	}
 }
 

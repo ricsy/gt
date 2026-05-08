@@ -28,6 +28,37 @@ type Repository struct {
 	OpenIssuesCount int    `json:"open_issues_count"`
 }
 
+// Branch represents a repository branch.
+type Branch struct {
+	Name          string `json:"name"`
+	Commit        string `json:"commit"`
+	Protected     bool   `json:"protected"`
+	ProtectionURL string `json:"protection_url"`
+}
+
+// CompleteBranch represents a detailed repository branch.
+type CompleteBranch struct {
+	Name          string `json:"name"`
+	Commit        string `json:"commit"`
+	Links         string `json:"_links"`
+	Protected     bool   `json:"protected"`
+	ProtectionURL string `json:"protection_url"`
+}
+
+// ListBranchesOptions contains options for listing repository branches.
+type ListBranchesOptions struct {
+	Sort      string
+	Direction string
+	Page      int
+	PerPage   int
+}
+
+// CreateBranchOptions contains options for creating a repository branch.
+type CreateBranchOptions struct {
+	Refs       string `json:"refs"`
+	BranchName string `json:"branch_name"`
+}
+
 // CreateRepoOptions contains options for creating a repository
 type CreateRepoOptions struct {
 	Name        string `json:"name"`
@@ -57,4 +88,39 @@ type UpdateRepoOptions struct {
 	RebaseEnabled        *bool  `json:"rebase_enabled,omitempty"`
 	DefaultMergeMethod   string `json:"default_merge_method,omitempty"`
 	IssueTemplateSource  string `json:"issue_template_source,omitempty"`
+}
+
+// Collaborator represents a repository collaborator.
+type Collaborator struct {
+	ID    int64  `json:"id"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+}
+
+// CollaboratorPermission represents a collaborator's permission level.
+type CollaboratorPermission struct {
+	Permission string `json:"permission"`
+}
+
+// ForkRepository represents a forked repository.
+type ForkRepository struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+	Owner    struct {
+		ID    int64  `json:"id"`
+		Login string `json:"login"`
+		Name  string `json:"name"`
+	} `json:"owner"`
+	Fork        bool   `json:"fork"`
+	HTMLURL     string `json:"html_url"`
+	CloneURL    string `json:"clone_url"`
+	Description string `json:"description"`
+	StarCount   int    `json:"stargazers_count"`
+	ForksCount  int    `json:"forks_count"`
+}
+
+// ListForksOptions contains options for listing forks.
+type ListForksOptions struct {
+	Sort string `json:"sort,omitempty"`
 }

@@ -111,6 +111,14 @@ type UpdatePRRequest struct {
 	SecurityHole          bool   `json:"security_hole,omitempty"`
 }
 
+// ListPRCommentsOptions contains the optional parameters for ListPRComments
+type ListPRCommentsOptions struct {
+	Direction   string // asc, desc
+	CommentType string // diff_comment, pr_comment
+	Page        int
+	PerPage     int
+}
+
 // ListPRsOptions contains the optional parameters for ListPRs
 type ListPRsOptions struct {
 	State           string

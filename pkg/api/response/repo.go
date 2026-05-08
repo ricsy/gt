@@ -61,10 +61,24 @@ type CreateBranchOptions struct {
 
 // CreateRepoOptions contains options for creating a repository
 type CreateRepoOptions struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Private     bool   `json:"private"`
-	AutoInit    bool   `json:"auto_init"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+	Homepage           string `json:"homepage,omitempty"`
+	Private            bool   `json:"private"`
+	AutoInit           bool   `json:"auto_init"`
+	HasIssues          *bool  `json:"has_issues,omitempty"`
+	HasWiki            *bool  `json:"has_wiki,omitempty"`
+	CanComment         *bool  `json:"can_comment,omitempty"`
+	GitignoreTemplate  string `json:"gitignore_template,omitempty"`
+	LicenseTemplate    string `json:"license_template,omitempty"`
+	Namespace          string `json:"namespace,omitempty"`
+	Public             *bool  `json:"public,omitempty"`
+	Outsourced         *bool  `json:"outsourced,omitempty"`
+	ProjectCreator     string `json:"project_creator,omitempty"`
+	Members            string `json:"members,omitempty"`
+	TemplateApplyScope int    `json:"template_apply_scope,omitempty"`
+	Model              string `json:"model,omitempty"`
+	Enterprise         string `json:"enterprise,omitempty"`
 }
 
 // UpdateRepoOptions contains options for updating a repository

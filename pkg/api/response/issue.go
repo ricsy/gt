@@ -107,6 +107,14 @@ type ListIssuesOptions struct {
 	FinishedAt   string
 }
 
+// ListIssueCommentsOptions contains the optional parameters for ListIssueComments
+type ListIssueCommentsOptions struct {
+	Since   string
+	Page    int
+	PerPage int
+	Order   string // asc, desc
+}
+
 // CreateIssueRequest is the request body for creating an issue
 type CreateIssueRequest struct {
 	Title         string `json:"title"`

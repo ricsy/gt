@@ -87,6 +87,7 @@ type EndpointGroup struct {
 	ReceivedEvents          Endpoint
 	ReceivedPublicEvents    Endpoint
 	OrgEvents               Endpoint
+	UserOrgsEvents          Endpoint
 	NetworkEvents           Endpoint
 	Subscriptions           Endpoint
 	Subscription            Endpoint
@@ -115,6 +116,7 @@ var Branches = EndpointGroup{
 // Orgs Org endpoints
 var Orgs = EndpointGroup{
 	Get:                   Endpoint{GET, "/orgs/%s"},
+	Update:                Endpoint{PATCH, "/orgs/%s"},
 	Members:               Endpoint{GET, "/orgs/%s/members"},
 	Repos:                 Endpoint{GET, "/orgs/%s/repos"},
 	GetUserOrgsByUsername: Endpoint{GET, "/users/%s/orgs"},
@@ -166,8 +168,9 @@ var PRs = EndpointGroup{
 
 // PRComments PR comment endpoints
 var PRComments = EndpointGroup{
-	List: Endpoint{GET, "/repos/%s/%s/pulls/%d/comments"},
-	Get:  Endpoint{GET, "/repos/%s/%s/pulls/%d/comments/%d"},
+	List:   Endpoint{GET, "/repos/%s/%s/pulls/%d/comments"},
+	Get:    Endpoint{GET, "/repos/%s/%s/pulls/%d/comments/%d"},
+	Create: Endpoint{POST, "/repos/%s/%s/pulls/%d/comments"},
 }
 
 // PRCommits PR commit endpoints
@@ -406,6 +409,7 @@ var Activity = EndpointGroup{
 	ReceivedEvents:       Endpoint{GET, "/users/%s/received_events"},
 	ReceivedPublicEvents: Endpoint{GET, "/users/%s/received_events/public"},
 	OrgEvents:            Endpoint{GET, "/orgs/%s/events"},
+	UserOrgsEvents:       Endpoint{GET, "/users/%s/events/orgs/%s"},
 	NetworkEvents:        Endpoint{GET, "/networks/%s/%s/events"},
 	List:                 Endpoint{GET, "/repos/%s/%s/events"},
 	Subscriptions:        Endpoint{GET, "/user/subscriptions"},

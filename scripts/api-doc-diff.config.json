@@ -4,8 +4,12 @@
     "basePathPrefix": "/v5",
     "live": {
       "pageUrl": "https://help.gitee.com/openapi/v5",
-      "downloadSelector": ".download-button"
-    }
+      "downloadSelector": ".download-button",
+      "directUrl": "https://gitee.com/sdk/typescript-sdk-v5/raw/main/openapi-spec.json"
+    },
+    "ignoredParameters": [
+      "access_token"
+    ]
   },
   "go": {
     "extractor": "scripts/go-ast-extract.go",

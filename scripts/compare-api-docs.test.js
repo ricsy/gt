@@ -9,6 +9,7 @@ const {
   compareApiDocs,
   createDefaultConfig,
   formatFindings,
+  getLiveOpenApiUrl,
   loadConfig,
   normalizeGoPath,
   normalizeOpenApiPath,
@@ -55,6 +56,32 @@ test("collects OpenAPI operations with sorted parameters", () => {
         { in: "query", name: "state" },
       ],
       pathParams: ["owner", "repo"],
+    },
+  ]);
+});
+
+test("filters configured OpenAPI parameters that are handled outside request structs", () => {
+  const config = createDefaultConfig();
+  const spec = {
+    paths: {
+      "/v5/user": {
+        get: {
+          parameters: [
+            { name: "access_token", in: "query" },
+            { name: "page", in: "query" },
+          ],
+        },
+      },
+    },
+  };
+
+  assert.deepEqual(collectOpenApiOperations(spec, config), [
+    {
+      method: "GET",
+      normalizedPath: "/user",
+      originalPath: "/v5/user",
+      parameters: [{ in: "query", name: "page" }],
+      pathParams: [],
     },
   ]);
 });
@@ -127,6 +154,8 @@ test("default config keeps repository-specific values outside comparison logic",
   assert.equal(config.openapi.basePathPrefix, "/v5");
   assert.equal(config.openapi.live.pageUrl, "https://help.gitee.com/openapi/v5");
   assert.equal(config.openapi.live.downloadSelector, ".download-button");
+  assert.equal(config.openapi.live.directUrl, "https://gitee.com/sdk/typescript-sdk-v5/raw/main/openapi-spec.json");
+  assert.deepEqual(config.openapi.ignoredParameters, ["access_token"]);
   assert.equal(config.go.endpointFile, "pkg/api/endpoint.go");
   assert.equal(config.go.endpointGroupType, "EndpointGroup");
   assert.deepEqual(config.go.requestStructSuffixes, ["Options", "Request"]);
@@ -154,4 +183,10 @@ test("loadConfig merges project config over generic defaults", () => {
   assert.equal(config.go.endpointFile, "src/endpoints.go");
   assert.equal(config.go.endpointGroupType, "RouteGroup");
   assert.deepEqual(config.go.requestStructSuffixes, ["Options", "Request"]);
+});
+
+test("live OpenAPI URL prefers configured direct URL over page scraping", () => {
+  const config = createDefaultConfig();
+
+  assert.equal(getLiveOpenApiUrl("<html></html>", config), config.openapi.live.directUrl);
 });

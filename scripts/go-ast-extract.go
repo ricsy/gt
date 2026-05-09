@@ -84,7 +84,6 @@ func main() {
 	if err != nil {
 		exitErr(err)
 	}
-	result.Endpoints = endpoints
 
 	requestStructs, err := extractRequestStructs(fset, *root, cfg)
 	if err != nil {
@@ -92,10 +91,11 @@ func main() {
 	}
 	result.RequestStructs = requestStructs
 
-	directCalls, err := extractDirectCalls(fset, *root, cfg)
+	directEndpoints, directCalls, err := extractDirectCalls(fset, *root, cfg, endpoints)
 	if err != nil {
 		exitErr(err)
 	}
+	result.Endpoints = append(endpoints, directEndpoints...)
 	result.DirectCalls = directCalls
 
 	enc := json.NewEncoder(os.Stdout)
@@ -220,12 +220,19 @@ func extractRequestStructs(fset *token.FileSet, root string, cfg config) (map[st
 	return result, nil
 }
 
-func extractDirectCalls(fset *token.FileSet, root string, cfg config) ([]directCall, error) {
+type endpointRef struct {
+	Method string
+	Path   string
+}
+
+func extractDirectCalls(fset *token.FileSet, root string, cfg config, endpoints []endpoint) ([]endpoint, []directCall, error) {
 	files, err := expandGlobs(root, cfg.Go.APIGlobs)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	endpointByName := endpointIndex(endpoints)
+	var directEndpoints []endpoint
 	var calls []directCall
 	ignored := ignoredFiles(cfg.Go.IgnoreDirectCallFiles)
 	for _, path := range files {
@@ -235,31 +242,155 @@ func extractDirectCalls(fset *token.FileSet, root string, cfg config) ([]directC
 		}
 		file, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		ast.Inspect(file, func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
-			if !ok {
+
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Body == nil {
+				continue
+			}
+			env := map[string][]endpointRef{}
+			ast.Inspect(fn.Body, func(node ast.Node) bool {
+				switch value := node.(type) {
+				case *ast.AssignStmt:
+					recordAssignments(env, value.Lhs, value.Rhs, endpointByName)
+				case *ast.ValueSpec:
+					recordAssignments(env, identsToExprs(value.Names), value.Values, endpointByName)
+				case *ast.CallExpr:
+					extractDirectCall(fset, root, cfg, value, env, endpointByName, &directEndpoints, &calls)
+				}
 				return true
-			}
-			selector, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok || selector.Sel.Name != cfg.Go.DirectCallMethod {
-				return true
-			}
-			pos := fset.Position(call.Pos())
-			dc := directCall{File: rel(root, pos.Filename), Line: pos.Line}
-			if len(call.Args) > 0 {
-				dc.Method = exprLabel(call.Args[0])
-			}
-			if len(call.Args) > 1 {
-				dc.Path = exprLabel(call.Args[1])
-			}
-			calls = append(calls, dc)
-			return true
-		})
+			})
+		}
 	}
 
-	return calls, nil
+	return directEndpoints, calls, nil
+}
+
+func endpointIndex(endpoints []endpoint) map[string]endpointRef {
+	result := map[string]endpointRef{}
+	for _, endpoint := range endpoints {
+		result[endpoint.Group+"."+endpoint.Action] = endpointRef{
+			Method: endpoint.Method,
+			Path:   endpoint.Path,
+		}
+	}
+	return result
+}
+
+func extractDirectCall(fset *token.FileSet, root string, cfg config, call *ast.CallExpr, env map[string][]endpointRef, endpointByName map[string]endpointRef, directEndpoints *[]endpoint, calls *[]directCall) {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || selector.Sel.Name != cfg.Go.DirectCallMethod {
+		return
+	}
+
+	pos := fset.Position(call.Pos())
+	method := ""
+	if len(call.Args) > 0 {
+		method = exprLabel(call.Args[0])
+	}
+	var refs []endpointRef
+	if len(call.Args) > 1 {
+		refs = resolveEndpointRefs(call.Args[1], env, endpointByName)
+	}
+	if len(refs) > 0 && method != "" {
+		for _, ref := range refs {
+			resolvedMethod := method
+			if resolvedMethod == "" {
+				resolvedMethod = ref.Method
+			}
+			*directEndpoints = append(*directEndpoints, endpoint{
+				Group:  "DirectCall",
+				Action: rel(root, pos.Filename) + ":" + strconv.Itoa(pos.Line),
+				Method: resolvedMethod,
+				Path:   ref.Path,
+				File:   rel(root, pos.Filename),
+				Line:   pos.Line,
+			})
+		}
+		return
+	}
+
+	dc := directCall{File: rel(root, pos.Filename), Line: pos.Line, Method: method}
+	if len(call.Args) > 1 {
+		dc.Path = exprLabel(call.Args[1])
+	}
+	*calls = append(*calls, dc)
+}
+
+func identsToExprs(idents []*ast.Ident) []ast.Expr {
+	result := make([]ast.Expr, 0, len(idents))
+	for _, ident := range idents {
+		result = append(result, ident)
+	}
+	return result
+}
+
+func recordAssignments(env map[string][]endpointRef, lhs, rhs []ast.Expr, endpointByName map[string]endpointRef) {
+	for i, left := range lhs {
+		if i >= len(rhs) {
+			continue
+		}
+		ident, ok := left.(*ast.Ident)
+		if !ok {
+			continue
+		}
+		refs := resolveEndpointRefs(rhs[i], env, endpointByName)
+		if len(refs) == 0 {
+			continue
+		}
+		env[ident.Name] = appendEndpointRefs(env[ident.Name], refs...)
+	}
+}
+
+func resolveEndpointRefs(expr ast.Expr, env map[string][]endpointRef, endpointByName map[string]endpointRef) []endpointRef {
+	switch value := expr.(type) {
+	case *ast.Ident:
+		return env[value.Name]
+	case *ast.SelectorExpr:
+		if value.Sel.Name == "Path" {
+			return resolveEndpointRefs(value.X, env, endpointByName)
+		}
+		key := exprLabel(value)
+		if ref, ok := endpointByName[key]; ok {
+			return []endpointRef{ref}
+		}
+	case *ast.CallExpr:
+		selector, ok := value.Fun.(*ast.SelectorExpr)
+		if ok && selector.Sel.Name == "Build" {
+			return resolveEndpointRefs(selector.X, env, endpointByName)
+		}
+	case *ast.BinaryExpr:
+		if value.Op != token.ADD {
+			return nil
+		}
+		return appendEndpointRefs(
+			resolveEndpointRefs(value.X, env, endpointByName),
+			resolveEndpointRefs(value.Y, env, endpointByName)...,
+		)
+	}
+	return nil
+}
+
+func appendEndpointRefs(existing []endpointRef, refs ...endpointRef) []endpointRef {
+	seen := map[string]bool{}
+	for _, ref := range existing {
+		seen[ref.Method+" "+ref.Path] = true
+	}
+	result := append([]endpointRef{}, existing...)
+	for _, ref := range refs {
+		if ref.Path == "" {
+			continue
+		}
+		key := ref.Method + " " + ref.Path
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		result = append(result, ref)
+	}
+	return result
 }
 
 func expandGlobs(root string, patterns []string) ([]string, error) {

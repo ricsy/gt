@@ -15,7 +15,9 @@ function createDefaultConfig() {
       live: {
         pageUrl: "https://help.gitee.com/openapi/v5",
         downloadSelector: ".download-button",
+        directUrl: "https://gitee.com/sdk/typescript-sdk-v5/raw/main/openapi-spec.json",
       },
+      ignoredParameters: ["access_token"],
     },
     go: {
       extractor: "scripts/go-ast-extract.go",
@@ -68,7 +70,6 @@ function validateConfig(config) {
     ["openapi.localPath", config.openapi?.localPath],
     ["openapi.basePathPrefix", config.openapi?.basePathPrefix],
     ["openapi.live.pageUrl", config.openapi?.live?.pageUrl],
-    ["openapi.live.downloadSelector", config.openapi?.live?.downloadSelector],
     ["go.extractor", config.go?.extractor],
     ["go.endpointFile", config.go?.endpointFile],
     ["go.endpointGroupType", config.go?.endpointGroupType],
@@ -143,7 +144,7 @@ function collectOpenApiOperations(openApi, config = createDefaultConfig()) {
       }
       const operation = pathItem[methodName] || {};
       const { normalizedPath, params: pathParams } = normalizeOpenApiPath(originalPath, config);
-      const parameters = collectOperationParameters(openApi, commonParams, operation.parameters || []);
+      const parameters = collectOperationParameters(openApi, config, commonParams, operation.parameters || []);
       operations.push({
         method: methodName.toUpperCase(),
         normalizedPath,
@@ -156,15 +157,22 @@ function collectOpenApiOperations(openApi, config = createDefaultConfig()) {
   return operations;
 }
 
-function collectOperationParameters(openApi, ...parameterLists) {
+function collectOperationParameters(openApi, config, ...parameterLists) {
   const byKey = new Map();
+  const ignoredParameters = new Set(config.openapi.ignoredParameters || []);
   for (const list of parameterLists) {
     for (const parameter of list) {
       if (!parameter || !parameter.name) {
         continue;
       }
+      if (ignoredParameters.has(parameter.name)) {
+        continue;
+      }
       if (parameter.in === "body" && parameter.schema) {
         for (const name of schemaPropertyNames(openApi, parameter.schema)) {
+          if (ignoredParameters.has(name)) {
+            continue;
+          }
           byKey.set(`body:${name}`, { in: "body", name });
         }
         continue;
@@ -345,20 +353,7 @@ function loadOpenApiJson(filePath) {
 
 async function fetchOfficialOpenApiJson(config = createDefaultConfig()) {
   const pageUrl = config.openapi.live.pageUrl;
-  let pageResponse;
-  try {
-    pageResponse = await fetch(pageUrl);
-  } catch (error) {
-    throw new DownloadError(`Unable to fetch official OpenAPI page ${pageUrl}: ${error.message}`, error);
-  }
-  if (!pageResponse.ok) {
-    throw new DownloadError(`Official OpenAPI page returned HTTP ${pageResponse.status}: ${pageUrl}`);
-  }
-  const html = await pageResponse.text();
-  const downloadUrl = resolveDownloadButtonUrl(html, pageUrl, config.openapi.live.downloadSelector);
-  if (!downloadUrl) {
-    throw new DownloadError(`Unable to find .download-button target on ${pageUrl}`);
-  }
+  const downloadUrl = await getLiveOpenApiUrlFromNetwork(config);
 
   let downloadResponse;
   try {
@@ -378,6 +373,36 @@ async function fetchOfficialOpenApiJson(config = createDefaultConfig()) {
   } catch (error) {
     throw new DownloadError(`Official OpenAPI download did not return valid OpenAPI JSON: ${error.message}`, error);
   }
+}
+
+async function getLiveOpenApiUrlFromNetwork(config = createDefaultConfig()) {
+  if (config.openapi.live.directUrl) {
+    return config.openapi.live.directUrl;
+  }
+
+  const pageUrl = config.openapi.live.pageUrl;
+  let pageResponse;
+  try {
+    pageResponse = await fetch(pageUrl);
+  } catch (error) {
+    throw new DownloadError(`Unable to fetch official OpenAPI page ${pageUrl}: ${error.message}`, error);
+  }
+  if (!pageResponse.ok) {
+    throw new DownloadError(`Official OpenAPI page returned HTTP ${pageResponse.status}: ${pageUrl}`);
+  }
+  const html = await pageResponse.text();
+  const downloadUrl = getLiveOpenApiUrl(html, config);
+  if (!downloadUrl) {
+    throw new DownloadError(`Unable to find ${config.openapi.live.downloadSelector} target on ${pageUrl}`);
+  }
+  return downloadUrl;
+}
+
+function getLiveOpenApiUrl(html, config = createDefaultConfig()) {
+  if (config.openapi.live.directUrl) {
+    return config.openapi.live.directUrl;
+  }
+  return resolveDownloadButtonUrl(html, config.openapi.live.pageUrl, config.openapi.live.downloadSelector);
 }
 
 function resolveDownloadButtonUrl(html, baseUrl, selector = ".download-button") {
@@ -455,7 +480,7 @@ function helpText() {
     "Options:",
     "  --config <path>   Comparison config JSON (default: scripts/api-doc-diff.config.json)",
     "  --openapi <path>  Override the configured local OpenAPI JSON document",
-    "  --live            Fetch the configured official document via the configured download selector",
+    "  --live            Fetch the configured official document via direct URL or download selector",
     "  --json            Print findings as JSON",
     "  --root <path>     Repository root (default: current working directory)",
     "  -h, --help        Show this help",
@@ -528,6 +553,7 @@ module.exports = {
   fetchOfficialOpenApiJson,
   formatFindings,
   formatSummary,
+  getLiveOpenApiUrl,
   loadOpenApiJson,
   loadConfig,
   normalizeGoPath,

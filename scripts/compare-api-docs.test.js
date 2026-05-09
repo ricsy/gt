@@ -157,6 +157,10 @@ test("default config keeps repository-specific values outside comparison logic",
   assert.equal(config.openapi.live.directUrl, "https://gitee.com/sdk/typescript-sdk-v5/raw/main/openapi-spec.json");
   assert.deepEqual(config.openapi.ignoredParameters, ["access_token"]);
   assert.equal(config.go.endpointFile, "pkg/api/endpoint.go");
+  assert.deepEqual(config.go.endpointGlobs, ["pkg/api/endpoint.go", "pkg/api/openapi_coverage.go"]);
+  assert.equal(config.go.coverageEndpointFile, "pkg/api/openapi_coverage.go");
+  assert.equal(config.go.compatibilityOptionsFile, "pkg/api/response/openapi_compatibility.go");
+  assert.equal(config.go.compatibilityOptionsType, "OpenAPICompatibilityOptions");
   assert.equal(config.go.endpointGroupType, "EndpointGroup");
   assert.deepEqual(config.go.requestStructSuffixes, ["Options", "Request"]);
   assert.equal(config.go.parameterNameCase, "snake_case");

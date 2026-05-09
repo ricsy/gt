@@ -169,7 +169,7 @@ var PRs = EndpointGroup{
 // PRComments PR comment endpoints
 var PRComments = EndpointGroup{
 	List:   Endpoint{GET, "/repos/%s/%s/pulls/%d/comments"},
-	Get:    Endpoint{GET, "/repos/%s/%s/pulls/%d/comments/%d"},
+	Get:    Endpoint{GET, "/repos/%s/%s/pulls/comments/%d"},
 	Create: Endpoint{POST, "/repos/%s/%s/pulls/%d/comments"},
 }
 
@@ -257,10 +257,10 @@ var IssueLabels = EndpointGroup{
 // IssueComments Issue comments endpoints
 var IssueComments = EndpointGroup{
 	List:   Endpoint{GET, "/repos/%s/%s/issues/%s/comments"},
-	Get:    Endpoint{GET, "/repos/%s/%s/issues/%s/comments/%d"},
+	Get:    Endpoint{GET, "/repos/%s/%s/issues/comments/%d"},
 	Create: Endpoint{POST, "/repos/%s/%s/issues/%s/comments"},
-	Update: Endpoint{PATCH, "/repos/%s/%s/issues/%s/comments/%d"},
-	Delete: Endpoint{DELETE, "/repos/%s/%s/issues/%s/comments/%d"},
+	Update: Endpoint{PATCH, "/repos/%s/%s/issues/comments/%d"},
+	Delete: Endpoint{DELETE, "/repos/%s/%s/issues/comments/%d"},
 }
 
 // ProjectLabels Project labels endpoints
@@ -288,7 +288,7 @@ var Enterprises = EndpointGroup{
 	Update:        Endpoint{PUT, "/enterprises/%s/members/%s"},
 	Delete:        Endpoint{DELETE, "/enterprises/%s/members/%s"},
 	Repos:         Endpoint{GET, "/enterprises/%s/repos"},
-	PullRequests:  Endpoint{GET, "/enterprises/%s/pull_requests"},
+	PullRequests:  Endpoint{GET, "/enterprise/%s/pull_requests"},
 }
 
 // Emails Email endpoints

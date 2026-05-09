@@ -27,6 +27,7 @@ type config struct {
 
 type goConfig struct {
 	EndpointFile          string   `json:"endpointFile"`
+	EndpointGlobs         []string `json:"endpointGlobs"`
 	EndpointGroupType     string   `json:"endpointGroupType"`
 	ResponseGlobs         []string `json:"responseGlobs"`
 	APIGlobs              []string `json:"apiGlobs"`
@@ -117,59 +118,100 @@ func readConfig(path string) (config, error) {
 }
 
 func extractEndpoints(fset *token.FileSet, root string, cfg config) ([]endpoint, error) {
-	path := filepath.Join(root, filepath.FromSlash(cfg.Go.EndpointFile))
-	file, err := parser.ParseFile(fset, path, nil, 0)
+	patterns := cfg.Go.EndpointGlobs
+	if len(patterns) == 0 && cfg.Go.EndpointFile != "" {
+		patterns = []string{cfg.Go.EndpointFile}
+	}
+	files, err := expandGlobs(root, patterns)
 	if err != nil {
 		return nil, err
 	}
 
 	var endpoints []endpoint
-	for _, decl := range file.Decls {
-		gen, ok := decl.(*ast.GenDecl)
-		if !ok || gen.Tok != token.VAR {
-			continue
+	for _, path := range files {
+		file, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return nil, err
 		}
-		for _, spec := range gen.Specs {
-			valueSpec, ok := spec.(*ast.ValueSpec)
-			if !ok {
+		for _, decl := range file.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.VAR {
 				continue
 			}
-			for i, value := range valueSpec.Values {
-				if i >= len(valueSpec.Names) {
+			for _, spec := range gen.Specs {
+				valueSpec, ok := spec.(*ast.ValueSpec)
+				if !ok {
 					continue
 				}
-				lit, ok := value.(*ast.CompositeLit)
-				if !ok || !isEndpointGroup(lit.Type, cfg.Go.EndpointGroupType) {
-					continue
-				}
-				group := valueSpec.Names[i].Name
-				for _, elt := range lit.Elts {
-					kv, ok := elt.(*ast.KeyValueExpr)
+				for i, value := range valueSpec.Values {
+					if i >= len(valueSpec.Names) {
+						continue
+					}
+					lit, ok := value.(*ast.CompositeLit)
 					if !ok {
 						continue
 					}
-					actionIdent, ok := kv.Key.(*ast.Ident)
-					if !ok {
+					group := valueSpec.Names[i].Name
+					if isEndpointGroup(lit.Type, cfg.Go.EndpointGroupType) {
+						endpoints = append(endpoints, endpointGroupLiterals(fset, root, group, lit)...)
 						continue
 					}
-					method, path, ok := endpointLiteral(kv.Value)
-					if !ok {
-						continue
+					if isEndpointArray(lit.Type) {
+						endpoints = append(endpoints, endpointArrayLiterals(fset, root, group, lit)...)
 					}
-					pos := fset.Position(kv.Pos())
-					endpoints = append(endpoints, endpoint{
-						Group:  group,
-						Action: actionIdent.Name,
-						Method: method,
-						Path:   path,
-						File:   rel(root, pos.Filename),
-						Line:   pos.Line,
-					})
 				}
 			}
 		}
 	}
 	return endpoints, nil
+}
+
+func endpointGroupLiterals(fset *token.FileSet, root, group string, lit *ast.CompositeLit) []endpoint {
+	var endpoints []endpoint
+	for _, elt := range lit.Elts {
+		kv, ok := elt.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		actionIdent, ok := kv.Key.(*ast.Ident)
+		if !ok {
+			continue
+		}
+		method, path, ok := endpointLiteral(kv.Value)
+		if !ok {
+			continue
+		}
+		pos := fset.Position(kv.Pos())
+		endpoints = append(endpoints, endpoint{
+			Group:  group,
+			Action: actionIdent.Name,
+			Method: method,
+			Path:   path,
+			File:   rel(root, pos.Filename),
+			Line:   pos.Line,
+		})
+	}
+	return endpoints
+}
+
+func endpointArrayLiterals(fset *token.FileSet, root, group string, lit *ast.CompositeLit) []endpoint {
+	var endpoints []endpoint
+	for i, elt := range lit.Elts {
+		method, path, ok := endpointLiteral(elt)
+		if !ok {
+			continue
+		}
+		pos := fset.Position(elt.Pos())
+		endpoints = append(endpoints, endpoint{
+			Group:  group,
+			Action: strconv.Itoa(i),
+			Method: method,
+			Path:   path,
+			File:   rel(root, pos.Filename),
+			Line:   pos.Line,
+		})
+	}
+	return endpoints
 }
 
 func extractRequestStructs(fset *token.FileSet, root string, cfg config) (map[string]requestStruct, error) {
@@ -423,6 +465,15 @@ func ignoredFiles(paths []string) map[string]bool {
 func isEndpointGroup(expr ast.Expr, typeName string) bool {
 	ident, ok := expr.(*ast.Ident)
 	return ok && ident.Name == typeName
+}
+
+func isEndpointArray(expr ast.Expr) bool {
+	array, ok := expr.(*ast.ArrayType)
+	if !ok {
+		return false
+	}
+	ident, ok := array.Elt.(*ast.Ident)
+	return ok && ident.Name == "Endpoint"
 }
 
 func endpointLiteral(expr ast.Expr) (string, string, bool) {

@@ -25,6 +25,10 @@ function createDefaultConfig() {
       endpointGroupType: "EndpointGroup",
       responseGlobs: ["pkg/api/response/*.go"],
       apiGlobs: ["pkg/api/*.go"],
+      endpointGlobs: ["pkg/api/endpoint.go", "pkg/api/openapi_coverage.go"],
+      coverageEndpointFile: "pkg/api/openapi_coverage.go",
+      compatibilityOptionsFile: "pkg/api/response/openapi_compatibility.go",
+      compatibilityOptionsType: "OpenAPICompatibilityOptions",
       requestStructSuffixes: ["Options", "Request"],
       parameterTags: ["url", "form", "query", "json"],
       parameterNameCase: "snake_case",
@@ -71,7 +75,6 @@ function validateConfig(config) {
     ["openapi.basePathPrefix", config.openapi?.basePathPrefix],
     ["openapi.live.pageUrl", config.openapi?.live?.pageUrl],
     ["go.extractor", config.go?.extractor],
-    ["go.endpointFile", config.go?.endpointFile],
     ["go.endpointGroupType", config.go?.endpointGroupType],
     ["go.directCallMethod", config.go?.directCallMethod],
   ];
@@ -83,6 +86,7 @@ function validateConfig(config) {
   const requiredArrays = [
     ["go.responseGlobs", config.go?.responseGlobs],
     ["go.apiGlobs", config.go?.apiGlobs],
+    ["go.endpointGlobs", config.go?.endpointGlobs],
     ["go.requestStructSuffixes", config.go?.requestStructSuffixes],
     ["go.parameterTags", config.go?.parameterTags],
   ];

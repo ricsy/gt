@@ -14,6 +14,13 @@
   "go": {
     "extractor": "scripts/go-ast-extract.go",
     "endpointFile": "pkg/api/endpoint.go",
+    "endpointGlobs": [
+      "pkg/api/endpoint.go",
+      "pkg/api/openapi_coverage.go"
+    ],
+    "coverageEndpointFile": "pkg/api/openapi_coverage.go",
+    "compatibilityOptionsFile": "pkg/api/response/openapi_compatibility.go",
+    "compatibilityOptionsType": "OpenAPICompatibilityOptions",
     "endpointGroupType": "EndpointGroup",
     "responseGlobs": [
       "pkg/api/response/*.go"

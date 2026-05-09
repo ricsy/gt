@@ -78,7 +78,7 @@ func buildPRQuery(opts ListPRsOptions) string {
 // GetPR gets a single pull request
 func (c *Client) GetPR(owner, repo string, number int) (*PullRequest, error) {
 	var pr PullRequest
-	err := c.DoFromEndpoint(PRs.List, []interface{}{owner, repo, number}, nil, &pr)
+	err := c.DoFromEndpoint(PRs.Get, []interface{}{owner, repo, number}, nil, &pr)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (c *Client) ListPRComments(owner, repo string, number int) ([]response.Pull
 // GetPRComment gets a single comment on a pull request
 func (c *Client) GetPRComment(owner, repo string, number, commentID int) (*response.PullRequestComment, error) {
 	var comment response.PullRequestComment
-	err := c.DoFromEndpoint(PRComments.Get, []interface{}{owner, repo, number, commentID}, nil, &comment)
+	err := c.DoFromEndpoint(PRComments.Get, []interface{}{owner, repo, commentID}, nil, &comment)
 	if err != nil {
 		return nil, err
 	}

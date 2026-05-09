@@ -21,7 +21,10 @@
     "lint:goreleaser": "goreleaser check",
     "release": "node scripts/release.js",
     "release:local": "goreleaser release --clean",
-    "release:beta": "goreleaser release --clean --snapshot"
+    "release:beta": "goreleaser release --clean --snapshot",
+    "api:diff": "node scripts/compare-api-docs.js",
+    "api:diff:live": "node scripts/compare-api-docs.js --live",
+    "test:api-docs": "node --test scripts/compare-api-docs.test.js"
   },
   "devDependencies": {
     "github-actionlint": "^1.7.12",

@@ -1,0 +1,36 @@
+{
+  "openapi": {
+    "localPath": "data/api-1.json",
+    "basePathPrefix": "/v5",
+    "live": {
+      "pageUrl": "https://help.gitee.com/openapi/v5",
+      "downloadSelector": ".download-button"
+    }
+  },
+  "go": {
+    "extractor": "scripts/go-ast-extract.go",
+    "endpointFile": "pkg/api/endpoint.go",
+    "endpointGroupType": "EndpointGroup",
+    "responseGlobs": [
+      "pkg/api/response/*.go"
+    ],
+    "apiGlobs": [
+      "pkg/api/*.go"
+    ],
+    "requestStructSuffixes": [
+      "Options",
+      "Request"
+    ],
+    "parameterTags": [
+      "url",
+      "form",
+      "query",
+      "json"
+    ],
+    "parameterNameCase": "snake_case",
+    "directCallMethod": "Do",
+    "ignoreDirectCallFiles": [
+      "pkg/api/client.go"
+    ]
+  }
+}

@@ -49,3 +49,28 @@ export GITEE_TOKEN="your_token_here"
 ```bash
 gt auth login
 ```
+
+## Codex 插件
+
+仓库内置了一个 Codex 插件，插件目录位于 `plugins/gt`，marketplace 配置位于
+`.agents/plugins/marketplace.json`。
+
+从 GitHub 仓库来源安装：
+
+```bash
+codex plugin marketplace add ricsy/gt
+codex plugin add gitee@ricsy-curated
+```
+
+卸载插件：
+
+```bash
+codex plugin remove gitee@ricsy-curated
+```
+
+查看已加载的 marketplace 和插件：
+
+```bash
+codex plugin marketplace list --json
+codex plugin list --json
+```

@@ -104,7 +104,8 @@ func (c *Client) CheckSubscription(owner, repo string) error {
 
 // WatchRepo watches a repository.
 func (c *Client) WatchRepo(owner, repo string) error {
-	return c.DoFromEndpoint(Activity.StarPut, []interface{}{owner, repo}, nil, nil)
+	req := map[string]string{"watch_type": "watching"}
+	return c.DoFromEndpoint(Activity.StarPut, []interface{}{owner, repo}, req, nil)
 }
 
 // UnwatchRepo unwatches a repository.

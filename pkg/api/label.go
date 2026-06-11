@@ -92,7 +92,7 @@ func (c *Client) DeleteAllIssueLabels(owner, repo, number string) error {
 
 // DeleteIssueLabel deletes a specific label from an issue
 func (c *Client) DeleteIssueLabel(owner, repo, number, name string) error {
-	return c.DoFromEndpoint(IssueLabels.Delete, []interface{}{owner, repo, number, name}, nil, nil)
+	return c.DoFromEndpoint(IssueLabels.Remove, []interface{}{owner, repo, number, name}, nil, nil)
 }
 
 // ListProjectLabels lists project labels for a repo

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -243,8 +244,13 @@ func gistCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	files, err := parseGistFiles(gistFiles)
+	if err != nil {
+		return err
+	}
+
 	gist, err := client.CreateGist(api.CreateGistOptions{
-		Files:       gistFiles,
+		Files:       files,
 		Description: gistDescription,
 		Public:      gistPublic,
 	})
@@ -268,7 +274,11 @@ func gistUpdate(cmd *cobra.Command, args []string) error {
 		opts.Description = gistDescription
 	}
 	if cmd.Flags().Changed("files") {
-		opts.Files = gistFiles
+		files, err := parseGistFiles(gistFiles)
+		if err != nil {
+			return err
+		}
+		opts.Files = files
 	}
 
 	gist, err := client.UpdateGist(id, opts)
@@ -374,19 +384,17 @@ func gistCommits(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	gists, err := client.ListGistCommits(id)
+	gist, err := client.ListGistCommits(id)
 	if err != nil {
 		return fmt.Errorf("failed to list gist commits: %w", err)
 	}
 
-	if len(gists) == 0 {
+	if gist == nil || gist.History == nil {
 		fmt.Println("No commits found")
 		return nil
 	}
 
-	for _, g := range gists {
-		fmt.Printf("%s\n", g.ID)
-	}
+	fmt.Printf("%v\n", gist.History)
 	return nil
 }
 
@@ -500,4 +508,16 @@ func gistCommentDelete(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Comment %d deleted\n", commentID)
 	return nil
+}
+
+// parseGistFiles 将 CLI 传入的 JSON 文本解析为 API 需要的 files 对象。
+func parseGistFiles(raw string) (map[string]map[string]string, error) {
+	var files map[string]map[string]string
+	if err := json.Unmarshal([]byte(raw), &files); err != nil {
+		return nil, fmt.Errorf("invalid --files JSON: %w", err)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("invalid --files JSON: at least one file is required")
+	}
+	return files, nil
 }

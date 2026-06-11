@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT"
+  short_description: "Route Gitee work to the right gt workflow"
+  default_prompt: "Use $gt to choose the right GT workflow for Gitee operations."

@@ -89,5 +89,9 @@ func buildSearchQuery(qKey, qVal, sort, order string, page, perPage int, kvPairs
 	if perPage > 0 {
 		params = append(params, "per_page", strconv.Itoa(perPage))
 	}
-	return util.BuildQuery(params...)
+	query := util.BuildQuery(params...)
+	if query == "" {
+		return ""
+	}
+	return "?" + query
 }

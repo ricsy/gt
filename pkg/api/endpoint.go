@@ -251,6 +251,7 @@ var IssueLabels = EndpointGroup{
 	List:    Endpoint{GET, "/repos/%s/%s/issues/%s/labels"},
 	Create:  Endpoint{POST, "/repos/%s/%s/issues/%s/labels"},
 	Replace: Endpoint{PUT, "/repos/%s/%s/issues/%s/labels"},
+	Remove:  Endpoint{DELETE, "/repos/%s/%s/issues/%s/labels/%s"},
 	Delete:  Endpoint{DELETE, "/repos/%s/%s/issues/%s/labels"},
 }
 

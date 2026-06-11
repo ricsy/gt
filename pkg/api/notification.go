@@ -1,7 +1,10 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/ricsy/gt/pkg/api/response"
+	"github.com/ricsy/gt/pkg/util"
 )
 
 // ListRepoNotificationsOptions is an alias for response.ListRepoNotificationsOptions
@@ -15,6 +18,9 @@ type ListMessagesOptions = response.ListMessagesOptions
 
 // MarkNotificationsReadOptions is an alias for response.MarkNotificationsReadOptions
 type MarkNotificationsReadOptions = response.MarkNotificationsReadOptions
+
+// MarkMessagesReadOptions is an alias for response.MarkMessagesReadOptions
+type MarkMessagesReadOptions = response.MarkMessagesReadOptions
 
 // CreateMessageOptions is an alias for response.CreateMessageOptions
 type CreateMessageOptions = response.CreateMessageOptions
@@ -67,7 +73,11 @@ func (c *Client) MarkNotificationRead(id string) error {
 // GetNotificationCount gets notification count
 func (c *Client) GetNotificationCount(unread *bool) (*response.UserNotificationCount, error) {
 	var result response.UserNotificationCount
-	err := c.DoFromEndpoint(NotificationCount.Get, nil, unread, &result)
+	path := NotificationCount.Get.Build()
+	if unread != nil {
+		path += "?" + util.BuildQuery("unread", strconv.FormatBool(*unread))
+	}
+	err := c.Do(string(NotificationCount.Get.Method), path, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -94,9 +104,9 @@ func (c *Client) CreateMessage(opts response.CreateMessageOptions) (*response.Us
 	return &result, nil
 }
 
-// MarkAllMessagesRead marks all messages as read
-func (c *Client) MarkAllMessagesRead() error {
-	return c.DoFromEndpoint(Messages.Update, nil, nil, nil)
+// MarkAllMessagesRead marks all or selected messages as read
+func (c *Client) MarkAllMessagesRead(opts response.MarkMessagesReadOptions) error {
+	return c.DoFromEndpoint(Messages.Update, nil, opts, nil)
 }
 
 // GetMessage gets a single message

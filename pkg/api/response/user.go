@@ -55,10 +55,10 @@ type BotInfo struct {
 
 // UpdateUserOptions contains options for updating the authenticated user.
 type UpdateUserOptions struct {
-	Name  string `json:"name,omitempty"`
-	Blog  string `json:"blog,omitempty"`
-	Weibo string `json:"weibo,omitempty"`
-	Bio   string `json:"bio,omitempty"`
+	Name  *string `json:"name,omitempty"`
+	Blog  *string `json:"blog,omitempty"`
+	Weibo *string `json:"weibo,omitempty"`
+	Bio   *string `json:"bio,omitempty"`
 }
 
 // ListUsersOptions contains pagination options for user list endpoints.
@@ -85,9 +85,8 @@ type SSHKey struct {
 
 // SSHKeyBasic represents basic SSH key info (from GET /users/{username}/keys)
 type SSHKeyBasic struct {
-	ID    int64  `json:"id"`
-	URL   string `json:"url"`
-	Title string `json:"title"`
+	ID  int64  `json:"id"`
+	Key string `json:"key"`
 }
 
 // UserInfo represents public user profile from GET /users/{username}

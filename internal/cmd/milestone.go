@@ -87,6 +87,7 @@ func init() {
 	_ = milestoneCreateCmd.MarkFlagRequired("repo")
 	_ = milestoneCreateCmd.MarkFlagRequired("owner")
 	_ = milestoneCreateCmd.MarkFlagRequired("title")
+	_ = milestoneCreateCmd.MarkFlagRequired("due_on")
 
 	milestoneUpdateCmd.Flags().StringVarP(&milestoneRepo, "repo", "r", "", "Repository name (required)")
 	milestoneUpdateCmd.Flags().StringVarP(&milestoneOwner, "owner", "o", "", "Owner name (required)")
@@ -189,11 +190,28 @@ func milestoneUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Gitee update API still expects title/due_on to be present.
+	// When users only change a subset of fields, hydrate required values from the current milestone.
+	current, err := client.GetMilestone(milestoneOwner, milestoneRepo, number)
+	if err != nil {
+		return fmt.Errorf("failed to load current milestone: %w", err)
+	}
+
+	title := milestoneTitle
+	if title == "" {
+		title = current.Title
+	}
+
+	dueOn := milestoneDueOn
+	if dueOn == "" {
+		dueOn = current.DueOn
+	}
+
 	milestone, err := client.UpdateMilestone(milestoneOwner, milestoneRepo, number, api.UpdateMilestoneOptions{
-		Title:       milestoneTitle,
+		Title:       title,
 		Description: milestoneDesc,
 		State:       milestoneState,
-		DueOn:       milestoneDueOn,
+		DueOn:       dueOn,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update milestone: %w", err)

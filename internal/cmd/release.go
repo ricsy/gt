@@ -31,7 +31,7 @@ func newReleaseCmd() *cobra.Command {
 			}
 
 			for _, r := range releases {
-				cmd.Printf("%s - %s (%s)\n", r.TagName, r.Name, r.PublishedAt)
+				cmd.Printf("%s - %s (%s)\n", r.TagName, r.Name, r.CreatedAt)
 			}
 			return nil
 		},
@@ -59,7 +59,7 @@ func newReleaseCmd() *cobra.Command {
 				return err
 			}
 
-			cmd.Printf("Tag: %s\nName: %s\nBody:\n%s\nURL: %s\n", release.TagName, release.Name, release.Body, release.HtmlUrl)
+			cmd.Printf("Tag: %s\nName: %s\nTarget: %s\nPrerelease: %t\nBody:\n%s\n", release.TagName, release.Name, release.TargetCommitish, release.Prerelease, release.Body)
 			return nil
 		},
 	}
@@ -101,7 +101,7 @@ func newReleaseCmd() *cobra.Command {
 				return err
 			}
 
-			cmd.Printf("Created release: %s\nURL: %s\n", release.TagName, release.HtmlUrl)
+			cmd.Printf("Created release: %s\n", release.TagName)
 			return nil
 		},
 	}

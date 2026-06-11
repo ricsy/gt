@@ -42,4 +42,22 @@ func TestEnterpriseCommandFlags(t *testing.T) {
 	if enterprisePRCmd.Flags().Lookup("state") == nil {
 		t.Error("expected --state flag")
 	}
+	if enterprisePRCmd.Flags().Lookup("issue-number") == nil {
+		t.Error("expected --issue-number flag")
+	}
+	if enterprisePRCmd.Flags().Lookup("head") == nil {
+		t.Error("expected --head flag")
+	}
+	if enterprisePRCmd.Flags().Lookup("base") == nil {
+		t.Error("expected --base flag")
+	}
+	if enterprisePRCmd.Flags().Lookup("since") == nil {
+		t.Error("expected --since flag")
+	}
+	if enterprisePRCmd.Flags().Lookup("program-id") == nil {
+		t.Error("expected --program-id flag")
+	}
+	if enterprisePRCmd.Flags().Lookup("milestone-number") == nil {
+		t.Error("expected --milestone-number flag")
+	}
 }

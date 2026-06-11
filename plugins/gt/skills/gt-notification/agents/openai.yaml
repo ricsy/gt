@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT Notify"
+  short_description: "Operate notifications, gists, user, org, and activity"
+  default_prompt: "Use $gt-notification for notifications, gists, and user-facing Gitee workflows through gt."

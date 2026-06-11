@@ -138,7 +138,7 @@ func issueList(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, issue := range issues {
-		fmt.Printf("#%d [%s] %s (by %s)\n", issue.Number, issue.State, issue.Title, issue.User.Login)
+		fmt.Printf("#%s [%s] %s (by %s)\n", issue.Number, issue.State, issue.Title, issue.User.Login)
 	}
 	return nil
 }
@@ -156,7 +156,7 @@ func issueView(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get issue: %w", err)
 	}
 
-	fmt.Printf("#%d %s\n", issue.Number, issue.Title)
+	fmt.Printf("#%s %s\n", issue.Number, issue.Title)
 	fmt.Printf("State: %s | Comments: %d\n", issue.State, issue.Comments)
 	fmt.Printf("Author: %s | Created: %s\n", issue.User.Login, issue.CreatedAt)
 	fmt.Println("\n--- Body ---")
@@ -190,7 +190,7 @@ func issueCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create issue: %w", err)
 	}
 
-	fmt.Printf("Issue created successfully: #%d %s\n", issue.Number, issue.Title)
+	fmt.Printf("Issue created successfully: #%s %s\n", issue.Number, issue.Title)
 	fmt.Printf("URL: %s\n", issue.HTMLURL)
 	return nil
 }
@@ -208,7 +208,7 @@ func issueState(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to update issue state: %w", err)
 	}
 
-	fmt.Printf("Issue #%d state set to %s\n", issue.Number, issue.State)
+	fmt.Printf("Issue #%s state set to %s\n", issue.Number, issue.State)
 	return nil
 }
 

@@ -16,8 +16,10 @@ var (
 	notificationSince         string
 	notificationBefore        string
 	notificationIDs           string
+	notificationPage          int
+	notificationPerPage       int
 	notificationMessageID     string
-	notificationUserID        int64
+	notificationUsername      string
 	notificationContent       string
 )
 
@@ -137,6 +139,9 @@ func init() {
 	notificationListCmd.Flags().StringVar(&notificationType, "type", "", "Filter by type: all, event, referer")
 	notificationListCmd.Flags().StringVar(&notificationSince, "since", "", "Notifications after this time (ISO 8601)")
 	notificationListCmd.Flags().StringVar(&notificationBefore, "before", "", "Notifications before this time (ISO 8601)")
+	notificationListCmd.Flags().StringVar(&notificationIDs, "ids", "", "Filter by notification IDs (comma-separated)")
+	notificationListCmd.Flags().IntVar(&notificationPage, "page", 0, "Page number")
+	notificationListCmd.Flags().IntVar(&notificationPerPage, "per-page", 0, "Items per page (max 100)")
 	_ = notificationListCmd.MarkFlagRequired("repo")
 	_ = notificationListCmd.MarkFlagRequired("owner")
 
@@ -151,6 +156,9 @@ func init() {
 	threadListCmd.Flags().StringVar(&notificationType, "type", "", "Filter by type: all, event, referer")
 	threadListCmd.Flags().StringVar(&notificationSince, "since", "", "Notifications after this time (ISO 8601)")
 	threadListCmd.Flags().StringVar(&notificationBefore, "before", "", "Notifications before this time (ISO 8601)")
+	threadListCmd.Flags().StringVar(&notificationIDs, "ids", "", "Filter by notification IDs (comma-separated)")
+	threadListCmd.Flags().IntVar(&notificationPage, "page", 0, "Page number")
+	threadListCmd.Flags().IntVar(&notificationPerPage, "per-page", 0, "Items per page (max 100)")
 
 	threadMarkAllReadCmd.Flags().StringVar(&notificationIDs, "ids", "", "Specific notification IDs to mark (comma-separated)")
 
@@ -158,14 +166,21 @@ func init() {
 
 	threadMarkReadCmd.Flags().StringVar(&notificationMessageID, "id", "", "Notification ID")
 
+	countCmd.Flags().BoolVar(&notificationUnread, "unread", false, "Only count unread notifications and messages")
+
 	messageListCmd.Flags().BoolVar(&notificationUnread, "unread", false, "Only show unread messages")
 	messageListCmd.Flags().StringVar(&notificationSince, "since", "", "Messages after this time (ISO 8601)")
 	messageListCmd.Flags().StringVar(&notificationBefore, "before", "", "Messages before this time (ISO 8601)")
+	messageListCmd.Flags().StringVar(&notificationIDs, "ids", "", "Filter by message IDs (comma-separated)")
+	messageListCmd.Flags().IntVar(&notificationPage, "page", 0, "Page number")
+	messageListCmd.Flags().IntVar(&notificationPerPage, "per-page", 0, "Items per page (max 100)")
 
-	messageCreateCmd.Flags().Int64Var(&notificationUserID, "user-id", 0, "User ID to send message to (required)")
+	messageCreateCmd.Flags().StringVar(&notificationUsername, "username", "", "Recipient username (required)")
 	messageCreateCmd.Flags().StringVarP(&notificationContent, "content", "c", "", "Message content (required)")
-	_ = messageCreateCmd.MarkFlagRequired("user-id")
+	_ = messageCreateCmd.MarkFlagRequired("username")
 	_ = messageCreateCmd.MarkFlagRequired("content")
+
+	messageMarkAllReadCmd.Flags().StringVar(&notificationIDs, "ids", "", "Specific message IDs to mark (comma-separated)")
 
 	messageViewCmd.Flags().StringVar(&notificationMessageID, "id", "", "Message ID")
 
@@ -179,9 +194,12 @@ func repoNotificationList(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := api.ListRepoNotificationsOptions{
-		Type:   notificationType,
-		Since:  notificationSince,
-		Before: notificationBefore,
+		Type:    notificationType,
+		Since:   notificationSince,
+		Before:  notificationBefore,
+		IDs:     notificationIDs,
+		Page:    notificationPage,
+		PerPage: notificationPerPage,
 	}
 	if notificationUnread {
 		opts.Unread = &notificationUnread
@@ -237,9 +255,12 @@ func threadList(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := api.ListNotificationsOptions{
-		Type:   notificationType,
-		Since:  notificationSince,
-		Before: notificationBefore,
+		Type:    notificationType,
+		Since:   notificationSince,
+		Before:  notificationBefore,
+		IDs:     notificationIDs,
+		Page:    notificationPage,
+		PerPage: notificationPerPage,
 	}
 	if notificationUnread {
 		opts.Unread = &notificationUnread
@@ -365,8 +386,11 @@ func messageList(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := api.ListMessagesOptions{
-		Since:  notificationSince,
-		Before: notificationBefore,
+		Since:   notificationSince,
+		Before:  notificationBefore,
+		IDs:     notificationIDs,
+		Page:    notificationPage,
+		PerPage: notificationPerPage,
 	}
 	if notificationUnread {
 		opts.Unread = &notificationUnread
@@ -400,8 +424,8 @@ func messageCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	msg, err := client.CreateMessage(api.CreateMessageOptions{
-		UserID:  notificationUserID,
-		Content: notificationContent,
+		Username: notificationUsername,
+		Content:  notificationContent,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create message: %w", err)
@@ -417,7 +441,9 @@ func messageMarkAllRead(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = client.MarkAllMessagesRead()
+	err = client.MarkAllMessagesRead(api.MarkMessagesReadOptions{
+		IDs: notificationIDs,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to mark all messages as read: %w", err)
 	}

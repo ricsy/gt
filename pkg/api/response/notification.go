@@ -100,8 +100,13 @@ type MarkNotificationsReadOptions struct {
 	IDs string `json:"ids,omitempty"`
 }
 
+// MarkMessagesReadOptions contains options for marking messages as read
+type MarkMessagesReadOptions struct {
+	IDs string `json:"ids,omitempty"`
+}
+
 // CreateMessageOptions contains options for creating a message
 type CreateMessageOptions struct {
-	UserID  int64  `json:"user_id"`
-	Content string `json:"content"`
+	Username string `json:"username"`
+	Content  string `json:"content"`
 }

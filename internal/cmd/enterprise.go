@@ -23,9 +23,15 @@ var (
 	enterpriseDirect      bool
 	enterprisePRState     string
 	enterprisePRRepo      string
+	enterprisePRIssue     string
+	enterprisePRHead      string
+	enterprisePRBase      string
+	enterprisePRSince     string
 	enterprisePRLabels    string
 	enterprisePRSort      string
 	enterprisePRDirection string
+	enterprisePRProgramID int
+	enterprisePRMilestone int
 )
 
 var enterpriseCmd = &cobra.Command{
@@ -139,9 +145,15 @@ func init() {
 
 	enterprisePRCmd.Flags().StringVar(&enterprisePRState, "state", "", "Pull request state: open, closed, merged, all")
 	enterprisePRCmd.Flags().StringVar(&enterprisePRRepo, "repo", "", "Repository path")
+	enterprisePRCmd.Flags().StringVar(&enterprisePRIssue, "issue-number", "", "Issue number")
+	enterprisePRCmd.Flags().StringVar(&enterprisePRHead, "head", "", "Source branch or username:branch")
+	enterprisePRCmd.Flags().StringVar(&enterprisePRBase, "base", "", "Target branch")
+	enterprisePRCmd.Flags().StringVar(&enterprisePRSince, "since", "", "Updated after this time (ISO 8601)")
 	enterprisePRCmd.Flags().StringVar(&enterprisePRLabels, "labels", "", "Comma-separated labels")
 	enterprisePRCmd.Flags().StringVar(&enterprisePRSort, "sort", "", "Sort field")
 	enterprisePRCmd.Flags().StringVar(&enterprisePRDirection, "direction", "", "Sort direction: asc or desc")
+	enterprisePRCmd.Flags().IntVar(&enterprisePRProgramID, "program-id", 0, "Program ID")
+	enterprisePRCmd.Flags().IntVar(&enterprisePRMilestone, "milestone-number", 0, "Milestone number")
 }
 
 func addEnterprisePaginationFlags(cmd *cobra.Command) {
@@ -313,13 +325,19 @@ func enterprisePRList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	prs, err := client.ListEnterprisePullRequests(args[0], api.ListEnterprisePullRequestsOptions{
-		State:     enterprisePRState,
-		Repo:      enterprisePRRepo,
-		Labels:    enterprisePRLabels,
-		Sort:      enterprisePRSort,
-		Direction: enterprisePRDirection,
-		Page:      enterprisePage,
-		PerPage:   enterprisePerPage,
+		IssueNumber:     enterprisePRIssue,
+		Repo:            enterprisePRRepo,
+		ProgramID:       enterprisePRProgramID,
+		State:           enterprisePRState,
+		Head:            enterprisePRHead,
+		Base:            enterprisePRBase,
+		Sort:            enterprisePRSort,
+		Since:           enterprisePRSince,
+		Direction:       enterprisePRDirection,
+		MilestoneNumber: enterprisePRMilestone,
+		Labels:          enterprisePRLabels,
+		Page:            enterprisePage,
+		PerPage:         enterprisePerPage,
 	})
 	if err != nil {
 		return err

@@ -80,5 +80,9 @@ func buildMilestonesQuery(opts ListMilestonesOptions) string {
 	if opts.PerPage > 0 {
 		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
 	}
-	return util.BuildQuery(params...)
+	query := util.BuildQuery(params...)
+	if query == "" {
+		return ""
+	}
+	return "?" + query
 }

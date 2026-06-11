@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 
 	"github.com/ricsy/gt/pkg/api"
+	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
@@ -186,7 +188,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")
 	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", false, "Create private repository")
-	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Create public repository")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Request public visibility (unsupported for personal repo creation)")
 	_ = repoCreateCmd.MarkFlagRequired("name")
 
 	addRepoBranchRepoFlag(repoBranchListCmd)
@@ -207,8 +209,8 @@ func init() {
 	addRepoFlag(repoCollaboratorRemoveCmd)
 	repoCollaboratorAddCmd.Flags().StringVar(&repoCollaboratorAddOpts.Permission, "permission", "push", "Collaborator permission (push, pull, admin)")
 
-	addRepoFlag(repoForkListCmd)
-	addRepoFlag(repoForkCreateCmd)
+	addRepoForkFlag(repoForkListCmd)
+	addRepoForkFlag(repoForkCreateCmd)
 	repoForkListCmd.Flags().StringVar(&repoForkOpts.Sort, "sort", "", "Sort by: newest, oldest, stargazers")
 	repoForkListCmd.Flags().IntVar(&repoForkOpts.Page, "page", 0, "Page number")
 	repoForkListCmd.Flags().IntVar(&repoForkOpts.PerPage, "per-page", 0, "Items per page (max 100)")
@@ -220,6 +222,10 @@ func addRepoBranchRepoFlag(cmd *cobra.Command) {
 
 func addRepoFlag(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&repoCollaboratorOpts.Repo, "repo", "", "Repository (owner/repo)")
+}
+
+func addRepoForkFlag(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&repoForkOpts.Repo, "repo", "", "Repository (owner/repo)")
 }
 
 func repoListCommand(cmd *cobra.Command, args []string) error {
@@ -307,11 +313,9 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	opts := api.CreateRepoOptions{
-		Name:        repoCreateOpts.Name,
-		Description: repoCreateOpts.Description,
-		Private:     repoCreateOpts.Private && !repoCreateOpts.Public,
-		AutoInit:    true,
+	opts, err := buildCreateRepoOptions(cmd)
+	if err != nil {
+		return err
 	}
 
 	repo, err := client.CreateRepo(opts)
@@ -322,6 +326,25 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Repository created: %s\n", repo.HTMLURL)
 
 	return nil
+}
+
+// buildCreateRepoOptions 根据当前个人仓库 API 契约构建请求，提前拦截平台不支持的可见性参数。
+func buildCreateRepoOptions(cmd *cobra.Command) (api.CreateRepoOptions, error) {
+	opts := api.CreateRepoOptions{
+		Name:        repoCreateOpts.Name,
+		Description: repoCreateOpts.Description,
+		AutoInit:    true,
+	}
+
+	// 当前 /user/repos 仅支持私有仓库，避免把用户带到后端 400。
+	if cmd.Flags().Changed("public") && repoCreateOpts.Public {
+		return api.CreateRepoOptions{}, fmt.Errorf("public repositories are not supported by the current user repo API; omit --public")
+	}
+	if cmd.Flags().Changed("private") {
+		opts.Private = repoCreateOpts.Private
+	}
+
+	return opts, nil
 }
 
 func repoBranchListCommand(cmd *cobra.Command, args []string) error {
@@ -343,7 +366,7 @@ func repoBranchListCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to list branches: %w", err)
 	}
 	for _, branch := range branches {
-		printBranch(branch.Name, branch.Commit, branch.Protected)
+		printBranch(branch.Name, branch.Commit.SHA, branch.Protected)
 	}
 	return nil
 }
@@ -361,7 +384,7 @@ func repoBranchViewCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get branch: %w", err)
 	}
-	printBranch(branch.Name, branch.Commit, branch.Protected)
+	printBranch(branch.Name, branch.Commit.SHA, branch.Protected)
 	return nil
 }
 
@@ -381,7 +404,7 @@ func repoBranchCreateCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create branch: %w", err)
 	}
-	printBranch(branch.Name, branch.Commit, branch.Protected)
+	printBranch(branch.Name, branch.Commit.SHA, branch.Protected)
 	return nil
 }
 
@@ -398,7 +421,7 @@ func repoBranchProtectCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to protect branch: %w", err)
 	}
-	printBranch(branch.Name, branch.Commit, branch.Protected)
+	printBranch(branch.Name, branch.Commit.SHA, branch.Protected)
 	return nil
 }
 
@@ -449,6 +472,11 @@ func repoCollaboratorViewCommand(cmd *cobra.Command, args []string) error {
 	collab, err := client.GetCollaborator(owner, repoName, args[0])
 	if err != nil {
 		return fmt.Errorf("failed to get collaborator: %w", err)
+	}
+	// Gitee 的 collaborator existence 接口返回 204，无响应体；这里退化为存在性输出。
+	if collab.Login == "" && collab.Name == "" {
+		cmd.Printf("%s is a collaborator\n", args[0])
+		return nil
 	}
 	cmd.Printf("%s (%s)\n", collab.Login, collab.Name)
 	return nil
@@ -563,6 +591,9 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	cloneURL := config.RepoGitHTTPSURL(resolveCommandHost(), owner, repoName)
+	if authenticatedURL, err := buildAuthenticatedCloneURL(resolveCommandHost(), cloneURL); err == nil && authenticatedURL != "" {
+		cloneURL = authenticatedURL
+	}
 
 	var gitArgs []string
 	gitArgs = append(gitArgs, "clone", cloneURL)
@@ -580,4 +611,20 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// buildAuthenticatedCloneURL 为私库 clone 注入 HTTPS 凭据。
+// 如果本地没有可解析的用户名，则退化为原始匿名 URL。
+func buildAuthenticatedCloneURL(host, cloneURL string) (string, error) {
+	authInfo, err := auth.GetAuth(host)
+	if err != nil || authInfo.Token == "" || authInfo.User == "" {
+		return "", err
+	}
+
+	parsed, err := url.Parse(cloneURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse clone URL: %w", err)
+	}
+	parsed.User = url.UserPassword(authInfo.User, authInfo.Token)
+	return parsed.String(), nil
 }

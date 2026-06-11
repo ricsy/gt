@@ -81,7 +81,7 @@ func repostatsTraffic(cmd *cobra.Command, args []string) error {
 	if len(traffic.Counts) > 0 {
 		fmt.Println("\nDaily breakdown:")
 		for _, d := range traffic.Counts {
-			fmt.Printf("  Bucket %d: Views: %d, Pulls: %d, Pushes: %d, Downloads: %d\n",
+			fmt.Printf("  Bucket %s: Views: %d, Pulls: %d, Pushes: %d, Downloads: %d\n",
 				d.Bucket, d.IP, d.Pull, d.Push, d.DownloadZip)
 		}
 	}

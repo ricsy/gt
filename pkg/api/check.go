@@ -60,14 +60,14 @@ func (c *Client) GetCheckRunAnnotations(owner, repo string, checkRunID int64, op
 
 // ListCommitCheckRuns lists check runs for a commit
 func (c *Client) ListCommitCheckRuns(owner, repo, ref string, opts ListCheckRunsOptions) ([]response.CheckRun, error) {
-	var checkRuns []response.CheckRun
+	var result response.CheckRunList
 	path := CheckRuns.GetCommitCheckRuns.Build(owner, repo, ref)
 	query := buildCheckRunsQuery(opts)
-	err := c.Do("GET", path+query, nil, &checkRuns)
+	err := c.Do("GET", path+query, nil, &result)
 	if err != nil {
 		return nil, err
 	}
-	return checkRuns, nil
+	return result.CheckRuns, nil
 }
 
 func buildCheckRunsQuery(opts ListCheckRunsOptions) string {

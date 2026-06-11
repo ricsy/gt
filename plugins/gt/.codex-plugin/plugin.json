@@ -1,0 +1,42 @@
+{
+  "name": "gitee",
+  "version": "0.1.0",
+  "description": "Operate Gitee repositories, issues, pull requests, releases, notifications, and related resources through the gt CLI.",
+  "author": {
+    "name": "ricsy",
+    "url": "https://github.com/ricsy"
+  },
+  "homepage": "https://github.com/ricsy/gt",
+  "repository": "https://github.com/ricsy/gt",
+  "license": "MIT",
+  "keywords": [
+    "gitee",
+    "cli",
+    "repository",
+    "issue",
+    "pull-request",
+    "release"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Gitee",
+    "shortDescription": "Operate Gitee through the gt CLI",
+    "longDescription": "Use GT to inspect repositories, manage issues and pull requests, work with releases, notifications, and other Gitee resources through a CLI-first workflow.",
+    "developerName": "ricsy",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/ricsy/gt",
+    "privacyPolicyURL": "https://github.com/ricsy/gt",
+    "termsOfServiceURL": "https://github.com/ricsy/gt",
+    "defaultPrompt": [
+      "Inspect and operate Gitee repositories, issues, pull requests, releases, notifications, and related resources with GT."
+    ],
+    "composerIcon": "./assets/gt-small.svg",
+    "logo": "./assets/gt-logo.svg",
+    "screenshots": [],
+    "brandColor": "#C71D23"
+  }
+}

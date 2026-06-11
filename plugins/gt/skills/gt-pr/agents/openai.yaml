@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT PR"
+  short_description: "Operate pull requests through gt"
+  default_prompt: "Use $gt-pr for Gitee pull request workflows through gt."

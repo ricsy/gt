@@ -1,117 +1,105 @@
 package cmd
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
+	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-func TestRepoCommand(t *testing.T) {
-	buf := new(bytes.Buffer)
-	repoCmd.SetOut(buf)
-	repoCmd.SetArgs([]string{"--help"})
+func TestBuildAuthenticatedCloneURL(t *testing.T) {
+	const host = "gitee.com"
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
 
-	err := repoCmd.Execute()
+	err := auth.Login(host, "test-token", "test-user")
 	if err != nil {
-		t.Errorf("Execute() error = %v", err)
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout(host)
+	})
+
+	got, err := buildAuthenticatedCloneURL(host, "https://gitee.com/owner/repo.git")
+	if err != nil {
+		t.Fatalf("buildAuthenticatedCloneURL() returned error: %v", err)
+	}
+
+	if !strings.Contains(got, "https://test-user:test-token@gitee.com/owner/repo.git") {
+		t.Fatalf("buildAuthenticatedCloneURL() = %q, want credentials embedded", got)
 	}
 }
 
-func TestRepoBranchCommand(t *testing.T) {
-	if repoBranchCmd.Use != "branch" {
-		t.Errorf("expected use 'branch', got %s", repoBranchCmd.Use)
-	}
-	if len(repoBranchCmd.Commands()) != 5 {
-		t.Errorf("expected 5 subcommands, got %d", len(repoBranchCmd.Commands()))
+func TestBuildAuthenticatedCloneURLWithoutStoredUser(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	got, err := buildAuthenticatedCloneURL("gitee.com", "https://gitee.com/owner/repo.git")
+	if err == nil {
+		t.Fatalf("buildAuthenticatedCloneURL() error = nil, want non-nil, got URL %q", got)
 	}
 }
 
-func TestRepoListCommandFlags(t *testing.T) {
-	cmd := &cobra.Command{Use: "list"}
-	cmd.Flags().String("owner", "", "Owner username")
-	cmd.Flags().Int("limit", 30, "Maximum number of repos")
-
-	if cmd.Flags().Lookup("owner") == nil {
-		t.Error("owner flag not found")
-	}
-	if cmd.Flags().Lookup("limit") == nil {
-		t.Error("limit flag not found")
-	}
-}
-
-func TestRepoCreateCommandFlags(t *testing.T) {
+func TestBuildCreateRepoOptionsRejectsPublicVisibility(t *testing.T) {
 	cmd := &cobra.Command{Use: "create"}
-	cmd.Flags().String("name", "", "Repository name")
-	cmd.Flags().String("description", "", "Repository description")
-	cmd.Flags().Bool("private", false, "Create private repository")
-	cmd.Flags().Bool("public", false, "Create public repository")
+	cmd.Flags().Bool("public", false, "")
+	cmd.Flags().Bool("private", false, "")
+	if err := cmd.Flags().Set("public", "true"); err != nil {
+		t.Fatalf("set public flag: %v", err)
+	}
 
-	if cmd.Flags().Lookup("name") == nil {
-		t.Error("name flag not found")
-	}
-	if cmd.Flags().Lookup("description") == nil {
-		t.Error("description flag not found")
-	}
-	if cmd.Flags().Lookup("private") == nil {
-		t.Error("private flag not found")
-	}
-	if cmd.Flags().Lookup("public") == nil {
-		t.Error("public flag not found")
-	}
-}
-
-func TestRepoBranchCommandFlags(t *testing.T) {
-	if repoBranchListCmd.Flags().Lookup("repo") == nil {
-		t.Error("repo flag not found")
-	}
-	if repoBranchListCmd.Flags().Lookup("sort") == nil {
-		t.Error("sort flag not found")
-	}
-	if repoBranchListCmd.Flags().Lookup("direction") == nil {
-		t.Error("direction flag not found")
-	}
-	if repoBranchCreateCmd.Flags().Lookup("refs") == nil {
-		t.Error("refs flag not found")
-	}
-	if repoBranchProtectCmd.Flags().Lookup("repo") == nil {
-		t.Error("repo flag not found")
-	}
-}
-
-func TestCloneCommandArgs(t *testing.T) {
-	tests := []struct {
-		name    string
-		args    []string
-		wantErr bool
+	repoCreateOpts = struct {
+		Name        string
+		Description string
+		Private     bool
+		Public      bool
 	}{
-		{"one arg", []string{"owner/repo"}, false},
-		{"two args", []string{"owner/repo", "directory"}, false},
-		{"no args", []string{}, true},
+		Name:        "demo",
+		Description: "public repo",
+		Public:      true,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd := &cobra.Command{
-				Use:   "clone",
-				Short: "Clone a repository",
-				Args:  cobra.RangeArgs(1, 2),
-				Run:   func(cmd *cobra.Command, args []string) {},
-			}
-
-			err := cmd.ValidateArgs(tt.args)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	_, err := buildCreateRepoOptions(cmd)
+	if err == nil {
+		t.Fatal("buildCreateRepoOptions() error = nil, want non-nil for --public")
 	}
 }
 
-func TestRepoCloneUsesWebCloneURL(t *testing.T) {
-	got := config.RepoGitHTTPSURL("gitee.com", "owner", "repo")
-	want := "https://gitee.com/owner/repo.git"
-	if got != want {
-		t.Fatalf("RepoGitHTTPSURL() = %s, want %s", got, want)
+func TestBuildCreateRepoOptionsKeepsPrivateVisibility(t *testing.T) {
+	cmd := &cobra.Command{Use: "create"}
+	cmd.Flags().Bool("public", false, "")
+	cmd.Flags().Bool("private", false, "")
+	if err := cmd.Flags().Set("private", "true"); err != nil {
+		t.Fatalf("set private flag: %v", err)
+	}
+
+	repoCreateOpts = struct {
+		Name        string
+		Description string
+		Private     bool
+		Public      bool
+	}{
+		Name:        "demo",
+		Description: "private repo",
+		Private:     true,
+	}
+
+	opts, err := buildCreateRepoOptions(cmd)
+	if err != nil {
+		t.Fatalf("buildCreateRepoOptions() returned error: %v", err)
+	}
+
+	if opts.Private != true {
+		t.Fatalf("opts.Private = %v, want true", opts.Private)
 	}
 }

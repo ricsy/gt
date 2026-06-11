@@ -148,7 +148,7 @@ func searchIssues(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, i := range issues {
-		fmt.Printf("#%d %s [%s]\n", i.Number, i.Title, i.State)
+		fmt.Printf("#%s %s [%s]\n", i.Number, i.Title, i.State)
 	}
 	return nil
 }

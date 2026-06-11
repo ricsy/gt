@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT Release"
+  short_description: "Operate releases, webhooks, checks, and repo data"
+  default_prompt: "Use $gt-release for release-adjacent Gitee workflows through gt."

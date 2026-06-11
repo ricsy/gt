@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT Repo"
+  short_description: "Operate repositories, branches, collaborators, and forks"
+  default_prompt: "Use $gt-repo for repository-level Gitee operations through gt."

@@ -1,0 +1,20 @@
+{
+  "name": "gt-local",
+  "interface": {
+    "displayName": "GT Local"
+  },
+  "plugins": [
+    {
+      "name": "gt",
+      "source": {
+        "source": "local",
+        "path": "./plugins/gt"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

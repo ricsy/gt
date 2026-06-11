@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT Issue"
+  short_description: "Operate issues, labels, and milestones"
+  default_prompt: "Use $gt-issue for issue, label, and milestone workflows through gt."

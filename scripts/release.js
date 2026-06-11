@@ -28,10 +28,18 @@ function updateRootGo(version) {
   console.log(`Updated root.go to ${version}`);
 }
 
+function updatePluginManifest(version) {
+  const manifestPath = path.join(__dirname, '..', 'plugins', 'gitee', '.codex-plugin', 'plugin.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  manifest.version = version;
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+  console.log(`Updated plugin.json to ${version}`);
+}
+
 function gitCommit(version) {
   const status = execSync('git status --porcelain').toString().trim();
   if (status) {
-    execSync('git add package.json internal/cmd/root.go', { stdio: 'inherit' });
+    execSync('git add package.json internal/cmd/root.go plugins/gitee/.codex-plugin/plugin.json', { stdio: 'inherit' });
     execSync(`git commit -m "release: bump version to ${version}"`, { stdio: 'inherit' });
     console.log(`Committed version bump to ${version}`);
   } else {
@@ -50,6 +58,7 @@ function run() {
   const version = getVersion();
   updatePackageJson(version);
   updateRootGo(version);
+  updatePluginManifest(version);
   gitCommit(version);
   gitTag(version);
   console.log(`\nRelease ${version} created successfully!`);

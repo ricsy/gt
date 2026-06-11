@@ -1,6 +1,6 @@
 {
   "name": "gitee",
-  "version": "0.1.0",
+  "version": "0.1.0-beta",
   "description": "Operate Gitee repositories, issues, pull requests, releases, notifications, and related resources through the gt CLI.",
   "author": {
     "name": "ricsy",

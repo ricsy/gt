@@ -1,6 +1,6 @@
 {
   "name": "gt",
-  "version": "0.1.0-alpha",
+  "version": "0.1.0-beta",
   "description": "Gitee’s command line tool",
   "author": "ricsy",
   "license": "MIT",

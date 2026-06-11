@@ -19,13 +19,14 @@ the local `gt` command or `gt api` fallback where needed.
 The marketplace entry uses `./plugins/gt`, which is resolved relative to the
 repository root.
 
-## Install In Codex
+## Manage In Codex
 
-From the repository root:
+Install from the GitHub repository source:
 
 ```bash
-codex plugin marketplace add .
-codex plugin add gt@gt-local
+codex plugin marketplace add ricsy/gt
+codex plugin add gitee@ricsy-curated
+codex plugin remove gitee@ricsy-curated
 ```
 
 Useful checks:
@@ -33,16 +34,6 @@ Useful checks:
 ```bash
 codex plugin marketplace list --json
 codex plugin list --json
-gh to codex plugin view gt@gt-local
-```
-
-## Update During Local Development
-
-When the plugin changes, bump the Codex cachebuster and reinstall:
-
-```bash
-python C:\Users\Administrator\.codex\skills\.system\plugin-creator\scripts\update_plugin_cachebuster.py plugins/gt
-codex plugin add gt@gt-local
 ```
 
 After reinstalling, start a new Codex thread so the updated plugin skills are

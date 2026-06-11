@@ -1,11 +1,11 @@
 {
-  "name": "gt-local",
+  "name": "ricsy-curated",
   "interface": {
-    "displayName": "GT Local"
+    "displayName": "Gitee"
   },
   "plugins": [
     {
-      "name": "gt",
+      "name": "gitee",
       "source": {
         "source": "local",
         "path": "./plugins/gt"

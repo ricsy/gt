@@ -1,5 +1,5 @@
 {
-  "name": "gt",
+  "name": "gitee",
   "version": "0.1.0",
   "description": "Operate Gitee repositories, issues, pull requests, releases, notifications, and related resources through the gt CLI.",
   "author": {
@@ -19,7 +19,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "GT",
+    "displayName": "Gitee",
     "shortDescription": "Operate Gitee through the gt CLI",
     "longDescription": "Use GT to inspect repositories, manage issues and pull requests, work with releases, notifications, and other Gitee resources through a CLI-first workflow.",
     "developerName": "ricsy",

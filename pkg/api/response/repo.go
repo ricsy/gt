@@ -1,5 +1,52 @@
 package response
 
+// BranchCommitActor 表示分支提交元数据中的作者或提交者信息。
+type BranchCommitActor struct {
+	Name  string `json:"name"`
+	Date  string `json:"date"`
+	Email string `json:"email"`
+}
+
+// BranchTree 表示分支提交关联的树对象。
+type BranchTree struct {
+	SHA string `json:"sha"`
+	URL string `json:"url"`
+}
+
+// BranchCommitDetail 表示 branch 响应中的嵌套 commit 明细。
+type BranchCommitDetail struct {
+	Author    BranchCommitActor `json:"author"`
+	Committer BranchCommitActor `json:"committer"`
+	Message   string            `json:"message"`
+	URL       string            `json:"url"`
+	Tree      BranchTree        `json:"tree"`
+}
+
+// BranchUserRef 表示 branch 响应中附带的用户引用。
+type BranchUserRef struct {
+	ID        int64  `json:"id"`
+	Login     string `json:"login"`
+	URL       string `json:"url"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+// BranchCommit 表示分支接口返回的提交摘要。
+// live API 返回的是对象，而不是旧实现假定的 SHA 字符串。
+type BranchCommit struct {
+	SHA       string             `json:"sha"`
+	URL       string             `json:"url"`
+	Commit    BranchCommitDetail `json:"commit"`
+	Author    BranchUserRef      `json:"author"`
+	Committer BranchUserRef      `json:"committer"`
+	Parents   []any              `json:"parents"`
+}
+
+// BranchLinks 表示单分支详情返回的链接集合。
+type BranchLinks struct {
+	HTML string `json:"html"`
+	Self string `json:"self"`
+}
+
 // Repository represents a Gitee repository
 type Repository struct {
 	ID       int64  `json:"id"`
@@ -30,19 +77,19 @@ type Repository struct {
 
 // Branch represents a repository branch.
 type Branch struct {
-	Name          string `json:"name"`
-	Commit        string `json:"commit"`
-	Protected     bool   `json:"protected"`
-	ProtectionURL string `json:"protection_url"`
+	Name          string       `json:"name"`
+	Commit        BranchCommit `json:"commit"`
+	Protected     bool         `json:"protected"`
+	ProtectionURL string       `json:"protection_url"`
 }
 
 // CompleteBranch represents a detailed repository branch.
 type CompleteBranch struct {
-	Name          string `json:"name"`
-	Commit        string `json:"commit"`
-	Links         string `json:"_links"`
-	Protected     bool   `json:"protected"`
-	ProtectionURL string `json:"protection_url"`
+	Name          string       `json:"name"`
+	Commit        BranchCommit `json:"commit"`
+	Links         BranchLinks  `json:"_links"`
+	Protected     bool         `json:"protected"`
+	ProtectionURL string       `json:"protection_url"`
 }
 
 // ListBranchesOptions contains options for listing repository branches.

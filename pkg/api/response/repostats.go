@@ -1,5 +1,7 @@
 package response
 
+import "encoding/json"
+
 // Contributor represents a repository contributor
 type Contributor struct {
 	Email         string `json:"email"`
@@ -36,7 +38,31 @@ type TrafficData struct {
 	Summary TrafficDataSummary `json:"summary"`
 }
 
-// Languages represents programming language bytes
+// Languages represents programming language bytes.
+// swagger 定义为 object，但 live API 在无语言数据时会返回 {"languages":[]}.
 type Languages struct {
 	Languages map[string]int `json:"languages"`
+}
+
+// UnmarshalJSON 兼容空语言统计时的数组返回。
+func (l *Languages) UnmarshalJSON(data []byte) error {
+	type languagesObject struct {
+		Languages map[string]int `json:"languages"`
+	}
+	var objectValue languagesObject
+	if err := json.Unmarshal(data, &objectValue); err == nil && objectValue.Languages != nil {
+		l.Languages = objectValue.Languages
+		return nil
+	}
+
+	type languagesArray struct {
+		Languages []any `json:"languages"`
+	}
+	var arrayValue languagesArray
+	if err := json.Unmarshal(data, &arrayValue); err != nil {
+		return err
+	}
+
+	l.Languages = map[string]int{}
+	return nil
 }

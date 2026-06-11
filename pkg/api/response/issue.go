@@ -14,7 +14,7 @@ const (
 // Issue represents a Gitee issue
 type Issue struct {
 	ID              int64       `json:"id"`
-	Number          int64       `json:"number"`
+	Number          string      `json:"number"`
 	State           string      `json:"state"`
 	Title           string      `json:"title"`
 	Body            string      `json:"body"`
@@ -40,7 +40,7 @@ type Issue struct {
 	ClosedAt        string      `json:"closed_at"`
 	Priority        int         `json:"priority,omitempty"`
 	PlanStartedAt   string      `json:"plan_started_at,omitempty"`
-	ScheduledTime   string      `json:"scheduled_time,omitempty"`
+	ScheduledTime   int64       `json:"scheduled_time,omitempty"`
 	IssueTypeDetail *IssueType  `json:"issue_type_detail,omitempty"`
 	FinishedAt      string      `json:"finished_at,omitempty"`
 	PullRequest     *struct {
@@ -81,8 +81,8 @@ type IssueComment struct {
 	CreatedAt   string    `json:"created_at"`
 	UpdatedAt   string    `json:"updated_at"`
 	User        UserBasic `json:"user"`
-	Source      string    `json:"source,omitempty"`
-	Target      string    `json:"target,omitempty"`
+	Source      any       `json:"source,omitempty"`
+	Target      any       `json:"target,omitempty"`
 	InReplyToID int64     `json:"in_reply_to_id,omitempty"`
 }
 

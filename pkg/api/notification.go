@@ -16,6 +16,9 @@ type ListMessagesOptions = response.ListMessagesOptions
 // MarkNotificationsReadOptions is an alias for response.MarkNotificationsReadOptions
 type MarkNotificationsReadOptions = response.MarkNotificationsReadOptions
 
+// MarkMessagesReadOptions is an alias for response.MarkMessagesReadOptions
+type MarkMessagesReadOptions = response.MarkMessagesReadOptions
+
 // CreateMessageOptions is an alias for response.CreateMessageOptions
 type CreateMessageOptions = response.CreateMessageOptions
 
@@ -94,9 +97,9 @@ func (c *Client) CreateMessage(opts response.CreateMessageOptions) (*response.Us
 	return &result, nil
 }
 
-// MarkAllMessagesRead marks all messages as read
-func (c *Client) MarkAllMessagesRead() error {
-	return c.DoFromEndpoint(Messages.Update, nil, nil, nil)
+// MarkAllMessagesRead marks all or selected messages as read
+func (c *Client) MarkAllMessagesRead(opts response.MarkMessagesReadOptions) error {
+	return c.DoFromEndpoint(Messages.Update, nil, opts, nil)
 }
 
 // GetMessage gets a single message

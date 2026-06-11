@@ -55,10 +55,10 @@ type BotInfo struct {
 
 // UpdateUserOptions contains options for updating the authenticated user.
 type UpdateUserOptions struct {
-	Name  string `json:"name,omitempty"`
-	Blog  string `json:"blog,omitempty"`
-	Weibo string `json:"weibo,omitempty"`
-	Bio   string `json:"bio,omitempty"`
+	Name  *string `json:"name,omitempty"`
+	Blog  *string `json:"blog,omitempty"`
+	Weibo *string `json:"weibo,omitempty"`
+	Bio   *string `json:"bio,omitempty"`
 }
 
 // ListUsersOptions contains pagination options for user list endpoints.

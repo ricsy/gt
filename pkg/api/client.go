@@ -45,6 +45,10 @@ func BoolPtr(b bool) *bool {
 	return &b
 }
 
+func StringPtr(s string) *string {
+	return &s
+}
+
 // Token returns the client's auth token (needed by api command for raw requests).
 func (c *Client) Token() string {
 	return c.token
@@ -82,6 +86,11 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(respBody))
+	}
+
+	// 某些存在性检查接口会返回 204 No Content，此时不应继续按 JSON 反序列化。
+	if len(respBody) == 0 {
+		return nil
 	}
 
 	if response != nil {

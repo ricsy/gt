@@ -33,6 +33,12 @@ type CheckAnnotation struct {
 	BlobHref        string `json:"blob_href"`
 }
 
+// CheckRunList 表示按提交查询 check runs 时的包装返回。
+type CheckRunList struct {
+	TotalCount int        `json:"total_count"`
+	CheckRuns  []CheckRun `json:"check_runs"`
+}
+
 type CreateCheckRunOptions struct {
 	PullRequestID                int      `json:"pull_request_id,omitempty"`
 	DetailsURL                   string   `json:"details_url,omitempty"`

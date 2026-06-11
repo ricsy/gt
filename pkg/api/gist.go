@@ -109,13 +109,13 @@ func (c *Client) ForkGist(id string) (*response.Gist, error) {
 }
 
 // ListGistCommits lists commits of a gist
-func (c *Client) ListGistCommits(id string) ([]response.Gist, error) {
-	var gists []response.Gist
-	err := c.DoFromEndpoint(Gists.Commits, []interface{}{id}, nil, &gists)
+func (c *Client) ListGistCommits(id string) (*response.Gist, error) {
+	var gist response.Gist
+	err := c.DoFromEndpoint(Gists.Commits, []interface{}{id}, nil, &gist)
 	if err != nil {
 		return nil, err
 	}
-	return gists, nil
+	return &gist, nil
 }
 
 // ListGistComments lists comments on a gist

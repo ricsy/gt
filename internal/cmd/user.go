@@ -193,12 +193,21 @@ func userUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	user, err := client.UpdateAuthenticatedUser(api.UpdateUserOptions{
-		Name:  userName,
-		Blog:  userBlog,
-		Weibo: userWeibo,
-		Bio:   userBio,
-	})
+	opts := api.UpdateUserOptions{}
+	if cmd.Flags().Changed("name") {
+		opts.Name = api.StringPtr(userName)
+	}
+	if cmd.Flags().Changed("blog") {
+		opts.Blog = api.StringPtr(userBlog)
+	}
+	if cmd.Flags().Changed("weibo") {
+		opts.Weibo = api.StringPtr(userWeibo)
+	}
+	if cmd.Flags().Changed("bio") {
+		opts.Bio = api.StringPtr(userBio)
+	}
+
+	user, err := client.UpdateAuthenticatedUser(opts)
 	if err != nil {
 		return err
 	}

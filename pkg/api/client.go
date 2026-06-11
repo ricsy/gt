@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ricsy/gt/pkg/config"
@@ -105,5 +109,105 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 // DoFromEndpoint performs an HTTP request from an Endpoint, auto-extracting method
 func (c *Client) DoFromEndpoint(e Endpoint, pathArgs []interface{}, body interface{}, response interface{}) error {
 	path := e.Build(pathArgs...)
+	if e.Method == GET && body != nil {
+		query, err := buildQueryFromRequest(body)
+		if err != nil {
+			return err
+		}
+		if query != "" {
+			path += "?" + query
+		}
+		body = nil
+	}
 	return c.Do(string(e.Method), path, body, response)
+}
+
+// buildQueryFromRequest 将 GET 请求的结构化参数编码为查询字符串，避免被错误发送为请求体。
+func buildQueryFromRequest(body interface{}) (string, error) {
+	values := url.Values{}
+	if err := appendQueryValues(values, reflect.ValueOf(body)); err != nil {
+		return "", err
+	}
+	return values.Encode(), nil
+}
+
+// appendQueryValues 递归展开结构体和指针字段，仅编码非零值。
+func appendQueryValues(values url.Values, value reflect.Value) error {
+	if !value.IsValid() {
+		return nil
+	}
+
+	for value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return nil
+		}
+		value = value.Elem()
+	}
+
+	if value.Kind() != reflect.Struct {
+		return fmt.Errorf("failed to encode GET query params: unsupported type %T", value.Interface())
+	}
+
+	valueType := value.Type()
+	for i := 0; i < value.NumField(); i++ {
+		field := value.Field(i)
+		structField := valueType.Field(i)
+		if !structField.IsExported() {
+			continue
+		}
+
+		tagName, omitEmpty := parseJSONTag(structField.Tag.Get("json"))
+		if tagName == "" || tagName == "-" {
+			continue
+		}
+
+		if field.Kind() == reflect.Pointer {
+			if field.IsNil() {
+				continue
+			}
+			field = field.Elem()
+		}
+
+		if omitEmpty && field.IsZero() {
+			continue
+		}
+
+		values.Set(tagName, formatQueryValue(field))
+	}
+
+	return nil
+}
+
+func parseJSONTag(tag string) (string, bool) {
+	if tag == "" {
+		return "", false
+	}
+
+	parts := strings.Split(tag, ",")
+	name := parts[0]
+	omitEmpty := false
+	for _, option := range parts[1:] {
+		if option == "omitempty" {
+			omitEmpty = true
+			break
+		}
+	}
+	return name, omitEmpty
+}
+
+func formatQueryValue(value reflect.Value) string {
+	switch value.Kind() {
+	case reflect.Bool:
+		return strconv.FormatBool(value.Bool())
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(value.Int(), 10)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return strconv.FormatUint(value.Uint(), 10)
+	case reflect.Float32, reflect.Float64:
+		return strconv.FormatFloat(value.Float(), 'f', -1, 64)
+	case reflect.String:
+		return value.String()
+	default:
+		return fmt.Sprint(value.Interface())
+	}
 }

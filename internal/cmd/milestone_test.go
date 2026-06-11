@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func TestMilestoneCmd(t *testing.T) {
@@ -82,6 +83,28 @@ func TestMilestoneCreateFlags(t *testing.T) {
 	if flags.Lookup("due_on") == nil {
 		t.Error("expected --due_on flag")
 	}
+
+	assertRequiredFlag(t, cmd, "due_on")
 }
 
 var _ = &cobra.Command{}
+
+func assertRequiredFlag(t *testing.T, cmd *cobra.Command, name string) {
+	t.Helper()
+
+	flag := cmd.Flags().Lookup(name)
+	if flag == nil {
+		t.Fatalf("flag %q not found", name)
+	}
+
+	required := false
+	cmd.Flags().VisitAll(func(current *pflag.Flag) {
+		if current.Name == name {
+			required = current.Annotations != nil && len(current.Annotations[cobra.BashCompOneRequiredFlag]) > 0
+		}
+	})
+
+	if !required {
+		t.Fatalf("expected flag %q to be marked required", name)
+	}
+}

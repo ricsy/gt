@@ -188,7 +188,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")
 	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", false, "Create private repository")
-	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Create public repository")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Request public visibility (unsupported for personal repo creation)")
 	_ = repoCreateCmd.MarkFlagRequired("name")
 
 	addRepoBranchRepoFlag(repoBranchListCmd)
@@ -313,11 +313,9 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	opts := api.CreateRepoOptions{
-		Name:        repoCreateOpts.Name,
-		Description: repoCreateOpts.Description,
-		Private:     repoCreateOpts.Private && !repoCreateOpts.Public,
-		AutoInit:    true,
+	opts, err := buildCreateRepoOptions(cmd)
+	if err != nil {
+		return err
 	}
 
 	repo, err := client.CreateRepo(opts)
@@ -328,6 +326,25 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Repository created: %s\n", repo.HTMLURL)
 
 	return nil
+}
+
+// buildCreateRepoOptions 根据当前个人仓库 API 契约构建请求，提前拦截平台不支持的可见性参数。
+func buildCreateRepoOptions(cmd *cobra.Command) (api.CreateRepoOptions, error) {
+	opts := api.CreateRepoOptions{
+		Name:        repoCreateOpts.Name,
+		Description: repoCreateOpts.Description,
+		AutoInit:    true,
+	}
+
+	// 当前 /user/repos 仅支持私有仓库，避免把用户带到后端 400。
+	if cmd.Flags().Changed("public") && repoCreateOpts.Public {
+		return api.CreateRepoOptions{}, fmt.Errorf("public repositories are not supported by the current user repo API; omit --public")
+	}
+	if cmd.Flags().Changed("private") {
+		opts.Private = repoCreateOpts.Private
+	}
+
+	return opts, nil
 }
 
 func repoBranchListCommand(cmd *cobra.Command, args []string) error {

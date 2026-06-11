@@ -17,11 +17,11 @@ type GetTrafficDataOptions struct {
 
 // TrafficDataDesc represents daily traffic data
 type TrafficDataDesc struct {
-	Bucket      int `json:"bucket"`
-	IP          int `json:"ip"`
-	Pull        int `json:"pull"`
-	Push        int `json:"push"`
-	DownloadZip int `json:"download_zip"`
+	Bucket      string `json:"bucket"`
+	IP          int    `json:"ip"`
+	Pull        int    `json:"pull"`
+	Push        int    `json:"push"`
+	DownloadZip int    `json:"download_zip"`
 }
 
 // TrafficDataSummary represents traffic data summary

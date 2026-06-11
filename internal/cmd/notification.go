@@ -166,6 +166,8 @@ func init() {
 
 	threadMarkReadCmd.Flags().StringVar(&notificationMessageID, "id", "", "Notification ID")
 
+	countCmd.Flags().BoolVar(&notificationUnread, "unread", false, "Only count unread notifications and messages")
+
 	messageListCmd.Flags().BoolVar(&notificationUnread, "unread", false, "Only show unread messages")
 	messageListCmd.Flags().StringVar(&notificationSince, "since", "", "Messages after this time (ISO 8601)")
 	messageListCmd.Flags().StringVar(&notificationBefore, "before", "", "Messages before this time (ISO 8601)")

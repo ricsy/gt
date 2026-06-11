@@ -27,4 +27,7 @@ func TestNotificationCommandFlags(t *testing.T) {
 	if messageMarkAllReadCmd.Flags().Lookup("ids") == nil {
 		t.Error("expected message mark-all-read --ids flag")
 	}
+	if countCmd.Flags().Lookup("unread") == nil {
+		t.Error("expected notification count --unread flag")
+	}
 }

@@ -1,7 +1,10 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/ricsy/gt/pkg/api/response"
+	"github.com/ricsy/gt/pkg/util"
 )
 
 // ListRepoNotificationsOptions is an alias for response.ListRepoNotificationsOptions
@@ -70,7 +73,11 @@ func (c *Client) MarkNotificationRead(id string) error {
 // GetNotificationCount gets notification count
 func (c *Client) GetNotificationCount(unread *bool) (*response.UserNotificationCount, error) {
 	var result response.UserNotificationCount
-	err := c.DoFromEndpoint(NotificationCount.Get, nil, unread, &result)
+	path := NotificationCount.Get.Build()
+	if unread != nil {
+		path += "?" + util.BuildQuery("unread", strconv.FormatBool(*unread))
+	}
+	err := c.Do(string(NotificationCount.Get.Method), path, nil, &result)
 	if err != nil {
 		return nil, err
 	}

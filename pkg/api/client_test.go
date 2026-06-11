@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/ricsy/gt/pkg/api/response"
 )
 
 func TestNewClient(t *testing.T) {
@@ -52,6 +55,93 @@ func TestDoAllowsEmptySuccessfulResponseBody(t *testing.T) {
 
 	if err := client.Do(http.MethodGet, "/repos/owner/repo/collaborators/user", nil, &response); err != nil {
 		t.Fatalf("client.Do() returned error for empty successful body: %v", err)
+	}
+}
+
+func TestDoFromEndpointEncodesGetOptionsAsQuery(t *testing.T) {
+	client := NewClient("gitee.com", "test-token")
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if req.URL.Path != "/api/v5/notifications/messages" {
+				t.Fatalf("expected path /notifications/messages, got %s", req.URL.Path)
+			}
+			if req.URL.Query().Get("unread") != "true" {
+				t.Fatalf("expected unread=true query, got %q", req.URL.RawQuery)
+			}
+			if req.URL.Query().Get("page") != "2" {
+				t.Fatalf("expected page=2 query, got %q", req.URL.RawQuery)
+			}
+			if req.Body == nil {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"total_count":0,"list":[]}`)),
+					Header:     make(http.Header),
+					Request:    req,
+				}, nil
+			}
+
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				t.Fatalf("failed to read request body: %v", err)
+			}
+			if len(body) != 0 {
+				t.Fatalf("expected empty GET body, got %q", string(body))
+			}
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"total_count":0,"list":[]}`)),
+				Header:     make(http.Header),
+				Request:    req,
+			}, nil
+		}),
+	}
+
+	_, err := client.ListMessages(response.ListMessagesOptions{
+		Unread:  BoolPtr(true),
+		Page:    2,
+		PerPage: 0,
+	})
+	if err != nil {
+		t.Fatalf("client.ListMessages() returned error: %v", err)
+	}
+}
+
+func TestGetNotificationCountEncodesUnreadAsQuery(t *testing.T) {
+	client := NewClient("gitee.com", "test-token")
+	client.HTTPClient = &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if req.URL.Path != "/api/v5/notifications/count" {
+				t.Fatalf("expected path /notifications/count, got %s", req.URL.Path)
+			}
+			if req.URL.Query().Get("unread") != "true" {
+				t.Fatalf("expected unread=true query, got %q", req.URL.RawQuery)
+			}
+			if req.Body != nil {
+				body, err := io.ReadAll(req.Body)
+				if err != nil {
+					t.Fatalf("failed to read request body: %v", err)
+				}
+				if len(body) != 0 {
+					t.Fatalf("expected empty GET body, got %q", string(body))
+				}
+			}
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"total_count":1,"notification_count":0,"message_count":1}`)),
+				Header:     make(http.Header),
+				Request:    req,
+			}, nil
+		}),
+	}
+
+	count, err := client.GetNotificationCount(BoolPtr(true))
+	if err != nil {
+		t.Fatalf("client.GetNotificationCount() returned error: %v", err)
+	}
+	if count.MessageCount != 1 {
+		t.Fatalf("expected message count 1, got %d", count.MessageCount)
 	}
 }
 

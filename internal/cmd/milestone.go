@@ -87,6 +87,7 @@ func init() {
 	_ = milestoneCreateCmd.MarkFlagRequired("repo")
 	_ = milestoneCreateCmd.MarkFlagRequired("owner")
 	_ = milestoneCreateCmd.MarkFlagRequired("title")
+	_ = milestoneCreateCmd.MarkFlagRequired("due_on")
 
 	milestoneUpdateCmd.Flags().StringVarP(&milestoneRepo, "repo", "r", "", "Repository name (required)")
 	milestoneUpdateCmd.Flags().StringVarP(&milestoneOwner, "owner", "o", "", "Owner name (required)")

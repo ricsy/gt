@@ -548,6 +548,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  DEFAULT_CONFIG_PATH,
   DownloadError,
   UsageError,
   collectOpenApiOperations,

@@ -24,9 +24,10 @@
     "release:beta": "goreleaser release --clean --snapshot",
     "api:diff": "node scripts/compare-api-docs.js",
     "api:diff:live": "node scripts/compare-api-docs.js --live",
+    "api:sync": "node scripts/sync-openapi-json.js",
     "api:coverage:update": "node scripts/generate-openapi-coverage.js",
     "api:coverage:update:live": "node scripts/generate-openapi-coverage.js --live",
-    "test:api-docs": "node --test scripts/compare-api-docs.test.js"
+    "test:api-docs": "node --test scripts/compare-api-docs.test.js scripts/sync-openapi-json.test.js"
   },
   "devDependencies": {
     "github-actionlint": "^1.7.12",

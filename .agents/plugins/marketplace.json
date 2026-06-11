@@ -8,7 +8,7 @@
       "name": "gitee",
       "source": {
         "source": "local",
-        "path": "./plugins/gt"
+        "path": "./plugins/gitee"
       },
       "policy": {
         "installation": "AVAILABLE",

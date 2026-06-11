@@ -31,30 +31,27 @@ type PullRequest struct {
 		ID    int64  `json:"id"`
 		Login string `json:"login"`
 	} `json:"user"`
-	Labels             []Label     `json:"labels"`
-	Assignee           *UserBasic  `json:"assignee"`
-	Assignees          []UserBasic `json:"assignees"`
-	Testers            []UserBasic `json:"testers"`
-	CloseRelatedIssue  int         `json:"close_related_issue"`
-	PruneBranch        bool        `json:"prune_branch"`
-	AssigneesNumber    int         `json:"assignees_number"`
-	TestersNumber      int         `json:"testers_number"`
-	APIReviewersNumber int         `json:"api_reviewers_number"`
-	APIReviewers       []UserBasic `json:"api_reviewers"`
-	Milestone          *Milestone  `json:"milestone"`
-	Locked             bool        `json:"locked"`
-	Comments           int         `json:"comments"`
-	Commits            int         `json:"commits"`
-	Additions          int         `json:"additions"`
-	Deletions          int         `json:"deletions"`
-	FilesChanged       int         `json:"files_changed"`
-	CreatedAt          string      `json:"created_at"`
-	UpdatedAt          string      `json:"updated_at"`
-	ClosedAt           string      `json:"closed_at"`
-	MergedAt           string      `json:"merged_at"`
-	Merged             bool        `json:"merged"`
-	Mergeable          bool        `json:"mergeable"`
-	CanMergeCheck      bool        `json:"can_merge_check,omitempty"`
+	Labels             []Label        `json:"labels"`
+	Assignee           *UserBasic     `json:"assignee"`
+	Assignees          []UserBasic    `json:"assignees"`
+	Testers            []UserBasic    `json:"testers"`
+	CloseRelatedIssue  int            `json:"close_related_issue"`
+	PruneBranch        bool           `json:"prune_branch"`
+	AssigneesNumber    int            `json:"assignees_number"`
+	TestersNumber      int            `json:"testers_number"`
+	APIReviewersNumber int            `json:"api_reviewers_number"`
+	APIReviewers       []UserBasic    `json:"api_reviewers"`
+	Milestone          *Milestone     `json:"milestone"`
+	Locked             bool           `json:"locked"`
+	CreatedAt          string         `json:"created_at"`
+	UpdatedAt          string         `json:"updated_at"`
+	ClosedAt           string         `json:"closed_at"`
+	Draft              bool           `json:"draft"`
+	MergedAt           string         `json:"merged_at"`
+	Mergeable          bool           `json:"mergeable"`
+	CanMergeCheck      bool           `json:"can_merge_check,omitempty"`
+	Links              map[string]any `json:"_links,omitempty"`
+	RefPullRequests    []ProjectBasic `json:"ref_pull_requests,omitempty"`
 	Head               struct {
 		Ref string `json:"ref"`
 		Sha string `json:"sha"`

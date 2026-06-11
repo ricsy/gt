@@ -280,7 +280,7 @@ func userKeyList(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		for _, key := range keys {
-			fmt.Printf("%d\t%s\n", key.ID, key.Title)
+			fmt.Printf("%d\t%s\n", key.ID, key.Key)
 		}
 	} else {
 		keys, err := client.ListSSHKeys(userListOptions())
@@ -288,7 +288,7 @@ func userKeyList(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		for _, key := range keys {
-			fmt.Printf("%d\t%s\n", key.ID, key.Title)
+			fmt.Printf("%d\t%s\n", key.ID, key.Key)
 		}
 	}
 	return nil

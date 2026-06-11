@@ -29,6 +29,8 @@ func newConfigCmd() *cobra.Command {
 				fmt.Println(cfg.DefaultRepo)
 			case "default_owner":
 				fmt.Println(cfg.DefaultOwner)
+			case "default_host":
+				fmt.Println(cfg.DefaultHost)
 			default:
 				return fmt.Errorf("unknown key: %s", key)
 			}
@@ -51,6 +53,8 @@ func newConfigCmd() *cobra.Command {
 				cfg.DefaultRepo = value
 			case "default_owner":
 				cfg.DefaultOwner = value
+			case "default_host":
+				cfg.DefaultHost = value
 			default:
 				return fmt.Errorf("unknown key: %s", key)
 			}
@@ -68,6 +72,7 @@ func newConfigCmd() *cobra.Command {
 			}
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_repo: %s\n", cfg.DefaultRepo)
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_owner: %s\n", cfg.DefaultOwner)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_host: %s\n", cfg.DefaultHost)
 			return nil
 		},
 	})

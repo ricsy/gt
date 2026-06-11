@@ -10,6 +10,7 @@ import (
 
 var version = "0.1.0-alpha"
 var requestTimeout = api.DefaultTimeout
+var commandHost string
 
 var rootCmd = &cobra.Command{
 	Use:     "gt",
@@ -36,6 +37,7 @@ func newCommandHTTPClient() *http.Client {
 
 func init() {
 	rootCmd.PersistentFlags().DurationVar(&requestTimeout, "timeout", api.DefaultTimeout, "HTTP request timeout")
+	rootCmd.PersistentFlags().StringVar(&commandHost, "host", "", "Git host (defaults to configured host or gitee.com)")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",

@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -36,7 +37,7 @@ Examples:
 			}
 			token := client.Token()
 
-			url := config.ApiUrl(config.DefaultHost) + path
+			url := config.ApiUrl(resolveCommandHost()) + path
 
 			var bodyReader io.Reader
 			if bodyFlag != "" {
@@ -60,6 +61,10 @@ Examples:
 			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return err
+			}
+
+			if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+				return fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(respBody))
 			}
 
 			if rawFlag {

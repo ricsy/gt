@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -104,5 +105,13 @@ func TestCloneCommandArgs(t *testing.T) {
 				t.Errorf("ValidateArgs() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestRepoCloneUsesWebCloneURL(t *testing.T) {
+	got := config.RepoGitHTTPSURL("gitee.com", "owner", "repo")
+	want := "https://gitee.com/owner/repo.git"
+	if got != want {
+		t.Fatalf("RepoGitHTTPSURL() = %s, want %s", got, want)
 	}
 }

@@ -1,11 +1,17 @@
 package cmd
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 
 	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var authCmd = &cobra.Command{
@@ -19,6 +25,8 @@ var loginFlags struct {
 	token    string
 	username string
 }
+
+var tokenShow bool
 
 func resolveAuthHost() string {
 	if loginFlags.host != "" {
@@ -37,10 +45,10 @@ var loginCmd = &cobra.Command{
 		username := loginFlags.username
 
 		if token == "" {
-			fmt.Printf("Enter token for %s: ", host)
-			_, err := fmt.Scanln(&token)
+			var err error
+			token, err = readTokenFromInput(cmd, host)
 			if err != nil {
-				return fmt.Errorf("failed to read token: %w", err)
+				return err
 			}
 		}
 
@@ -96,8 +104,8 @@ var statusCmd = &cobra.Command{
 
 var tokenCmd = &cobra.Command{
 	Use:   "token",
-	Short: "Show or set authentication token",
-	Long:  `Show or set the authentication token for a host.`,
+	Short: "Show authentication token",
+	Long:  `Show the authentication token for a host. Output is masked unless --show is used.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		host := resolveAuthHost()
 
@@ -106,9 +114,56 @@ var tokenCmd = &cobra.Command{
 			return fmt.Errorf("failed to get token: %w", err)
 		}
 
-		fmt.Println(token)
+		if tokenShow {
+			fmt.Println(token)
+			return nil
+		}
+
+		fmt.Println(maskToken(token))
 		return nil
 	},
+}
+
+func readTokenFromInput(cmd *cobra.Command, host string) (string, error) {
+	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Enter token for %s: ", host)
+
+	input := cmd.InOrStdin()
+	if file, ok := input.(*os.File); ok && term.IsTerminal(int(file.Fd())) {
+		tokenBytes, err := term.ReadPassword(int(file.Fd()))
+		_, _ = fmt.Fprintln(cmd.ErrOrStderr())
+		if err != nil {
+			return "", fmt.Errorf("failed to read token: %w", err)
+		}
+
+		token := strings.TrimSpace(string(tokenBytes))
+		if token == "" {
+			return "", fmt.Errorf("token cannot be empty")
+		}
+		return token, nil
+	}
+
+	reader := bufio.NewReader(input)
+	token, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", fmt.Errorf("failed to read token: %w", err)
+	}
+	_, _ = fmt.Fprintln(cmd.ErrOrStderr())
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "", fmt.Errorf("token cannot be empty")
+	}
+	return token, nil
+}
+
+func maskToken(token string) string {
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 4 {
+		return strings.Repeat("*", len(token))
+	}
+	return token[:2] + strings.Repeat("*", len(token)-4) + token[len(token)-2:]
 }
 
 func init() {
@@ -128,4 +183,5 @@ func init() {
 	statusCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 
 	tokenCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
+	tokenCmd.Flags().BoolVar(&tokenShow, "show", false, "Print the full token value")
 }

@@ -78,6 +78,7 @@ func TestLoadSaveConfig(t *testing.T) {
 	cfg := &Config{
 		DefaultRepo:  "my-repo",
 		DefaultOwner: "myowner",
+		DefaultHost:  "gitee.example.com",
 	}
 
 	if err := SaveConfig(cfg); err != nil {
@@ -96,6 +97,10 @@ func TestLoadSaveConfig(t *testing.T) {
 	if loaded.DefaultOwner != "myowner" {
 		t.Errorf("DefaultOwner = %s, want myowner", loaded.DefaultOwner)
 	}
+
+	if loaded.DefaultHost != "gitee.example.com" {
+		t.Errorf("DefaultHost = %s, want gitee.example.com", loaded.DefaultHost)
+	}
 }
 
 func TestLoadHostsNonExistent(t *testing.T) {
@@ -110,5 +115,20 @@ func TestLoadHostsNonExistent(t *testing.T) {
 
 	if _, ok := hosts["gitee.com"]; !ok {
 		t.Errorf("expected default gitee.com entry in hosts map")
+	}
+}
+
+func TestDefaultConfigUsesDefaultHost(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.DefaultHost != DefaultHost {
+		t.Fatalf("DefaultHost = %s, want %s", cfg.DefaultHost, DefaultHost)
+	}
+}
+
+func TestRepoGitHTTPSURL(t *testing.T) {
+	got := RepoGitHTTPSURL("gitee.example.com", "owner", "repo")
+	want := "https://gitee.example.com/owner/repo.git"
+	if got != want {
+		t.Fatalf("RepoGitHTTPSURL() = %s, want %s", got, want)
 	}
 }

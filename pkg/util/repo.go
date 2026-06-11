@@ -1,6 +1,9 @@
 package util
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 // SplitOwnerRepo splits "owner/repo" into owner and repo parts.
 func SplitOwnerRepo(repo string) (owner, repoName string) {
@@ -26,17 +29,14 @@ func BuildQuery(params ...string) string {
 	if len(params)%2 != 0 {
 		return ""
 	}
-	var q string
+
+	values := url.Values{}
 	for i := 0; i < len(params); i += 2 {
 		key, value := params[i], params[i+1]
 		if value == "" {
 			continue
 		}
-		if q == "" {
-			q = key + "=" + value
-		} else {
-			q += "&" + key + "=" + value
-		}
+		values.Set(key, value)
 	}
-	return q
+	return values.Encode()
 }

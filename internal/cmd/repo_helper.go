@@ -11,11 +11,29 @@ import (
 )
 
 func getClient() (*api.Client, error) {
-	token, err := auth.GetToken(config.DefaultHost)
+	host := resolveCommandHost()
+	token, err := auth.GetToken(host)
 	if err != nil {
 		return nil, fmt.Errorf("authentication required: %w", err)
 	}
-	return newCommandAPIClient(config.DefaultHost, token), nil
+	return newCommandAPIClient(host, token), nil
+}
+
+func resolveCommandHost() string {
+	if commandHost != "" {
+		return commandHost
+	}
+
+	if envHost := os.Getenv("GT_HOST"); envHost != "" {
+		return envHost
+	}
+
+	cfg, err := config.LoadConfig()
+	if err == nil && cfg.DefaultHost != "" {
+		return cfg.DefaultHost
+	}
+
+	return config.DefaultHost
 }
 
 func resolveRepoFlag(repoFlag string) (owner, repoName string, err error) {

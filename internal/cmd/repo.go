@@ -282,15 +282,14 @@ func repoViewCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get repo: %w", err)
 		}
 	} else {
-		repos, err := client.ListRepos()
+		owner, repoName, err := resolveRepoFlag("")
 		if err != nil {
-			return fmt.Errorf("failed to list repos: %w", err)
+			return err
 		}
-		if len(repos) == 0 {
-			fmt.Println("No repositories found")
-			return nil
+		repo, err = client.GetRepo(owner, repoName)
+		if err != nil {
+			return fmt.Errorf("failed to get repo: %w", err)
 		}
-		repo = &repos[0]
 	}
 
 	fmt.Printf("Name: %s\n", repo.FullName)
@@ -563,7 +562,7 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 		directory = args[1]
 	}
 
-	cloneURL := config.ApiUrl(config.DefaultHost) + "/" + owner + "/" + repoName + ".git"
+	cloneURL := config.RepoGitHTTPSURL(resolveCommandHost(), owner, repoName)
 
 	var gitArgs []string
 	gitArgs = append(gitArgs, "clone", cloneURL)

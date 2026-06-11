@@ -70,6 +70,11 @@ func TestTokenCmdHasFlags(t *testing.T) {
 	if !hasHost {
 		t.Error("tokenCmd should have --host flag")
 	}
+
+	hasShow := tokenCmd.Flags().Lookup("show") != nil
+	if !hasShow {
+		t.Error("tokenCmd should have --show flag")
+	}
 }
 
 func TestAuthCmdExecution(t *testing.T) {
@@ -95,5 +100,15 @@ func TestAuthCmdExecution(t *testing.T) {
 				t.Errorf("Execute() error = %v", err)
 			}
 		})
+	}
+}
+
+func TestMaskToken(t *testing.T) {
+	if got := maskToken("abcd"); got != "****" {
+		t.Fatalf("maskToken(short) = %s, want ****", got)
+	}
+
+	if got := maskToken("abcdef1234"); got != "ab******34" {
+		t.Fatalf("maskToken(long) = %s, want ab******34", got)
 	}
 }

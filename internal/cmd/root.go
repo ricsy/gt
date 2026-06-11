@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "0.1.0-alpha"
+var version = "0.1.0-beta"
 var requestTimeout = api.DefaultTimeout
 var commandHost string
 

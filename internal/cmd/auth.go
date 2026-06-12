@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/ricsy/gt/pkg/auth"
@@ -27,6 +28,28 @@ var loginFlags struct {
 }
 
 var tokenShow bool
+
+var gitCredentialApprove = func(host, username, token string) error {
+	payload := strings.Join([]string{
+		"protocol=https",
+		fmt.Sprintf("host=%s", host),
+		fmt.Sprintf("username=%s", username),
+		fmt.Sprintf("password=%s", token),
+		"",
+	}, "\n")
+
+	cmd := exec.Command("git", "credential", "approve")
+	cmd.Stdin = strings.NewReader(payload)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		trimmed := strings.TrimSpace(string(output))
+		if trimmed == "" {
+			return fmt.Errorf("git credential approve failed: %w", err)
+		}
+		return fmt.Errorf("git credential approve failed: %w: %s", err, trimmed)
+	}
+	return nil
+}
 
 func resolveAuthHost() string {
 	if loginFlags.host != "" {
@@ -124,6 +147,33 @@ var tokenCmd = &cobra.Command{
 	},
 }
 
+var setupCmd = &cobra.Command{
+	Use:   "setup",
+	Short: "Configure git credentials for a host",
+	Long:  `Write the current host token into git credential storage for HTTPS git operations.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		host := resolveAuthHost()
+
+		authInfo, err := auth.GetAuth(host)
+		if err != nil {
+			return fmt.Errorf("failed to get stored auth: %w", err)
+		}
+		if authInfo.User == "" {
+			return fmt.Errorf("stored auth for %s does not include a username; run gt auth login --username <name>", host)
+		}
+		if authInfo.Token == "" {
+			return fmt.Errorf("stored auth for %s does not include a token", host)
+		}
+
+		if err := gitCredentialApprove(host, authInfo.User, authInfo.Token); err != nil {
+			return err
+		}
+
+		fmt.Printf("Configured git credentials for %s as %s\n", host, authInfo.User)
+		return nil
+	},
+}
+
 func readTokenFromInput(cmd *cobra.Command, host string) (string, error) {
 	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Enter token for %s: ", host)
 
@@ -173,6 +223,7 @@ func init() {
 	authCmd.AddCommand(logoutCmd)
 	authCmd.AddCommand(statusCmd)
 	authCmd.AddCommand(tokenCmd)
+	authCmd.AddCommand(setupCmd)
 
 	loginCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 	loginCmd.Flags().StringVarP(&loginFlags.token, "token", "t", "", "Authentication token")
@@ -184,4 +235,6 @@ func init() {
 
 	tokenCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 	tokenCmd.Flags().BoolVar(&tokenShow, "show", false, "Print the full token value")
+
+	setupCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 }

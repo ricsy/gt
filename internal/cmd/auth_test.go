@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/ricsy/gt/pkg/auth"
+	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +23,7 @@ func TestAuthCmd(t *testing.T) {
 func TestAuthSubcommands(t *testing.T) {
 	subcommands := authCmd.Commands()
 
-	expectedCmds := []string{"login", "logout", "status", "token"}
+	expectedCmds := []string{"login", "logout", "status", "token", "setup"}
 	foundCmds := make(map[string]bool)
 
 	for _, c := range subcommands {
@@ -77,6 +79,13 @@ func TestTokenCmdHasFlags(t *testing.T) {
 	}
 }
 
+func TestSetupCmdHasFlags(t *testing.T) {
+	hasHost := setupCmd.Flags().Lookup("host") != nil
+	if !hasHost {
+		t.Error("setupCmd should have --host flag")
+	}
+}
+
 func TestAuthCmdExecution(t *testing.T) {
 	tests := []struct {
 		name string
@@ -87,6 +96,7 @@ func TestAuthCmdExecution(t *testing.T) {
 		{"logout help", logoutCmd, []string{"--help"}},
 		{"status help", statusCmd, []string{"--help"}},
 		{"token help", tokenCmd, []string{"--help"}},
+		{"setup help", setupCmd, []string{"--help"}},
 	}
 
 	for _, tt := range tests {
@@ -110,5 +120,66 @@ func TestMaskToken(t *testing.T) {
 
 	if got := maskToken("abcdef1234"); got != "ab******34" {
 		t.Fatalf("maskToken(long) = %s, want ab******34", got)
+	}
+}
+
+func TestSetupCmdStoresGitCredential(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalApprove := gitCredentialApprove
+	t.Cleanup(func() {
+		gitCredentialApprove = originalApprove
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	called := false
+	gitCredentialApprove = func(host, username, token string) error {
+		called = true
+		if host != "gitee.com" {
+			t.Fatalf("host = %q, want gitee.com", host)
+		}
+		if username != "test-user" {
+			t.Fatalf("username = %q, want test-user", username)
+		}
+		if token != "test-token" {
+			t.Fatalf("token = %q, want test-token", token)
+		}
+		return nil
+	}
+
+	if err := setupCmd.RunE(setupCmd, nil); err != nil {
+		t.Fatalf("setupCmd.RunE() returned error: %v", err)
+	}
+	if !called {
+		t.Fatal("gitCredentialApprove was not called")
+	}
+}
+
+func TestSetupCmdRequiresStoredAuth(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	if err := auth.Logout("gitee.com"); err != nil {
+		t.Fatalf("auth.Logout() returned error: %v", err)
+	}
+
+	err := setupCmd.RunE(setupCmd, nil)
+	if err == nil {
+		t.Fatal("setupCmd.RunE() error = nil, want non-nil without stored auth")
 	}
 }

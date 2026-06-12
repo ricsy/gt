@@ -11,6 +11,7 @@
   "scripts": {
     "prepare": "pip install pre-commit && pre-commit install && curl -sfL https://goreleaser.com/install.sh | sh",
     "build": "go build",
+    "link:global": "go install .",
     "test": "go test ./...",
     "test:verbose": "go test -v ./...",
     "test:integration": "pnpm run build && go test -v ./internal/cmd -run TestIntegration",

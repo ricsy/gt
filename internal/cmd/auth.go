@@ -174,6 +174,47 @@ var setupCmd = &cobra.Command{
 	},
 }
 
+var doctorCmd = &cobra.Command{
+	Use:   "doctor",
+	Short: "Diagnose git authentication for a host",
+	Long:  `Inspect stored auth, git credential helper state, and git credential lookup for a host.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		host := resolveAuthHost()
+		report := runAuthDoctor(host)
+
+		cmd.Printf("Host: %s\n", host)
+		if report.StoredAuthErr != nil {
+			cmd.Printf("Stored auth: missing (%v)\n", report.StoredAuthErr)
+		} else {
+			cmd.Printf("Stored auth: ok as %s\n", report.StoredAuth.User)
+		}
+
+		if report.CredentialHelperErr != nil {
+			cmd.Printf("Git credential helper: unavailable (%v)\n", report.CredentialHelperErr)
+		} else if report.CredentialHelper == "" {
+			cmd.Printf("Git credential helper: not configured\n")
+		} else {
+			cmd.Printf("Git credential helper: %s\n", report.CredentialHelper)
+		}
+
+		if report.GitCredentialErr != nil {
+			cmd.Printf("Git credential lookup: failed (%v)\n", report.GitCredentialErr)
+		} else {
+			cmd.Printf("Git credential lookup: ok as %s\n", report.GitCredential.User)
+		}
+
+		if report.StoredAuthErr != nil {
+			return fmt.Errorf("doctor found issues: run gt auth login --username <name> --token <token>")
+		}
+		if report.GitCredentialErr != nil {
+			return fmt.Errorf("doctor found issues: run gt auth setup")
+		}
+
+		cmd.Println("Doctor: OK")
+		return nil
+	},
+}
+
 func readTokenFromInput(cmd *cobra.Command, host string) (string, error) {
 	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Enter token for %s: ", host)
 
@@ -224,6 +265,7 @@ func init() {
 	authCmd.AddCommand(statusCmd)
 	authCmd.AddCommand(tokenCmd)
 	authCmd.AddCommand(setupCmd)
+	authCmd.AddCommand(doctorCmd)
 
 	loginCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 	loginCmd.Flags().StringVarP(&loginFlags.token, "token", "t", "", "Authentication token")
@@ -237,4 +279,5 @@ func init() {
 	tokenCmd.Flags().BoolVar(&tokenShow, "show", false, "Print the full token value")
 
 	setupCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
+	doctorCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 }

@@ -342,6 +342,7 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Repository created: %s\n", repo.HTMLURL)
+	printRepoCreatePushDiagnostics(cmd, repo)
 
 	return nil
 }

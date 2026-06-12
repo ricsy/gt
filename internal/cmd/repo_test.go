@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
+	"github.com/ricsy/gt/pkg/api"
 	"github.com/ricsy/gt/pkg/auth"
 	"github.com/ricsy/gt/pkg/config"
 	"github.com/spf13/cobra"
@@ -200,5 +203,105 @@ func TestBuildCreateRepoOptionsMapsAllSupportedPersonalFlags(t *testing.T) {
 	}
 	if opts.CanComment == nil || *opts.CanComment != false {
 		t.Fatalf("opts.CanComment = %v, want false pointer", opts.CanComment)
+	}
+}
+
+func TestPrintRepoCreatePushDiagnosticsSuggestsAuthSetup(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	originalInside := gitIsInsideWorkTree
+	originalRemoteGetURL := gitRemoteGetURL
+	originalLsRemote := gitLsRemote
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+		gitIsInsideWorkTree = originalInside
+		gitRemoteGetURL = originalRemoteGetURL
+		gitLsRemote = originalLsRemote
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) { return "manager", nil }
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{}, errors.New("missing credential")
+	}
+	gitIsInsideWorkTree = func() (bool, error) { return false, nil }
+	gitRemoteGetURL = func(name string) (string, error) { return "", errors.New("no remote") }
+	gitLsRemote = func(target string) error { return nil }
+
+	cmd := &cobra.Command{}
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetErr(buf)
+
+	printRepoCreatePushDiagnostics(cmd, &api.Repository{CloneURL: "https://gitee.com/ricsy/traceops.git"})
+
+	output := buf.String()
+	if !strings.Contains(output, "gt auth setup") {
+		t.Fatalf("expected auth setup guidance in output, got: %s", output)
+	}
+}
+
+func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	originalInside := gitIsInsideWorkTree
+	originalRemoteGetURL := gitRemoteGetURL
+	originalLsRemote := gitLsRemote
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+		gitIsInsideWorkTree = originalInside
+		gitRemoteGetURL = originalRemoteGetURL
+		gitLsRemote = originalLsRemote
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) { return "manager", nil }
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{Token: "test-token", User: "test-user"}, nil
+	}
+	gitIsInsideWorkTree = func() (bool, error) { return true, nil }
+	gitRemoteGetURL = func(name string) (string, error) {
+		return "https://gitee.com/ricsy/old.git", nil
+	}
+	gitLsRemote = func(target string) error { return nil }
+
+	cmd := &cobra.Command{}
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetErr(buf)
+
+	printRepoCreatePushDiagnostics(cmd, &api.Repository{CloneURL: "https://gitee.com/ricsy/traceops.git"})
+
+	output := buf.String()
+	if !strings.Contains(output, "git remote set-url origin https://gitee.com/ricsy/traceops.git") {
+		t.Fatalf("expected remote set-url guidance in output, got: %s", output)
 	}
 }

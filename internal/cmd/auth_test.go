@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 
 	"github.com/ricsy/gt/pkg/auth"
@@ -23,7 +24,7 @@ func TestAuthCmd(t *testing.T) {
 func TestAuthSubcommands(t *testing.T) {
 	subcommands := authCmd.Commands()
 
-	expectedCmds := []string{"login", "logout", "status", "token", "setup"}
+	expectedCmds := []string{"login", "logout", "status", "token", "setup", "doctor"}
 	foundCmds := make(map[string]bool)
 
 	for _, c := range subcommands {
@@ -86,6 +87,13 @@ func TestSetupCmdHasFlags(t *testing.T) {
 	}
 }
 
+func TestDoctorCmdHasFlags(t *testing.T) {
+	hasHost := doctorCmd.Flags().Lookup("host") != nil
+	if !hasHost {
+		t.Error("doctorCmd should have --host flag")
+	}
+}
+
 func TestAuthCmdExecution(t *testing.T) {
 	tests := []struct {
 		name string
@@ -97,6 +105,7 @@ func TestAuthCmdExecution(t *testing.T) {
 		{"status help", statusCmd, []string{"--help"}},
 		{"token help", tokenCmd, []string{"--help"}},
 		{"setup help", setupCmd, []string{"--help"}},
+		{"doctor help", doctorCmd, []string{"--help"}},
 	}
 
 	for _, tt := range tests {
@@ -181,5 +190,77 @@ func TestSetupCmdRequiresStoredAuth(t *testing.T) {
 	err := setupCmd.RunE(setupCmd, nil)
 	if err == nil {
 		t.Fatal("setupCmd.RunE() error = nil, want non-nil without stored auth")
+	}
+}
+
+func TestDoctorCmdPassesWhenStoredAuthAndGitCredentialExist(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) {
+		return "manager", nil
+	}
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{
+			Token: "test-token",
+			User:  "test-user",
+		}, nil
+	}
+
+	if err := doctorCmd.RunE(doctorCmd, nil); err != nil {
+		t.Fatalf("doctorCmd.RunE() returned error: %v", err)
+	}
+}
+
+func TestDoctorCmdFailsWhenGitCredentialMissing(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) {
+		return "manager", nil
+	}
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{}, errors.New("missing credential")
+	}
+
+	err := doctorCmd.RunE(doctorCmd, nil)
+	if err == nil {
+		t.Fatal("doctorCmd.RunE() error = nil, want non-nil when git credential lookup fails")
 	}
 }

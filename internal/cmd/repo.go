@@ -36,12 +36,22 @@ var repoViewCmd = &cobra.Command{
 	RunE:  repoViewCommand,
 }
 
-var repoCreateOpts struct {
-	Name        string
-	Description string
-	Private     bool
-	Public      bool
+type repoCreateOptions struct {
+	Name              string
+	Description       string
+	Homepage          string
+	Private           bool
+	Public            bool
+	HasIssues         bool
+	HasWiki           bool
+	CanComment        bool
+	AutoInit          bool
+	GitignoreTemplate string
+	LicenseTemplate   string
+	Path              string
 }
+
+var repoCreateOpts = repoCreateOptions{}
 
 var repoCreateCmd = &cobra.Command{
 	Use:   "create",
@@ -187,8 +197,16 @@ func init() {
 
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")
-	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", false, "Create private repository")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Homepage, "homepage", "", "Repository homepage URL")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", true, "Create private repository")
 	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Request public visibility (unsupported for personal repo creation)")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.HasIssues, "has-issues", true, "Enable repository issues")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.HasWiki, "has-wiki", true, "Enable repository wiki")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.CanComment, "can-comment", true, "Allow repository comments")
+	repoCreateCmd.Flags().BoolVar(&repoCreateOpts.AutoInit, "auto-init", false, "Initialize repository with README files")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.GitignoreTemplate, "gitignore-template", "", "Gitignore template name")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.LicenseTemplate, "license-template", "", "License template name")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Path, "path", "", "Repository path")
 	_ = repoCreateCmd.MarkFlagRequired("name")
 
 	addRepoBranchRepoFlag(repoBranchListCmd)
@@ -328,20 +346,40 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// buildCreateRepoOptions 根据当前个人仓库 API 契约构建请求，提前拦截平台不支持的可见性参数。
+// buildCreateRepoOptions aligns CLI flags with the current personal repository API contract.
 func buildCreateRepoOptions(cmd *cobra.Command) (api.CreateRepoOptions, error) {
 	opts := api.CreateRepoOptions{
 		Name:        repoCreateOpts.Name,
 		Description: repoCreateOpts.Description,
-		AutoInit:    true,
+		Homepage:    repoCreateOpts.Homepage,
+		Private:     true,
+		AutoInit:    repoCreateOpts.AutoInit,
+		Path:        repoCreateOpts.Path,
 	}
 
-	// 当前 /user/repos 仅支持私有仓库，避免把用户带到后端 400。
 	if cmd.Flags().Changed("public") && repoCreateOpts.Public {
 		return api.CreateRepoOptions{}, fmt.Errorf("public repositories are not supported by the current user repo API; omit --public")
 	}
 	if cmd.Flags().Changed("private") {
+		if !repoCreateOpts.Private {
+			return api.CreateRepoOptions{}, fmt.Errorf("personal repositories currently require --private=true")
+		}
 		opts.Private = repoCreateOpts.Private
+	}
+	if cmd.Flags().Changed("has-issues") {
+		opts.HasIssues = api.BoolPtr(repoCreateOpts.HasIssues)
+	}
+	if cmd.Flags().Changed("has-wiki") {
+		opts.HasWiki = api.BoolPtr(repoCreateOpts.HasWiki)
+	}
+	if cmd.Flags().Changed("can-comment") {
+		opts.CanComment = api.BoolPtr(repoCreateOpts.CanComment)
+	}
+	if cmd.Flags().Changed("gitignore-template") {
+		opts.GitignoreTemplate = repoCreateOpts.GitignoreTemplate
+	}
+	if cmd.Flags().Changed("license-template") {
+		opts.LicenseTemplate = repoCreateOpts.LicenseTemplate
 	}
 
 	return opts, nil
@@ -473,7 +511,6 @@ func repoCollaboratorViewCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get collaborator: %w", err)
 	}
-	// Gitee 的 collaborator existence 接口返回 204，无响应体；这里退化为存在性输出。
 	if collab.Login == "" && collab.Name == "" {
 		cmd.Printf("%s is a collaborator\n", args[0])
 		return nil
@@ -613,8 +650,6 @@ func repoCloneCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// buildAuthenticatedCloneURL 为私库 clone 注入 HTTPS 凭据。
-// 如果本地没有可解析的用户名，则退化为原始匿名 URL。
 func buildAuthenticatedCloneURL(host, cloneURL string) (string, error) {
 	authInfo, err := auth.GetAuth(host)
 	if err != nil || authInfo.Token == "" || authInfo.User == "" {

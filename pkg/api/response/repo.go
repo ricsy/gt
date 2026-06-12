@@ -118,6 +118,7 @@ type CreateRepoOptions struct {
 	CanComment         *bool  `json:"can_comment,omitempty"`
 	GitignoreTemplate  string `json:"gitignore_template,omitempty"`
 	LicenseTemplate    string `json:"license_template,omitempty"`
+	Path               string `json:"path,omitempty"`
 	Namespace          string `json:"namespace,omitempty"`
 	Public             *bool  `json:"public,omitempty"`
 	Outsourced         *bool  `json:"outsourced,omitempty"`

@@ -36,6 +36,7 @@ type EndpointGroup struct {
 	Remove                  Endpoint
 	Replace                 Endpoint
 	Delete                  Endpoint
+	Review                  Endpoint
 	Test                    Endpoint
 	Merge                   Endpoint
 	Comment                 Endpoint
@@ -163,6 +164,8 @@ var PRs = EndpointGroup{
 	Create:  Endpoint{POST, "/repos/%s/%s/pulls"},
 	Merge:   Endpoint{PUT, "/repos/%s/%s/pulls/%d/merge"},
 	Update:  Endpoint{PATCH, "/repos/%s/%s/pulls/%d"},
+	Review:  Endpoint{POST, "/repos/%s/%s/pulls/%d/review"},
+	Test:    Endpoint{POST, "/repos/%s/%s/pulls/%d/test"},
 	Comment: Endpoint{POST, "/repos/%s/%s/pulls/%d/comments"},
 }
 

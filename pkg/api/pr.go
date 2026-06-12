@@ -26,6 +26,12 @@ type CreatePRRequest = response.CreatePRRequest
 // MergePRRequest is an alias for response.MergePRRequest
 type MergePRRequest = response.MergePRRequest
 
+// ReviewPRRequest is an alias for response.ReviewPRRequest
+type ReviewPRRequest = response.ReviewPRRequest
+
+// TestPRRequest is an alias for response.TestPRRequest
+type TestPRRequest = response.TestPRRequest
+
 // UpdatePRRequest is an alias for response.UpdatePRRequest
 type UpdatePRRequest = response.UpdatePRRequest
 
@@ -99,6 +105,16 @@ func (c *Client) CreatePR(owner, repo, title, body, head, base string) (*PullReq
 // MergePR merges a pull request
 func (c *Client) MergePR(owner, repo string, number int, req MergePRRequest) error {
 	return c.DoFromEndpoint(PRs.Merge, []interface{}{owner, repo, number}, req, nil)
+}
+
+// ReviewPR marks a pull request review as passed
+func (c *Client) ReviewPR(owner, repo string, number int, req ReviewPRRequest) error {
+	return c.DoFromEndpoint(PRs.Review, []interface{}{owner, repo, number}, req, nil)
+}
+
+// TestPR marks a pull request test as passed
+func (c *Client) TestPR(owner, repo string, number int, req TestPRRequest) error {
+	return c.DoFromEndpoint(PRs.Test, []interface{}{owner, repo, number}, req, nil)
 }
 
 // UpdatePR updates a pull request

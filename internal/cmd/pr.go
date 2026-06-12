@@ -16,6 +16,8 @@ var (
 	prHead        string
 	prBase        string
 	prNewState    string
+	prGateForce   bool
+	prMergeGates  bool
 )
 
 var prCmd = &cobra.Command{
@@ -50,6 +52,20 @@ var prMergeCmd = &cobra.Command{
 	RunE:  prMerge,
 }
 
+var prReviewCmd = &cobra.Command{
+	Use:   "review <number>",
+	Short: "Pass pull request review",
+	Args:  cobra.ExactArgs(1),
+	RunE:  prReview,
+}
+
+var prTestCmd = &cobra.Command{
+	Use:   "test <number>",
+	Short: "Pass pull request test",
+	Args:  cobra.ExactArgs(1),
+	RunE:  prTest,
+}
+
 var prCloseCmd = &cobra.Command{
 	Use:   "close <number>",
 	Short: "Close a pull request",
@@ -74,7 +90,7 @@ var prStateCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(prCmd)
 
-	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prCloseCmd, prCommentCmd, prStateCmd)
+	prCmd.AddCommand(prListCmd, prViewCmd, prCreateCmd, prMergeCmd, prReviewCmd, prTestCmd, prCloseCmd, prCommentCmd, prStateCmd)
 
 	prListCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 	prListCmd.Flags().StringVar(&prFilterState, "state", string(api.PRStateOpen), "Filter by state: open, closed, merged, all")
@@ -88,6 +104,14 @@ func init() {
 	prCreateCmd.Flags().StringVar(&prBase, "base", "main", "Base branch")
 
 	prMergeCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
+	prMergeCmd.Flags().BoolVar(&prMergeGates, "pass-gates", false, "Pass review and test gates before merge")
+	prMergeCmd.Flags().BoolVar(&prGateForce, "force", false, "Force gate pass when supported for administrators")
+
+	prReviewCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
+	prReviewCmd.Flags().BoolVar(&prGateForce, "force", false, "Force review pass when supported for administrators")
+
+	prTestCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
+	prTestCmd.Flags().BoolVar(&prGateForce, "force", false, "Force test pass when supported for administrators")
 
 	prCloseCmd.Flags().StringVar(&prRepo, "repo", "", "owner/repo")
 
@@ -194,12 +218,70 @@ func prMerge(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if prMergeGates {
+		gateReq := api.ReviewPRRequest{Force: prGateForce}
+		if err := client.ReviewPR(owner, repo, number, gateReq); err != nil {
+			return fmt.Errorf("pass review gate: %w", err)
+		}
+		if err := client.TestPR(owner, repo, number, api.TestPRRequest{Force: prGateForce}); err != nil {
+			return fmt.Errorf("pass test gate: %w", err)
+		}
+	}
+
 	err = client.MergePR(owner, repo, number, api.MergePRRequest{})
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("Merged PR #%d\n", number)
+	return nil
+}
+
+func prReview(cmd *cobra.Command, args []string) error {
+	owner, repo, err := resolveRepoFlag(prRepo)
+	if err != nil {
+		return err
+	}
+
+	number, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("invalid PR number: %w", err)
+	}
+
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+
+	if err := client.ReviewPR(owner, repo, number, api.ReviewPRRequest{Force: prGateForce}); err != nil {
+		return err
+	}
+
+	fmt.Printf("Passed review for PR #%d\n", number)
+	return nil
+}
+
+func prTest(cmd *cobra.Command, args []string) error {
+	owner, repo, err := resolveRepoFlag(prRepo)
+	if err != nil {
+		return err
+	}
+
+	number, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("invalid PR number: %w", err)
+	}
+
+	client, err := getClient()
+	if err != nil {
+		return err
+	}
+
+	if err := client.TestPR(owner, repo, number, api.TestPRRequest{Force: prGateForce}); err != nil {
+		return err
+	}
+
+	fmt.Printf("Passed test for PR #%d\n", number)
 	return nil
 }
 

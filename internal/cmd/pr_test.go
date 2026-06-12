@@ -52,6 +52,36 @@ func TestPRMergeCmd(t *testing.T) {
 	if prMergeCmd.Use != "merge <number>" {
 		t.Errorf("prMergeCmd.Use = %s, want 'merge <number>'", prMergeCmd.Use)
 	}
+	if prMergeCmd.Flags().Lookup("pass-gates") == nil {
+		t.Error("prMergeCmd should have --pass-gates flag")
+	}
+	if prMergeCmd.Flags().Lookup("force") == nil {
+		t.Error("prMergeCmd should have --force flag")
+	}
+}
+
+func TestPRReviewCmd(t *testing.T) {
+	if prReviewCmd.Use != "review <number>" {
+		t.Errorf("prReviewCmd.Use = %s, want 'review <number>'", prReviewCmd.Use)
+	}
+	if prReviewCmd.Flags().Lookup("repo") == nil {
+		t.Error("prReviewCmd should have --repo flag")
+	}
+	if prReviewCmd.Flags().Lookup("force") == nil {
+		t.Error("prReviewCmd should have --force flag")
+	}
+}
+
+func TestPRTestCmd(t *testing.T) {
+	if prTestCmd.Use != "test <number>" {
+		t.Errorf("prTestCmd.Use = %s, want 'test <number>'", prTestCmd.Use)
+	}
+	if prTestCmd.Flags().Lookup("repo") == nil {
+		t.Error("prTestCmd should have --repo flag")
+	}
+	if prTestCmd.Flags().Lookup("force") == nil {
+		t.Error("prTestCmd should have --force flag")
+	}
 }
 
 func TestPRCloseCmd(t *testing.T) {

@@ -92,6 +92,16 @@ type MergePRRequest struct {
 	Description       string `json:"description,omitempty"`
 }
 
+// ReviewPRRequest is the request body for passing PR review
+type ReviewPRRequest struct {
+	Force bool `json:"force,omitempty"`
+}
+
+// TestPRRequest is the request body for passing PR test
+type TestPRRequest struct {
+	Force bool `json:"force,omitempty"`
+}
+
 // UpdatePRRequest is the request body for updating a PR
 type UpdatePRRequest struct {
 	Title                 string `json:"title,omitempty"`

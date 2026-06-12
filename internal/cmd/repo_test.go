@@ -74,7 +74,18 @@ func newRepoCreateTestCommand() *cobra.Command {
 	cmd.Flags().String("license-template", "", "")
 	cmd.Flags().String("homepage", "", "")
 	cmd.Flags().String("path", "", "")
+	cmd.Flags().String("clone-url-mode", "https", "")
 	return cmd
+}
+
+func newRepository(owner, name, httpsURL, sshURL string) *api.Repository {
+	repo := &api.Repository{
+		Name:     name,
+		CloneURL: httpsURL,
+		SSHURL:   sshURL,
+	}
+	repo.Owner.Login = owner
+	return repo
 }
 
 func TestBuildCreateRepoOptionsRejectsPublicVisibility(t *testing.T) {
@@ -247,7 +258,7 @@ func TestPrintRepoCreatePushDiagnosticsSuggestsAuthSetup(t *testing.T) {
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
 
-	printRepoCreatePushDiagnostics(cmd, &api.Repository{CloneURL: "https://gitee.com/ricsy/traceops.git"})
+	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "", ""), cloneURLModeHTTPS)
 
 	output := buf.String()
 	if !strings.Contains(output, "gt auth setup") {
@@ -298,10 +309,41 @@ func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
 
-	printRepoCreatePushDiagnostics(cmd, &api.Repository{CloneURL: "https://gitee.com/ricsy/traceops.git"})
+	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "https://gitee.com/ricsy/traceops.git", ""), cloneURLModeHTTPS)
 
 	output := buf.String()
 	if !strings.Contains(output, "git remote set-url origin https://gitee.com/ricsy/traceops.git") {
 		t.Fatalf("expected remote set-url guidance in output, got: %s", output)
+	}
+}
+
+func TestResolveRepoCloneURLFallsBackWhenCreateResponseOmitsCloneURL(t *testing.T) {
+	got, err := resolveRepoCloneURL("gitee.com", "ricsy", "traceops", "", "", cloneURLModeHTTPS)
+	if err != nil {
+		t.Fatalf("resolveRepoCloneURL() returned error: %v", err)
+	}
+
+	want := "https://gitee.com/ricsy/traceops.git"
+	if got != want {
+		t.Fatalf("resolveRepoCloneURL() = %q, want %q", got, want)
+	}
+}
+
+func TestResolveRepoCloneURLSupportsSSHMode(t *testing.T) {
+	got, err := resolveRepoCloneURL("gitee.com", "ricsy", "traceops", "", "", cloneURLModeSSH)
+	if err != nil {
+		t.Fatalf("resolveRepoCloneURL() returned error: %v", err)
+	}
+
+	want := "git@gitee.com:ricsy/traceops.git"
+	if got != want {
+		t.Fatalf("resolveRepoCloneURL() = %q, want %q", got, want)
+	}
+}
+
+func TestValidateCloneURLModeRejectsUnknownValue(t *testing.T) {
+	err := validateCloneURLMode("ftp")
+	if err == nil {
+		t.Fatal("validateCloneURLMode() error = nil, want non-nil")
 	}
 }

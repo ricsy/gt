@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/ricsy/gt/pkg/auth"
@@ -29,26 +28,12 @@ var loginFlags struct {
 
 var tokenShow bool
 
-var gitCredentialApprove = func(host, username, token string) error {
-	payload := strings.Join([]string{
-		"protocol=https",
-		fmt.Sprintf("host=%s", host),
-		fmt.Sprintf("username=%s", username),
-		fmt.Sprintf("password=%s", token),
-		"",
-	}, "\n")
+var setupFlags struct {
+	Overwrite bool
+}
 
-	cmd := exec.Command("git", "credential", "approve")
-	cmd.Stdin = strings.NewReader(payload)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		trimmed := strings.TrimSpace(string(output))
-		if trimmed == "" {
-			return fmt.Errorf("git credential approve failed: %w", err)
-		}
-		return fmt.Errorf("git credential approve failed: %w: %s", err, trimmed)
-	}
-	return nil
+var doctorFlags struct {
+	JSON bool
 }
 
 func resolveAuthHost() string {
@@ -99,14 +84,25 @@ var logoutCmd = &cobra.Command{
 			return fmt.Errorf("not logged in to %s", host)
 		}
 
+		authInfo, _ := auth.GetAuth(host)
 		if err := auth.Logout(host); err != nil {
 			return fmt.Errorf("failed to logout: %w", err)
+		}
+
+		if logoutCleanupGit {
+			if err := clearGitCredentialsForHost(host, authInfo.User); err != nil {
+				return fmt.Errorf("logged out from %s but failed to clear git credentials: %w", host, err)
+			}
+			fmt.Printf("Logged out from %s and cleared git credentials\n", host)
+			return nil
 		}
 
 		fmt.Printf("Logged out from %s\n", host)
 		return nil
 	},
 }
+
+var logoutCleanupGit bool
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
@@ -165,6 +161,12 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("stored auth for %s does not include a token", host)
 		}
 
+		if setupFlags.Overwrite {
+			if err := clearGitCredentialsForHost(host, authInfo.User); err != nil {
+				return fmt.Errorf("failed to clear existing git credentials: %w", err)
+			}
+		}
+
 		if err := gitCredentialApprove(host, authInfo.User, authInfo.Token); err != nil {
 			return err
 		}
@@ -177,42 +179,108 @@ var setupCmd = &cobra.Command{
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Diagnose git authentication for a host",
-	Long:  `Inspect stored auth, git credential helper state, and git credential lookup for a host.`,
+	Long:  `Inspect stored auth, git credential state, and local git remote access for a host.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		host := resolveAuthHost()
 		report := runAuthDoctor(host)
 
+		if doctorFlags.JSON {
+			jsonText, err := report.ToJSON()
+			if err != nil {
+				return fmt.Errorf("failed to encode doctor report: %w", err)
+			}
+			cmd.Println(jsonText)
+			if report.ReadyForHTTPSGit {
+				return nil
+			}
+			return fmt.Errorf("doctor found issues")
+		}
+
 		cmd.Printf("Host: %s\n", host)
-		if report.StoredAuthErr != nil {
-			cmd.Printf("Stored auth: missing (%v)\n", report.StoredAuthErr)
+		if report.StoredAuthErr != "" {
+			cmd.Printf("Stored auth: missing (%s)\n", report.StoredAuthErr)
 		} else {
 			cmd.Printf("Stored auth: ok as %s\n", report.StoredAuth.User)
 		}
 
-		if report.CredentialHelperErr != nil {
-			cmd.Printf("Git credential helper: unavailable (%v)\n", report.CredentialHelperErr)
+		if report.CredentialHelperErr != "" {
+			cmd.Printf("Git credential helper: unavailable (%s)\n", report.CredentialHelperErr)
 		} else if report.CredentialHelper == "" {
 			cmd.Printf("Git credential helper: not configured\n")
 		} else {
 			cmd.Printf("Git credential helper: %s\n", report.CredentialHelper)
 		}
 
-		if report.GitCredentialErr != nil {
-			cmd.Printf("Git credential lookup: failed (%v)\n", report.GitCredentialErr)
+		if report.GitCredentialErr != "" {
+			cmd.Printf("Git credential lookup: failed (%s)\n", report.GitCredentialErr)
 		} else {
 			cmd.Printf("Git credential lookup: ok as %s\n", report.GitCredential.User)
 		}
 
-		if report.StoredAuthErr != nil {
+		if len(report.CredentialTargets) > 1 {
+			cmd.Printf("Credential targets: multiple entries found for %s\n", host)
+			for _, target := range report.CredentialTargets {
+				cmd.Printf("  - %s (%s)\n", target.Target, target.User)
+			}
+		}
+
+		if report.StoredAuthErr == "" && report.GitCredentialErr == "" && !report.AuthUserMatchesGit {
+			cmd.Printf("Credential mismatch: stored auth user is %s, git credential user is %s\n", report.StoredAuth.User, report.GitCredential.User)
+			cmd.Printf("Recommendation: gt auth setup --overwrite\n")
+		}
+
+		if report.CurrentDirectoryRepoErr != "" {
+			cmd.Printf("Current directory git status: failed (%s)\n", report.CurrentDirectoryRepoErr)
+		} else if !report.CurrentDirectoryIsRepo {
+			cmd.Printf("Current directory git status: not a git worktree\n")
+		} else {
+			cmd.Printf("Current directory git status: git worktree\n")
+		}
+
+		if report.OriginURL != "" {
+			cmd.Printf("Origin URL: %s\n", report.OriginURL)
+			if report.OriginAccessErr != "" {
+				cmd.Printf("Origin access: failed (%s)\n", report.OriginAccessErr)
+			} else if report.OriginAccessOK {
+				cmd.Printf("Origin access: ok\n")
+			}
+		} else if report.OriginURLErr != "" {
+			cmd.Printf("Origin URL: unavailable (%s)\n", report.OriginURLErr)
+		}
+
+		if report.StoredAuthErr != "" {
 			return fmt.Errorf("doctor found issues: run gt auth login --username <name> --token <token>")
 		}
-		if report.GitCredentialErr != nil {
-			return fmt.Errorf("doctor found issues: run gt auth setup")
+		if report.GitCredentialErr != "" || !report.AuthUserMatchesGit {
+			return fmt.Errorf("doctor found issues: run gt auth setup --overwrite")
 		}
 
 		cmd.Println("Doctor: OK")
 		return nil
 	},
+}
+
+func clearGitCredentialsForHost(host, username string) error {
+	if err := gitCredentialReject(host, ""); err != nil {
+		return err
+	}
+	if username != "" {
+		if err := gitCredentialReject(host, username); err != nil {
+			return err
+		}
+	}
+
+	targets, err := gitCredentialTargetsList(host)
+	if err != nil {
+		return err
+	}
+	for _, target := range targets {
+		if err := gitCredentialTargetDelete(target.Target); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func readTokenFromInput(cmd *cobra.Command, host string) (string, error) {
@@ -272,6 +340,7 @@ func init() {
 	loginCmd.Flags().StringVarP(&loginFlags.username, "username", "u", "", "Username")
 
 	logoutCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
+	logoutCmd.Flags().BoolVar(&logoutCleanupGit, "cleanup-git", false, "Also clear git credentials for the current host")
 
 	statusCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
 
@@ -279,5 +348,8 @@ func init() {
 	tokenCmd.Flags().BoolVar(&tokenShow, "show", false, "Print the full token value")
 
 	setupCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
+	setupCmd.Flags().BoolVar(&setupFlags.Overwrite, "overwrite", false, "Clear existing git credentials for the host before writing the new one")
+
 	doctorCmd.Flags().StringVar(&loginFlags.host, "host", "", "Host (default: gitee.com)")
+	doctorCmd.Flags().BoolVar(&doctorFlags.JSON, "json", false, "Print the doctor report as JSON")
 }

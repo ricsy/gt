@@ -7,67 +7,83 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func printRepoCreatePushDiagnostics(cmd *cobra.Command, repo *api.Repository) {
-	cmd.Println("Push diagnostic:")
-
+// printRepoCreatePushDiagnostics explains the post-create push state without mutating the local repository.
+func printRepoCreatePushDiagnostics(cmd *cobra.Command, repo *api.Repository, cloneURLMode string) {
 	host := resolveCommandHost()
-	report := runAuthDoctor(host)
-	if report.StoredAuthErr != nil {
-		cmd.Printf("- Missing stored auth for %s. Run: gt auth login --username <name> --token <token>\n", host)
+	cloneURL, err := resolveRepoCloneURL(host, repo.Owner.Login, repo.Name, repo.CloneURL, repo.SSHURL, cloneURLMode)
+
+	cmd.Println("Push diagnostics:")
+	cmd.Println("- Repository creation: success")
+	if err != nil {
+		cmd.Printf("- Remote URL: unavailable (%v)\n", err)
 		return
 	}
-	if report.GitCredentialErr != nil {
-		cmd.Printf("- Git credentials are not ready for HTTPS git operations. Run: gt auth setup\n")
+	cmd.Printf("- Suggested remote URL: %s\n", cloneURL)
+
+	report := runAuthDoctor(host)
+	if cloneURLMode == cloneURLModeHTTPS {
+		if report.StoredAuthErr != "" {
+			cmd.Printf("- HTTPS auth: missing stored auth for %s. Run: gt auth login --username <name> --token <token>\n", host)
+		} else if report.GitCredentialErr != "" || !report.AuthUserMatchesGit {
+			cmd.Printf("- HTTPS auth: not ready for git push. Run: gt auth setup --overwrite\n")
+		} else {
+			cmd.Printf("- HTTPS auth: ready\n")
+		}
 	} else {
-		cmd.Printf("- Git credentials are ready for HTTPS git operations.\n")
+		cmd.Printf("- Remote mode: SSH (gt does not validate SSH agent keys here)\n")
 	}
 
-	insideWorkTree, err := gitIsInsideWorkTree()
-	if err != nil {
-		cmd.Printf("- Could not inspect the current git worktree: %v\n", err)
+	insideWorkTree, workTreeErr := gitIsInsideWorkTree()
+	if workTreeErr != nil {
+		cmd.Printf("- Local repository check: failed (%v)\n", workTreeErr)
 		return
 	}
 	if !insideWorkTree {
-		cmd.Printf("- Current directory is not a git worktree.\n")
-		cmd.Printf("- Add the remote and push later:\n")
-		cmd.Printf("  git remote add origin %s\n", repo.CloneURL)
+		cmd.Printf("- Local repository check: current directory is not a git worktree\n")
+		cmd.Printf("- Next steps:\n")
+		cmd.Printf("  git remote add origin %s\n", cloneURL)
 		cmd.Printf("  git push -u origin master\n")
 		return
 	}
 
-	originURL, err := gitRemoteGetURL("origin")
-	if err != nil {
-		cmd.Printf("- No origin remote found.\n")
-		cmd.Printf("- Add the remote and push:\n")
-		cmd.Printf("  git remote add origin %s\n", repo.CloneURL)
+	originURL, originErr := gitRemoteGetURL("origin")
+	if originErr != nil {
+		cmd.Printf("- Origin remote: missing\n")
+		cmd.Printf("- Next steps:\n")
+		cmd.Printf("  git remote add origin %s\n", cloneURL)
 		cmd.Printf("  git push -u origin master\n")
 		return
 	}
 
-	if originURL != repo.CloneURL {
-		cmd.Printf("- origin points to %s\n", originURL)
-		cmd.Printf("- Expected remote URL: %s\n", repo.CloneURL)
-		cmd.Printf("- Update it before push:\n")
-		cmd.Printf("  git remote set-url origin %s\n", repo.CloneURL)
+	if originURL == cloneURL {
+		cmd.Printf("- Origin remote: already points to the new repository\n")
+	} else {
+		cmd.Printf("- Origin remote: points to %s\n", originURL)
+		cmd.Printf("- Update command:\n")
+		cmd.Printf("  git remote set-url origin %s\n", cloneURL)
 	}
 
-	if report.GitCredentialErr != nil {
-		cmd.Printf("- HTTPS remote access was not checked because git credentials are not configured yet.\n")
+	if cloneURLMode == cloneURLModeSSH {
+		cmd.Printf("- SSH reachability: skipped\n")
 		return
 	}
 
-	if isSSHRemote(originURL) {
-		cmd.Printf("- origin uses SSH; verify SSH access separately.\n")
+	if report.StoredAuthErr != "" || report.GitCredentialErr != "" || !report.AuthUserMatchesGit {
+		cmd.Printf("- HTTPS reachability: skipped until auth is fixed\n")
 		return
 	}
 
-	if err := gitLsRemote(repo.CloneURL); err != nil {
-		cmd.Printf("- HTTPS remote access check failed: %v\n", err)
-		cmd.Printf("- Run: gt auth setup\n")
+	targetURL := cloneURL
+	if isSSHRemote(originURL) || originURL != cloneURL {
+		targetURL = cloneURL
+	}
+	if err := gitLsRemote(targetURL); err != nil {
+		cmd.Printf("- HTTPS reachability: failed (%v)\n", err)
+		cmd.Printf("- Recommendation: run gt auth setup --overwrite\n")
 		return
 	}
 
-	cmd.Printf("- HTTPS remote access check passed for %s\n", repo.CloneURL)
+	cmd.Printf("- HTTPS reachability: ok\n")
 }
 
 func isSSHRemote(remoteURL string) bool {

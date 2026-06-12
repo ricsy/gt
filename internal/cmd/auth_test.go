@@ -59,6 +59,10 @@ func TestLogoutCmdHasFlags(t *testing.T) {
 	if !hasHost {
 		t.Error("logoutCmd should have --host flag")
 	}
+	hasCleanupGit := logoutCmd.Flags().Lookup("cleanup-git") != nil
+	if !hasCleanupGit {
+		t.Error("logoutCmd should have --cleanup-git flag")
+	}
 }
 
 func TestStatusCmdHasFlags(t *testing.T) {
@@ -85,12 +89,20 @@ func TestSetupCmdHasFlags(t *testing.T) {
 	if !hasHost {
 		t.Error("setupCmd should have --host flag")
 	}
+	hasOverwrite := setupCmd.Flags().Lookup("overwrite") != nil
+	if !hasOverwrite {
+		t.Error("setupCmd should have --overwrite flag")
+	}
 }
 
 func TestDoctorCmdHasFlags(t *testing.T) {
 	hasHost := doctorCmd.Flags().Lookup("host") != nil
 	if !hasHost {
 		t.Error("doctorCmd should have --host flag")
+	}
+	hasJSON := doctorCmd.Flags().Lookup("json") != nil
+	if !hasJSON {
+		t.Error("doctorCmd should have --json flag")
 	}
 }
 
@@ -262,5 +274,119 @@ func TestDoctorCmdFailsWhenGitCredentialMissing(t *testing.T) {
 	err := doctorCmd.RunE(doctorCmd, nil)
 	if err == nil {
 		t.Fatal("doctorCmd.RunE() error = nil, want non-nil when git credential lookup fails")
+	}
+}
+
+func TestSetupCmdOverwriteClearsExistingGitCredentials(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalApprove := gitCredentialApprove
+	originalReject := gitCredentialReject
+	originalTargets := gitCredentialTargetsList
+	originalDelete := gitCredentialTargetDelete
+	originalOverwrite := setupFlags.Overwrite
+	t.Cleanup(func() {
+		gitCredentialApprove = originalApprove
+		gitCredentialReject = originalReject
+		gitCredentialTargetsList = originalTargets
+		gitCredentialTargetDelete = originalDelete
+		setupFlags.Overwrite = originalOverwrite
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	var rejected []string
+	var deleted []string
+	var approved bool
+	gitCredentialReject = func(host, username string) error {
+		rejected = append(rejected, host+":"+username)
+		return nil
+	}
+	gitCredentialTargetsList = func(host string) ([]credentialTarget, error) {
+		return []credentialTarget{{Target: "git:https://test-user@gitee.com"}}, nil
+	}
+	gitCredentialTargetDelete = func(target string) error {
+		deleted = append(deleted, target)
+		return nil
+	}
+	gitCredentialApprove = func(host, username, token string) error {
+		approved = true
+		return nil
+	}
+
+	setupFlags.Overwrite = true
+	if err := setupCmd.RunE(setupCmd, nil); err != nil {
+		t.Fatalf("setupCmd.RunE() returned error: %v", err)
+	}
+
+	if len(rejected) != 2 {
+		t.Fatalf("gitCredentialReject call count = %d, want 2", len(rejected))
+	}
+	if len(deleted) != 1 {
+		t.Fatalf("gitCredentialTargetDelete call count = %d, want 1", len(deleted))
+	}
+	if !approved {
+		t.Fatal("gitCredentialApprove was not called")
+	}
+}
+
+func TestDoctorCmdJSONOutputsStructuredReport(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	originalInside := gitIsInsideWorkTree
+	originalJSON := doctorFlags.JSON
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+		gitIsInsideWorkTree = originalInside
+		doctorFlags.JSON = originalJSON
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) {
+		return "manager", nil
+	}
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{Token: "test-token", User: "test-user"}, nil
+	}
+	gitIsInsideWorkTree = func() (bool, error) { return false, nil }
+
+	doctorFlags.JSON = true
+	buf := new(bytes.Buffer)
+	doctorCmd.SetOut(buf)
+
+	if err := doctorCmd.RunE(doctorCmd, nil); err != nil {
+		t.Fatalf("doctorCmd.RunE() returned error: %v", err)
+	}
+
+	output := buf.String()
+	if !bytes.Contains([]byte(output), []byte(`"ready_for_https_git": true`)) {
+		t.Fatalf("doctor JSON output missing readiness field: %s", output)
+	}
+	if !bytes.Contains([]byte(output), []byte(`"host": "gitee.com"`)) {
+		t.Fatalf("doctor JSON output missing host field: %s", output)
 	}
 }

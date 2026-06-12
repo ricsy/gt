@@ -49,6 +49,7 @@ type repoCreateOptions struct {
 	GitignoreTemplate string
 	LicenseTemplate   string
 	Path              string
+	CloneURLMode      string
 }
 
 var repoCreateOpts = repoCreateOptions{}
@@ -57,6 +58,17 @@ var repoCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new repository",
 	RunE:  repoCreateCommand,
+}
+
+var repoBootstrapOpts struct {
+	RemoteName string
+	Push       bool
+}
+
+var repoBootstrapCmd = &cobra.Command{
+	Use:   "bootstrap",
+	Short: "Create a repository and connect the current git worktree",
+	RunE:  repoBootstrapCommand,
 }
 
 var repoBranchOpts struct {
@@ -187,7 +199,7 @@ var repoForkCreateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(repoCmd)
-	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd)
+	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBootstrapCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd)
 	repoBranchCmd.AddCommand(repoBranchListCmd, repoBranchViewCmd, repoBranchCreateCmd, repoBranchProtectCmd, repoBranchUnprotectCmd)
 	repoCollaboratorCmd.AddCommand(repoCollaboratorListCmd, repoCollaboratorViewCmd, repoCollaboratorPermCmd, repoCollaboratorAddCmd, repoCollaboratorRemoveCmd)
 	repoForkCmd.AddCommand(repoForkListCmd, repoForkCreateCmd)
@@ -207,7 +219,25 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.GitignoreTemplate, "gitignore-template", "", "Gitignore template name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.LicenseTemplate, "license-template", "", "License template name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Path, "path", "", "Repository path")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Preferred clone URL mode for follow-up diagnostics: https or ssh")
 	_ = repoCreateCmd.MarkFlagRequired("name")
+
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Homepage, "homepage", "", "Repository homepage URL")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.Private, "private", true, "Create private repository")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.Public, "public", false, "Request public visibility (unsupported for personal repo creation)")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.HasIssues, "has-issues", true, "Enable repository issues")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.HasWiki, "has-wiki", true, "Enable repository wiki")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.CanComment, "can-comment", true, "Allow repository comments")
+	repoBootstrapCmd.Flags().BoolVar(&repoCreateOpts.AutoInit, "auto-init", false, "Initialize repository with README files")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.GitignoreTemplate, "gitignore-template", "", "Gitignore template name")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.LicenseTemplate, "license-template", "", "License template name")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Path, "path", "", "Repository path")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Remote URL mode to configure: https or ssh")
+	repoBootstrapCmd.Flags().StringVar(&repoBootstrapOpts.RemoteName, "remote-name", "origin", "Remote name to create or update")
+	repoBootstrapCmd.Flags().BoolVar(&repoBootstrapOpts.Push, "push", true, "Push the current branch after wiring the remote")
+	_ = repoBootstrapCmd.MarkFlagRequired("name")
 
 	addRepoBranchRepoFlag(repoBranchListCmd)
 	addRepoBranchRepoFlag(repoBranchViewCmd)
@@ -342,7 +372,7 @@ func repoCreateCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Repository created: %s\n", repo.HTMLURL)
-	printRepoCreatePushDiagnostics(cmd, repo)
+	printRepoCreatePushDiagnostics(cmd, repo, repoCreateOpts.CloneURLMode)
 
 	return nil
 }

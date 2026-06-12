@@ -132,3 +132,11 @@ func TestRepoGitHTTPSURL(t *testing.T) {
 		t.Fatalf("RepoGitHTTPSURL() = %s, want %s", got, want)
 	}
 }
+
+func TestRepoGitSSHURL(t *testing.T) {
+	got := RepoGitSSHURL("gitee.example.com", "owner", "repo")
+	want := "git@gitee.example.com:owner/repo.git"
+	if got != want {
+		t.Fatalf("RepoGitSSHURL() = %s, want %s", got, want)
+	}
+}

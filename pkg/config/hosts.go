@@ -24,3 +24,7 @@ func WebURL(host string) string {
 func RepoGitHTTPSURL(host, owner, repo string) string {
 	return fmt.Sprintf("%s/%s/%s.git", WebURL(host), owner, repo)
 }
+
+func RepoGitSSHURL(host, owner, repo string) string {
+	return fmt.Sprintf("git@%s:%s/%s.git", host, owner, repo)
+}

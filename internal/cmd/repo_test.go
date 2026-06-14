@@ -317,6 +317,72 @@ func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
 	}
 }
 
+func TestPrintRepoCreatePushDiagnosticsUsesCurrentBranchForPushHint(t *testing.T) {
+	originalConfigDirFunc := config.ConfigDir
+	configDir := t.TempDir()
+	config.SetConfigDirFunc(func() string { return configDir })
+	t.Cleanup(func() {
+		config.SetConfigDirFunc(originalConfigDirFunc)
+	})
+
+	originalFill := gitCredentialFill
+	originalHelper := gitCredentialHelperGet
+	originalInside := gitIsInsideWorkTree
+	originalRemoteGetURL := gitRemoteGetURL
+	originalLsRemote := gitLsRemote
+	originalCurrentBranch := gitCurrentBranch
+	t.Cleanup(func() {
+		gitCredentialFill = originalFill
+		gitCredentialHelperGet = originalHelper
+		gitIsInsideWorkTree = originalInside
+		gitRemoteGetURL = originalRemoteGetURL
+		gitLsRemote = originalLsRemote
+		gitCurrentBranch = originalCurrentBranch
+	})
+
+	if err := auth.Login("gitee.com", "test-token", "test-user"); err != nil {
+		t.Fatalf("auth.Login() returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = auth.Logout("gitee.com")
+	})
+
+	gitCredentialHelperGet = func() (string, error) { return "manager", nil }
+	gitCredentialFill = func(host string) (config.HostAuth, error) {
+		return config.HostAuth{Token: "test-token", User: "test-user"}, nil
+	}
+	gitIsInsideWorkTree = func() (bool, error) { return true, nil }
+	gitRemoteGetURL = func(name string) (string, error) { return "", errors.New("no remote") }
+	gitLsRemote = func(target string) error { return nil }
+	gitCurrentBranch = func() (string, error) { return "master", nil }
+
+	cmd := &cobra.Command{}
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetErr(buf)
+
+	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "https://gitee.com/ricsy/traceops.git", ""), cloneURLModeHTTPS)
+
+	output := buf.String()
+	if !strings.Contains(output, "git push -u origin master") {
+		t.Fatalf("expected current branch push hint in output, got: %s", output)
+	}
+}
+
+func TestPreferredRepoPushBranchFallsBackToMain(t *testing.T) {
+	originalCurrentBranch := gitCurrentBranch
+	t.Cleanup(func() {
+		gitCurrentBranch = originalCurrentBranch
+	})
+
+	gitCurrentBranch = func() (string, error) { return "", errors.New("branch unavailable") }
+
+	got := preferredRepoPushBranch()
+	if got != repoPrimaryBranch {
+		t.Fatalf("preferredRepoPushBranch() = %q, want %q", got, repoPrimaryBranch)
+	}
+}
+
 func TestResolveRepoCloneURLFallsBackWhenCreateResponseOmitsCloneURL(t *testing.T) {
 	got, err := resolveRepoCloneURL("gitee.com", "ricsy", "traceops", "", "", cloneURLModeHTTPS)
 	if err != nil {

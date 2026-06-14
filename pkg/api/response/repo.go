@@ -51,6 +51,7 @@ type BranchLinks struct {
 type Repository struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
+	Path     string `json:"path"`
 	FullName string `json:"full_name"`
 	Owner    struct {
 		ID    int64  `json:"id"`

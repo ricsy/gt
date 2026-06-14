@@ -42,7 +42,7 @@ func printRepoCreatePushDiagnostics(cmd *cobra.Command, repo *api.Repository, cl
 		cmd.Printf("- Local repository check: current directory is not a git worktree\n")
 		cmd.Printf("- Next steps:\n")
 		cmd.Printf("  git remote add origin %s\n", cloneURL)
-		cmd.Printf("  git push -u origin master\n")
+		cmd.Printf("  git push -u origin %s\n", preferredRepoPushBranch())
 		return
 	}
 
@@ -51,7 +51,7 @@ func printRepoCreatePushDiagnostics(cmd *cobra.Command, repo *api.Repository, cl
 		cmd.Printf("- Origin remote: missing\n")
 		cmd.Printf("- Next steps:\n")
 		cmd.Printf("  git remote add origin %s\n", cloneURL)
-		cmd.Printf("  git push -u origin master\n")
+		cmd.Printf("  git push -u origin %s\n", preferredRepoPushBranch())
 		return
 	}
 
@@ -88,4 +88,13 @@ func printRepoCreatePushDiagnostics(cmd *cobra.Command, repo *api.Repository, cl
 
 func isSSHRemote(remoteURL string) bool {
 	return strings.HasPrefix(remoteURL, "git@") || strings.HasPrefix(remoteURL, "ssh://")
+}
+
+func preferredRepoPushBranch() string {
+	branch, err := gitCurrentBranch()
+	if err != nil || strings.TrimSpace(branch) == "" {
+		return repoPrimaryBranch
+	}
+
+	return strings.TrimSpace(branch)
 }

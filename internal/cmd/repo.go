@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	repoPrimaryBranch = "main"
+)
+
 var repoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "Manage repositories",
@@ -248,7 +252,7 @@ func init() {
 	repoBranchListCmd.Flags().StringVar(&repoBranchOpts.Direction, "direction", "", "Sort direction: asc or desc")
 	repoBranchListCmd.Flags().IntVar(&repoBranchOpts.Page, "page", 0, "Page number")
 	repoBranchListCmd.Flags().IntVar(&repoBranchOpts.PerPage, "per-page", 0, "Items per page (max 100)")
-	repoBranchCreateCmd.Flags().StringVar(&repoBranchOpts.Refs, "refs", "master", "Starting ref")
+	repoBranchCreateCmd.Flags().StringVar(&repoBranchOpts.Refs, "refs", repoPrimaryBranch, "Starting ref")
 
 	addRepoFlag(repoCollaboratorListCmd)
 	addRepoFlag(repoCollaboratorViewCmd)

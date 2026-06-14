@@ -86,6 +86,11 @@ func (c *Client) UpdateRepo(owner, repo string, opts UpdateRepoOptions) (*Reposi
 	return &result, nil
 }
 
+// DeleteRepo deletes a repository.
+func (c *Client) DeleteRepo(owner, repo string) error {
+	return c.DoFromEndpoint(Repo.Delete, []interface{}{owner, repo}, nil, nil)
+}
+
 // ListBranches lists repository branches.
 func (c *Client) ListBranches(owner, repo string, opts ListBranchesOptions) ([]Branch, error) {
 	var branches []Branch

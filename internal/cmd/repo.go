@@ -65,6 +65,13 @@ var repoCreateCmd = &cobra.Command{
 	RunE:  repoCreateCommand,
 }
 
+var repoDeleteCmd = &cobra.Command{
+	Use:   "delete <repo>",
+	Short: "Delete a repository",
+	Args:  cobra.ExactArgs(1),
+	RunE:  repoDeleteCommand,
+}
+
 var repoBootstrapOpts struct {
 	RemoteName string
 	Push       bool
@@ -234,7 +241,7 @@ var repoModeClearCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(repoCmd)
-	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBootstrapCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd, repoModeCmd)
+	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoDeleteCmd, repoBootstrapCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd, repoModeCmd)
 	repoBranchCmd.AddCommand(repoBranchListCmd, repoBranchViewCmd, repoBranchCreateCmd, repoBranchProtectCmd, repoBranchUnprotectCmd)
 	repoCollaboratorCmd.AddCommand(repoCollaboratorListCmd, repoCollaboratorViewCmd, repoCollaboratorPermCmd, repoCollaboratorAddCmd, repoCollaboratorRemoveCmd)
 	repoForkCmd.AddCommand(repoForkListCmd, repoForkCreateCmd)
@@ -258,6 +265,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Namespace, "namespace", "", "Repository namespace")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Preferred clone URL mode for follow-up diagnostics: https or ssh")
 	_ = repoCreateCmd.MarkFlagRequired("name")
+	repoDeleteCmd.Flags().BoolVar(&repoDeleteOpts.Yes, "yes", false, "Delete without prompt only when the repository has no commit history")
 
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")

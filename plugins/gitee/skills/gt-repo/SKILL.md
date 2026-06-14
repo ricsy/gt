@@ -9,7 +9,7 @@ description: Manage Gitee repositories through gt, including repository inspecti
 
 Use this skill for:
 
-- `gt repo list/view/create/clone`
+- `gt repo list/view/create/delete/clone`
 - `gt repo branch *`
 - `gt repo collaborator *`
 - `gt repo fork *`
@@ -27,3 +27,4 @@ Route to `$gt-mode` instead when the primary request is about repository scope s
 
 - Do not jump to `gt api` if `gt repo` already covers the operation.
 - Treat collaborator, fork, and branch commands as repository-domain work even when they look like separate features.
+- For repository deletion, prefer the guarded `gt repo delete` workflow instead of raw API deletion, and preserve the interactive confirmation path for repositories with commit history.

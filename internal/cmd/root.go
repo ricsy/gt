@@ -17,10 +17,11 @@ var commandHost string
 var commandEnvFile string
 
 var rootCmd = &cobra.Command{
-	Use:     "gt",
-	Short:   "gt is a CLI for Gitee",
-	Long:    `Gitee's command line tool.`,
-	Version: version,
+	Use:          "gt",
+	Short:        "gt is a CLI for Gitee",
+	Long:         `Gitee's command line tool.`,
+	Version:      version,
+	SilenceUsage: true,
 }
 
 func Execute() error {

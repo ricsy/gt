@@ -82,10 +82,7 @@ func promptRepositoryDeletionConfirmation(cmd *cobra.Command, fullRepoName strin
 		return fmt.Errorf("repository deletion requires confirmation; rerun interactively or pass --yes only for repositories without commit history")
 	}
 
-	if hasCommitHistory {
-		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Repository %s has commit history and will be permanently deleted.\n", fullRepoName)
-	}
-	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Type %s to confirm deletion: ", fullRepoName)
+	_, _ = fmt.Fprint(cmd.ErrOrStderr(), buildRepositoryDeletionPrompt(fullRepoName, hasCommitHistory))
 
 	reader := bufio.NewReader(input)
 	confirmation, err := reader.ReadString('\n')
@@ -98,4 +95,14 @@ func promptRepositoryDeletionConfirmation(cmd *cobra.Command, fullRepoName strin
 	}
 
 	return nil
+}
+
+func buildRepositoryDeletionPrompt(fullRepoName string, hasCommitHistory bool) string {
+	var builder strings.Builder
+	if hasCommitHistory {
+		_, _ = fmt.Fprintf(&builder, "Repository %s has commit history and will be permanently deleted.\n", fullRepoName)
+	}
+	builder.WriteString("Do not type yes. Enter the full repository name to confirm deletion.\n")
+	_, _ = fmt.Fprintf(&builder, "Confirmation (expected: %s): ", fullRepoName)
+	return builder.String()
 }

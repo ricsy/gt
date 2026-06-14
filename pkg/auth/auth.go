@@ -18,6 +18,7 @@ func Login(host, token, username string) error {
 		return err
 	}
 
+	previousUser := hosts[host].User
 	hosts[host] = config.HostAuth{
 		Token: token,
 		User:  username,
@@ -25,6 +26,19 @@ func Login(host, token, username string) error {
 
 	if err := config.SaveHosts(hosts); err != nil {
 		return err
+	}
+
+	if previousUser != "" && previousUser != username {
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return err
+		}
+		if cfg.DefaultRepo != "" {
+			cfg.DefaultRepo = ""
+			if err := config.SaveConfig(cfg); err != nil {
+				return err
+			}
+		}
 	}
 
 	invalidateAuthCache()

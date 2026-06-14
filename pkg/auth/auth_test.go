@@ -52,6 +52,54 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestLoginClearsDefaultRepoWhenUserChanges(t *testing.T) {
+	host := "switch-user-test.example.com"
+	cfg := config.DefaultConfig()
+	cfg.DefaultRepo = "gitee/demo-repo"
+	if err := config.SaveConfig(cfg); err != nil {
+		t.Fatalf("SaveConfig failed: %v", err)
+	}
+
+	if err := Login(host, "token-a", "user-a"); err != nil {
+		t.Fatalf("first Login failed: %v", err)
+	}
+	if err := Login(host, "token-b", "user-b"); err != nil {
+		t.Fatalf("second Login failed: %v", err)
+	}
+
+	loaded, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if loaded.DefaultRepo != "" {
+		t.Fatalf("DefaultRepo = %q, want empty after user switch", loaded.DefaultRepo)
+	}
+}
+
+func TestLoginKeepsDefaultRepoWhenUserStaysSame(t *testing.T) {
+	host := "same-user-test.example.com"
+	cfg := config.DefaultConfig()
+	cfg.DefaultRepo = "gitee/demo-repo"
+	if err := config.SaveConfig(cfg); err != nil {
+		t.Fatalf("SaveConfig failed: %v", err)
+	}
+
+	if err := Login(host, "token-a", "user-a"); err != nil {
+		t.Fatalf("first Login failed: %v", err)
+	}
+	if err := Login(host, "token-b", "user-a"); err != nil {
+		t.Fatalf("second Login failed: %v", err)
+	}
+
+	loaded, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if loaded.DefaultRepo != "gitee/demo-repo" {
+		t.Fatalf("DefaultRepo = %q, want %q when user stays the same", loaded.DefaultRepo, "gitee/demo-repo")
+	}
+}
+
 func TestLogout(t *testing.T) {
 	// Use a fresh host to avoid pollution from other tests
 	host := "logout-test.example.com"

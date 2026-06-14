@@ -91,3 +91,23 @@ func TestPromptRepositoryDeletionConfirmationRejectsNonTerminalInput(t *testing.
 		t.Fatal("promptRepositoryDeletionConfirmation() error = nil, want non-nil for non-terminal input")
 	}
 }
+
+func TestPromptRepositoryDeletionConfirmationMessageIsExplicit(t *testing.T) {
+	output := buildRepositoryDeletionPrompt("gitee/demo-repo", true)
+	if !bytes.Contains([]byte(output), []byte("Do not type yes")) {
+		t.Fatalf("expected explicit no-yes warning in output, got: %s", output)
+	}
+	if !bytes.Contains([]byte(output), []byte("Confirmation (expected: gitee/demo-repo)")) {
+		t.Fatalf("expected full repository name hint in output, got: %s", output)
+	}
+}
+
+func TestRepoDeleteCommandSupportsYesShortFlag(t *testing.T) {
+	flag := repoDeleteCmd.Flags().Lookup("yes")
+	if flag == nil {
+		t.Fatal("expected repo delete command to define a yes flag")
+	}
+	if flag.Shorthand != "y" {
+		t.Fatalf("expected yes flag shorthand to be y, got %q", flag.Shorthand)
+	}
+}

@@ -67,6 +67,12 @@ func TestRootCommandHasEnvFileFlag(t *testing.T) {
 	}
 }
 
+func TestRootCommandSilencesUsageOnError(t *testing.T) {
+	if !rootCmd.SilenceUsage {
+		t.Fatal("expected root command to silence usage output on command errors")
+	}
+}
+
 func TestCommandHTTPClientUsesRequestTimeout(t *testing.T) {
 	originalTimeout := requestTimeout
 	t.Cleanup(func() {

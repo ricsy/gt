@@ -265,7 +265,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Namespace, "namespace", "", "Repository namespace")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Preferred clone URL mode for follow-up diagnostics: https or ssh")
 	_ = repoCreateCmd.MarkFlagRequired("name")
-	repoDeleteCmd.Flags().BoolVar(&repoDeleteOpts.Yes, "yes", false, "Delete without prompt only when the repository has no commit history")
+	repoDeleteCmd.Flags().BoolVarP(&repoDeleteOpts.Yes, "yes", "y", false, "Delete without prompt only when the repository has no commit history")
 
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Name, "name", "", "Repository name")
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Description, "description", "", "Repository description")

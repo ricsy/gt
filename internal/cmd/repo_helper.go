@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -43,6 +44,12 @@ func resolveRepoFlag(repoFlag string) (owner, repoName string, err error) {
 		repo = os.Getenv("GT_REPO")
 	}
 	if repo == "" {
+		repo, err = resolveRepoFromGitRemote(resolveCommandHost())
+		if err != nil {
+			return "", "", err
+		}
+	}
+	if repo == "" {
 		cfg, loadErr := config.LoadConfig()
 		if loadErr == nil && cfg.DefaultRepo != "" {
 			repo = cfg.DefaultRepo
@@ -79,4 +86,54 @@ func ResolveRepo(repo string) (owner, repoName string, err error) {
 		return "", "", err
 	}
 	return owner, repoName, nil
+}
+
+func resolveRepoFromGitRemote(host string) (string, error) {
+	insideWorkTree, err := gitIsInsideWorkTree()
+	if err != nil || !insideWorkTree {
+		return "", nil
+	}
+
+	originURL, err := gitRemoteGetURL("origin")
+	if err != nil {
+		return "", nil
+	}
+
+	return parseRepoFromRemoteURL(originURL, host)
+}
+
+func parseRepoFromRemoteURL(remoteURL, expectedHost string) (string, error) {
+	remoteURL = strings.TrimSpace(remoteURL)
+	expectedHost = strings.TrimSpace(expectedHost)
+	if remoteURL == "" || expectedHost == "" {
+		return "", nil
+	}
+
+	if strings.HasPrefix(remoteURL, "git@") {
+		parts := strings.SplitN(strings.TrimPrefix(remoteURL, "git@"), ":", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], expectedHost) {
+			return "", nil
+		}
+		return normalizeRemoteRepoPath(parts[1]), nil
+	}
+
+	parsed, err := url.Parse(remoteURL)
+	if err != nil {
+		return "", nil
+	}
+	if !strings.EqualFold(parsed.Hostname(), expectedHost) {
+		return "", nil
+	}
+
+	return normalizeRemoteRepoPath(parsed.Path), nil
+}
+
+func normalizeRemoteRepoPath(path string) string {
+	path = strings.TrimSpace(path)
+	path = strings.TrimPrefix(path, "/")
+	path = strings.TrimSuffix(path, ".git")
+	if strings.Count(path, "/") != 1 {
+		return ""
+	}
+	return path
 }

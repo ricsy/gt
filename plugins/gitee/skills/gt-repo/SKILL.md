@@ -14,6 +14,8 @@ Use this skill for:
 - `gt repo collaborator *`
 - `gt repo fork *`
 
+Route to `$gt-mode` instead when the primary request is about repository scope switching, org-vs-personal execution context, or env-file driven temporary setup.
+
 ## Workflow
 
 1. Resolve the repository identifier first.

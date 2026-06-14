@@ -169,13 +169,13 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Failed to read test config: %v\n", err)
 		os.Exit(1)
 	}
-	var config TestConfig
-	if err := json.Unmarshal(cfg, &config); err != nil {
+	var testConfig TestConfig
+	if err := json.Unmarshal(cfg, &testConfig); err != nil {
 		fmt.Printf("Failed to parse test config: %v\n", err)
 		os.Exit(1)
 	}
-	applyTestConfigEnvOverrides(&config)
-	testOwner = config.Owner
+	applyTestConfigEnvOverrides(&testConfig)
+	testOwner = testConfig.Owner
 
 	// Create test repo
 	testRepoName = setupTestRepo(testCLI)

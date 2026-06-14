@@ -1,0 +1,4 @@
+interface:
+  display_name: "GT Mode"
+  short_description: "Manage repo scope mode and temporary env-file execution context"
+  default_prompt: "Use $gt-mode for gt repository context switching, env-file workflows, and temporary live test setup."

@@ -17,10 +17,7 @@ var toOpts struct {
 var resolveCurrentUser = auth.CurrentUser
 var openBrowserURL = browser.OpenURL
 var verifyToRepoExists = func(owner, repo string) error {
-	client, err := getClient()
-	if err != nil {
-		return err
-	}
+	client := newCommandAPIClient(resolveCommandHost(), "")
 	if _, err := client.GetRepo(owner, repo); err != nil {
 		if isToNotFoundError(err) {
 			return fmt.Errorf("repository not found: %s/%s", owner, repo)
@@ -30,10 +27,7 @@ var verifyToRepoExists = func(owner, repo string) error {
 	return nil
 }
 var verifyToNamespaceExists = func(namespace string) error {
-	client, err := getClient()
-	if err != nil {
-		return err
-	}
+	client := newCommandAPIClient(resolveCommandHost(), "")
 	if _, err := client.GetUser(namespace); err == nil {
 		return nil
 	} else if !isToNotFoundError(err) {

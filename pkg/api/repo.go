@@ -1,9 +1,6 @@
 package api
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/ricsy/gt/pkg/api/response"
 	"github.com/ricsy/gt/pkg/util"
 )
@@ -50,7 +47,6 @@ type ForkRepository = response.ForkRepository
 type ListForksOptions = response.ListForksOptions
 
 type RepoCommitHistorySummary struct {
-	Count  int
 	Latest *BranchCommit
 }
 
@@ -110,44 +106,20 @@ func (c *Client) DeleteRepo(owner, repo string) error {
 }
 
 func (c *Client) GetRepoCommitHistorySummary(owner, repo, ref string) (*RepoCommitHistorySummary, error) {
-	commits, headers, err := c.listRepoCommits(owner, repo, ListRepoCommitsOptions{
+	commits, err := c.listRepoCommits(owner, repo, ListRepoCommitsOptions{
 		SHA:     ref,
 		Page:    1,
-		PerPage: 100,
+		PerPage: 1,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	summary := &RepoCommitHistorySummary{Count: len(commits)}
+	summary := &RepoCommitHistorySummary{}
 	if len(commits) > 0 {
 		summary.Latest = &commits[0]
 	}
-
-	if totalCount := parseHeaderInt(headers, "X-Total-Count"); totalCount > 0 {
-		summary.Count = totalCount
-		return summary, nil
-	}
-
-	if len(commits) < 100 {
-		return summary, nil
-	}
-
-	for page := 2; ; page++ {
-		nextPageCommits, _, err := c.listRepoCommits(owner, repo, ListRepoCommitsOptions{
-			SHA:     ref,
-			Page:    page,
-			PerPage: 100,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		summary.Count += len(nextPageCommits)
-		if len(nextPageCommits) < 100 {
-			return summary, nil
-		}
-	}
+	return summary, nil
 }
 
 // ListBranches lists repository branches.
@@ -268,31 +240,13 @@ func buildListForksQuery(opts ListForksOptions) string {
 	return "?" + query
 }
 
-func (c *Client) listRepoCommits(owner, repo string, opts ListRepoCommitsOptions) ([]BranchCommit, http.Header, error) {
+func (c *Client) listRepoCommits(owner, repo string, opts ListRepoCommitsOptions) ([]BranchCommit, error) {
 	var commits []BranchCommit
-	headers, err := c.DoFromEndpointWithHeaders(Repo.Commits, []interface{}{owner, repo}, opts, &commits)
+	err := c.DoFromEndpoint(Repo.Commits, []interface{}{owner, repo}, opts, &commits)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return commits, headers, nil
-}
-
-func parseHeaderInt(headers http.Header, key string) int {
-	if headers == nil {
-		return 0
-	}
-
-	value := headers.Get(key)
-	if value == "" {
-		return 0
-	}
-
-	count, err := strconv.Atoi(value)
-	if err != nil || count < 0 {
-		return 0
-	}
-
-	return count
+	return commits, nil
 }
 
 func buildListBranchesQuery(opts ListBranchesOptions) string {

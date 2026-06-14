@@ -69,7 +69,6 @@ func TestConfirmRepositoryDeletionRejectsNonInteractiveCommittedRepo(t *testing.
 	cmd.SetErr(new(bytes.Buffer))
 
 	summary := &repoDeletionCommitSummary{
-		Count:         12,
 		LatestAt:      "2026-06-14T15:00:00Z",
 		LatestTitle:   "fix: keep delete guard",
 		HasLatestInfo: true,
@@ -77,7 +76,7 @@ func TestConfirmRepositoryDeletionRejectsNonInteractiveCommittedRepo(t *testing.
 
 	if err := confirmRepositoryDeletion(cmd, repo, summary, true); err == nil {
 		t.Fatal("confirmRepositoryDeletion() error = nil, want non-nil for non-interactive repo with commit history")
-	} else if !bytes.Contains([]byte(err.Error()), []byte("12 commits")) {
+	} else if !bytes.Contains([]byte(err.Error()), []byte("latest 2026-06-14T15:00:00Z - fix: keep delete guard")) {
 		t.Fatalf("expected commit summary in error, got: %v", err)
 	}
 }
@@ -107,7 +106,6 @@ func TestPromptRepositoryDeletionConfirmationRejectsNonTerminalInput(t *testing.
 
 func TestPromptRepositoryDeletionConfirmationMessageIsExplicit(t *testing.T) {
 	output := buildRepositoryDeletionPrompt("gitee/demo-repo", &repoDeletionCommitSummary{
-		Count:         12,
 		LatestAt:      "2026-06-14T15:00:00Z",
 		LatestTitle:   "fix: keep delete guard",
 		HasLatestInfo: true,
@@ -117,9 +115,6 @@ func TestPromptRepositoryDeletionConfirmationMessageIsExplicit(t *testing.T) {
 	}
 	if !bytes.Contains([]byte(output), []byte("Confirmation (expected: gitee/demo-repo)")) {
 		t.Fatalf("expected full repository name hint in output, got: %s", output)
-	}
-	if !bytes.Contains([]byte(output), []byte("12 commits")) {
-		t.Fatalf("expected commit count in output, got: %s", output)
 	}
 	if !bytes.Contains([]byte(output), []byte("fix: keep delete guard")) {
 		t.Fatalf("expected latest commit title in output, got: %s", output)
@@ -145,7 +140,6 @@ func TestExtractCommitTitleReturnsFirstLine(t *testing.T) {
 
 func TestBuildRepoDeletionCommitSummaryUsesLatestCommitDetails(t *testing.T) {
 	summary := buildRepoDeletionCommitSummary(&api.RepoCommitHistorySummary{
-		Count: 3,
 		Latest: &api.BranchCommit{
 			Commit: api.BranchCommitDetail{
 				Committer: api.BranchCommitActor{Date: "2026-06-14T16:00:00Z"},
@@ -156,9 +150,6 @@ func TestBuildRepoDeletionCommitSummaryUsesLatestCommitDetails(t *testing.T) {
 
 	if summary == nil {
 		t.Fatal("expected summary, got nil")
-	}
-	if summary.Count != 3 {
-		t.Fatalf("summary.Count = %d, want 3", summary.Count)
 	}
 	if summary.LatestAt != "2026-06-14T16:00:00Z" {
 		t.Fatalf("summary.LatestAt = %q, want %q", summary.LatestAt, "2026-06-14T16:00:00Z")

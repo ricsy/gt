@@ -145,28 +145,25 @@ func TestGetNotificationCountEncodesUnreadAsQuery(t *testing.T) {
 	}
 }
 
-func TestDoWithHeadersReturnsResponseHeaders(t *testing.T) {
-	client := NewClient("gitee.com", "test-token")
+func TestDoOmitsAuthorizationHeaderWhenTokenIsEmpty(t *testing.T) {
+	client := NewClient("gitee.com", "")
 	client.HTTPClient = &http.Client{
 		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-			header := make(http.Header)
-			header.Set("X-Total-Count", "12")
+			if got := req.Header.Get("Authorization"); got != "" {
+				t.Fatalf("expected empty Authorization header, got %q", got)
+			}
 			return &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(`[]`)),
-				Header:     header,
+				Body:       io.NopCloser(strings.NewReader(`{}`)),
+				Header:     make(http.Header),
 				Request:    req,
 			}, nil
 		}),
 	}
 
-	var response []struct{}
-	headers, err := client.DoWithHeaders(http.MethodGet, "/repos/owner/repo/commits", nil, &response)
-	if err != nil {
-		t.Fatalf("client.DoWithHeaders() returned error: %v", err)
-	}
-	if headers.Get("X-Total-Count") != "12" {
-		t.Fatalf("expected X-Total-Count header, got %q", headers.Get("X-Total-Count"))
+	var response struct{}
+	if err := client.Do(http.MethodGet, "/repos/gitee/demo", nil, &response); err != nil {
+		t.Fatalf("client.Do() returned error: %v", err)
 	}
 }
 

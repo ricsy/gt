@@ -128,6 +128,38 @@ func TestToCommandOpensResolvedURL(t *testing.T) {
 	}
 }
 
+func TestToCommandCanOpenPublicNamespaceWithoutLogin(t *testing.T) {
+	originalOpenBrowserURL := openBrowserURL
+	originalVerifyToNamespaceExists := verifyToNamespaceExists
+	originalResolveCurrentUser := resolveCurrentUser
+	var openedURL string
+	openBrowserURL = func(targetURL string) error {
+		openedURL = targetURL
+		return nil
+	}
+	verifyToNamespaceExists = func(namespace string) error {
+		return nil
+	}
+	resolveCurrentUser = func(host string) (string, error) {
+		return "", errors.New("not logged in")
+	}
+	t.Cleanup(func() {
+		openBrowserURL = originalOpenBrowserURL
+		verifyToNamespaceExists = originalVerifyToNamespaceExists
+		resolveCurrentUser = originalResolveCurrentUser
+	})
+
+	cmd := &cobra.Command{}
+	cmd.SetOut(new(bytes.Buffer))
+
+	if err := toCommand(cmd, []string{"gitee"}); err != nil {
+		t.Fatalf("toCommand() returned error: %v", err)
+	}
+	if openedURL != "https://gitee.com/gitee" {
+		t.Fatalf("openedURL = %q, want %q", openedURL, "https://gitee.com/gitee")
+	}
+}
+
 func TestToCommandDoesNotOpenMissingRepository(t *testing.T) {
 	originalOpenBrowserURL := openBrowserURL
 	originalVerifyToRepoExists := verifyToRepoExists

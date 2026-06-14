@@ -78,26 +78,6 @@ func (c *Client) Do(method, path string, body interface{}, response interface{})
 	return nil
 }
 
-// DoWithHeaders performs a request and returns response headers for callers that need pagination metadata.
-func (c *Client) DoWithHeaders(method, path string, body interface{}, response interface{}) (http.Header, error) {
-	headers, respBody, err := c.doRequest(method, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(respBody) == 0 {
-		return headers, nil
-	}
-
-	if response != nil {
-		if err := json.Unmarshal(respBody, response); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-		}
-	}
-
-	return headers, nil
-}
-
 func (c *Client) doRequest(method, path string, body interface{}) (http.Header, []byte, error) {
 	var reqBody io.Reader
 	if body != nil {
@@ -114,7 +94,9 @@ func (c *Client) doRequest(method, path string, body interface{}) (http.Header, 
 		return nil, nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", authHeaderPrefix+c.token)
+	if c.token != "" {
+		req.Header.Set("Authorization", authHeaderPrefix+c.token)
+	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 
 	resp, err := c.HTTPClient.Do(req)
@@ -149,22 +131,6 @@ func (c *Client) DoFromEndpoint(e Endpoint, pathArgs []interface{}, body interfa
 		body = nil
 	}
 	return c.Do(string(e.Method), path, body, response)
-}
-
-// DoFromEndpointWithHeaders performs an endpoint request and exposes response headers for pagination-aware callers.
-func (c *Client) DoFromEndpointWithHeaders(e Endpoint, pathArgs []interface{}, body interface{}, response interface{}) (http.Header, error) {
-	path := e.Build(pathArgs...)
-	if e.Method == GET && body != nil {
-		query, err := buildQueryFromRequest(body)
-		if err != nil {
-			return nil, err
-		}
-		if query != "" {
-			path += "?" + query
-		}
-		body = nil
-	}
-	return c.DoWithHeaders(string(e.Method), path, body, response)
 }
 
 // buildQueryFromRequest 将 GET 请求的结构化参数编码为查询字符串，避免被错误发送为请求体。

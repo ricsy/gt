@@ -18,7 +18,6 @@ var repoDeleteOpts struct {
 }
 
 type repoDeletionCommitSummary struct {
-	Count         int
 	LatestAt      string
 	LatestTitle   string
 	HasLatestInfo bool
@@ -131,7 +130,7 @@ func buildRepoDeletionCommitSummary(historySummary *api.RepoCommitHistorySummary
 		return nil
 	}
 
-	summary := &repoDeletionCommitSummary{Count: historySummary.Count}
+	summary := &repoDeletionCommitSummary{}
 	if historySummary.Latest == nil {
 		return summary
 	}
@@ -153,18 +152,17 @@ func formatRepoDeletionCommitSummary(summary *repoDeletionCommitSummary) string 
 		return "commit history detected"
 	}
 
-	description := fmt.Sprintf("%d commits", summary.Count)
 	if summary.HasLatestInfo {
 		switch {
 		case summary.LatestAt != "" && summary.LatestTitle != "":
-			return fmt.Sprintf("%s; latest %s - %s", description, summary.LatestAt, summary.LatestTitle)
+			return fmt.Sprintf("latest %s - %s", summary.LatestAt, summary.LatestTitle)
 		case summary.LatestAt != "":
-			return fmt.Sprintf("%s; latest %s", description, summary.LatestAt)
+			return fmt.Sprintf("latest %s", summary.LatestAt)
 		case summary.LatestTitle != "":
-			return fmt.Sprintf("%s; latest %s", description, summary.LatestTitle)
+			return fmt.Sprintf("latest %s", summary.LatestTitle)
 		}
 	}
-	return description
+	return "commit history detected"
 }
 
 func extractCommitTitle(message string) string {

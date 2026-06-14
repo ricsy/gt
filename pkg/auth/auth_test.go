@@ -56,6 +56,7 @@ func TestLoginClearsDefaultRepoWhenUserChanges(t *testing.T) {
 	host := "switch-user-test.example.com"
 	cfg := config.DefaultConfig()
 	cfg.DefaultRepo = "gitee/demo-repo"
+	cfg.DefaultOwner = "legacy-owner"
 	if err := config.SaveConfig(cfg); err != nil {
 		t.Fatalf("SaveConfig failed: %v", err)
 	}
@@ -74,12 +75,16 @@ func TestLoginClearsDefaultRepoWhenUserChanges(t *testing.T) {
 	if loaded.DefaultRepo != "" {
 		t.Fatalf("DefaultRepo = %q, want empty after user switch", loaded.DefaultRepo)
 	}
+	if loaded.DefaultOwner != "" {
+		t.Fatalf("DefaultOwner = %q, want empty after user switch", loaded.DefaultOwner)
+	}
 }
 
 func TestLoginKeepsDefaultRepoWhenUserStaysSame(t *testing.T) {
 	host := "same-user-test.example.com"
 	cfg := config.DefaultConfig()
 	cfg.DefaultRepo = "gitee/demo-repo"
+	cfg.DefaultOwner = "same-owner"
 	if err := config.SaveConfig(cfg); err != nil {
 		t.Fatalf("SaveConfig failed: %v", err)
 	}
@@ -97,6 +102,9 @@ func TestLoginKeepsDefaultRepoWhenUserStaysSame(t *testing.T) {
 	}
 	if loaded.DefaultRepo != "gitee/demo-repo" {
 		t.Fatalf("DefaultRepo = %q, want %q when user stays the same", loaded.DefaultRepo, "gitee/demo-repo")
+	}
+	if loaded.DefaultOwner != "same-owner" {
+		t.Fatalf("DefaultOwner = %q, want %q when user stays the same", loaded.DefaultOwner, "same-owner")
 	}
 }
 

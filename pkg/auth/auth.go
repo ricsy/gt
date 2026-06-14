@@ -33,8 +33,16 @@ func Login(host, token, username string) error {
 		if err != nil {
 			return err
 		}
+		updated := false
 		if cfg.DefaultRepo != "" {
 			cfg.DefaultRepo = ""
+			updated = true
+		}
+		if cfg.DefaultOwner != "" {
+			cfg.DefaultOwner = ""
+			updated = true
+		}
+		if updated {
 			if err := config.SaveConfig(cfg); err != nil {
 				return err
 			}

@@ -53,6 +53,7 @@ type repoCreateOptions struct {
 	GitignoreTemplate string
 	LicenseTemplate   string
 	Path              string
+	Namespace         string
 	CloneURLMode      string
 }
 
@@ -201,12 +202,43 @@ var repoForkCreateCmd = &cobra.Command{
 	RunE:  repoForkCreateCommand,
 }
 
+var repoModeCmd = &cobra.Command{
+	Use:   "mode",
+	Short: "Manage repository scope mode",
+}
+
+var repoModeShowCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Show active repository scope mode",
+	RunE:  repoModeShowCommand,
+}
+
+var repoModePersonalCmd = &cobra.Command{
+	Use:   "personal",
+	Short: "Lock repository operations to the authenticated user",
+	RunE:  repoModePersonalCommand,
+}
+
+var repoModeOrgCmd = &cobra.Command{
+	Use:   "org <namespace>",
+	Short: "Lock repository operations to an organization namespace",
+	Args:  cobra.ExactArgs(1),
+	RunE:  repoModeOrgCommand,
+}
+
+var repoModeClearCmd = &cobra.Command{
+	Use:   "clear",
+	Short: "Clear repository scope mode",
+	RunE:  repoModeClearCommand,
+}
+
 func init() {
 	rootCmd.AddCommand(repoCmd)
-	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBootstrapCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd)
+	repoCmd.AddCommand(repoListCmd, repoViewCmd, repoCreateCmd, repoBootstrapCmd, repoBranchCmd, repoCloneCmd, repoCollaboratorCmd, repoForkCmd, repoModeCmd)
 	repoBranchCmd.AddCommand(repoBranchListCmd, repoBranchViewCmd, repoBranchCreateCmd, repoBranchProtectCmd, repoBranchUnprotectCmd)
 	repoCollaboratorCmd.AddCommand(repoCollaboratorListCmd, repoCollaboratorViewCmd, repoCollaboratorPermCmd, repoCollaboratorAddCmd, repoCollaboratorRemoveCmd)
 	repoForkCmd.AddCommand(repoForkListCmd, repoForkCreateCmd)
+	repoModeCmd.AddCommand(repoModeShowCmd, repoModePersonalCmd, repoModeOrgCmd, repoModeClearCmd)
 
 	repoListCmd.Flags().StringVar(&repoListOpts.Owner, "owner", "", "Owner username")
 	repoListCmd.Flags().IntVar(&repoListOpts.Limit, "limit", 30, "Maximum number of repos to list")
@@ -223,6 +255,7 @@ func init() {
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.GitignoreTemplate, "gitignore-template", "", "Gitignore template name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.LicenseTemplate, "license-template", "", "License template name")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Path, "path", "", "Repository path")
+	repoCreateCmd.Flags().StringVar(&repoCreateOpts.Namespace, "namespace", "", "Repository namespace")
 	repoCreateCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Preferred clone URL mode for follow-up diagnostics: https or ssh")
 	_ = repoCreateCmd.MarkFlagRequired("name")
 
@@ -238,6 +271,7 @@ func init() {
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.GitignoreTemplate, "gitignore-template", "", "Gitignore template name")
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.LicenseTemplate, "license-template", "", "License template name")
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Path, "path", "", "Repository path")
+	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.Namespace, "namespace", "", "Repository namespace")
 	repoBootstrapCmd.Flags().StringVar(&repoCreateOpts.CloneURLMode, "clone-url-mode", "https", "Remote URL mode to configure: https or ssh")
 	repoBootstrapCmd.Flags().StringVar(&repoBootstrapOpts.RemoteName, "remote-name", "origin", "Remote name to create or update")
 	repoBootstrapCmd.Flags().BoolVar(&repoBootstrapOpts.Push, "push", true, "Push the current branch after wiring the remote")
@@ -290,7 +324,30 @@ func repoListCommand(cmd *cobra.Command, args []string) error {
 	var err2 error
 
 	if repoListOpts.Owner != "" {
-		repos, err2 = client.ListUserRepos(repoListOpts.Owner)
+		if err := enforceRepoScopeOwner(repoListOpts.Owner); err != nil {
+			return err
+		}
+		scope, scopeErr := loadRepoScope()
+		if scopeErr != nil {
+			return scopeErr
+		}
+		if scope.Mode == repoScopeModeOrg && repoListOpts.Owner == scope.Namespace {
+			repos, err2 = client.ListOrgRepos(repoListOpts.Owner, api.ListOrgReposOptions{})
+		} else {
+			repos, err2 = client.ListUserRepos(repoListOpts.Owner)
+		}
+	} else if scopedOwner, scopeErr := resolveScopedRepoOwner(); scopeErr != nil {
+		return scopeErr
+	} else if scopedOwner != "" {
+		scope, scopeErr := loadRepoScope()
+		if scopeErr != nil {
+			return scopeErr
+		}
+		if scope.Mode == repoScopeModeOrg {
+			repos, err2 = client.ListOrgRepos(scopedOwner, api.ListOrgReposOptions{})
+		} else {
+			repos, err2 = client.ListUserRepos(scopedOwner)
+		}
 	} else {
 		repos, err2 = client.ListRepos()
 	}
@@ -391,6 +448,12 @@ func buildCreateRepoOptions(cmd *cobra.Command) (api.CreateRepoOptions, error) {
 		AutoInit:    repoCreateOpts.AutoInit,
 		Path:        repoCreateOpts.Path,
 	}
+
+	namespace, err := resolveRepoCreateNamespace(repoCreateOpts.Namespace)
+	if err != nil {
+		return api.CreateRepoOptions{}, err
+	}
+	opts.Namespace = namespace
 
 	if cmd.Flags().Changed("public") && repoCreateOpts.Public {
 		return api.CreateRepoOptions{}, fmt.Errorf("public repositories are not supported by the current user repo API; omit --public")
@@ -640,6 +703,64 @@ func repoForkCreateCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to fork repository: %w", err)
 	}
 	cmd.Printf("Forked: %s\n", fork.HTMLURL)
+	return nil
+}
+
+func repoModeShowCommand(cmd *cobra.Command, args []string) error {
+	scope, err := loadRepoScope()
+	if err != nil {
+		return err
+	}
+
+	cmd.Printf("Repo scope mode: %s\n", describeRepoScope(scope))
+	return nil
+}
+
+func repoModePersonalCommand(cmd *cobra.Command, args []string) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg.RepoScopeMode = repoScopeModePersonal
+	cfg.RepoScopeNamespace = ""
+	if err := config.SaveConfig(cfg); err != nil {
+		return err
+	}
+
+	cmd.Printf("Repo scope mode: %s\n", repoScopeModePersonal)
+	return nil
+}
+
+func repoModeOrgCommand(cmd *cobra.Command, args []string) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg.RepoScopeMode = repoScopeModeOrg
+	cfg.RepoScopeNamespace = args[0]
+	if err := config.SaveConfig(cfg); err != nil {
+		return err
+	}
+
+	cmd.Printf("Repo scope mode: %s:%s\n", repoScopeModeOrg, args[0])
+	return nil
+}
+
+func repoModeClearCommand(cmd *cobra.Command, args []string) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	cfg.RepoScopeMode = ""
+	cfg.RepoScopeNamespace = ""
+	if err := config.SaveConfig(cfg); err != nil {
+		return err
+	}
+
+	cmd.Printf("Repo scope mode: none\n")
 	return nil
 }
 

@@ -76,9 +76,11 @@ func TestLoadSaveConfig(t *testing.T) {
 	defer func() { configDirFunc = ConfigDirImpl }()
 
 	cfg := &Config{
-		DefaultRepo:  "my-repo",
-		DefaultOwner: "myowner",
-		DefaultHost:  "gitee.example.com",
+		DefaultRepo:        "my-repo",
+		DefaultOwner:       "myowner",
+		DefaultHost:        "gitee.example.com",
+		RepoScopeMode:      "org",
+		RepoScopeNamespace: "gitee",
 	}
 
 	if err := SaveConfig(cfg); err != nil {
@@ -100,6 +102,14 @@ func TestLoadSaveConfig(t *testing.T) {
 
 	if loaded.DefaultHost != "gitee.example.com" {
 		t.Errorf("DefaultHost = %s, want gitee.example.com", loaded.DefaultHost)
+	}
+
+	if loaded.RepoScopeMode != "org" {
+		t.Errorf("RepoScopeMode = %s, want org", loaded.RepoScopeMode)
+	}
+
+	if loaded.RepoScopeNamespace != "gitee" {
+		t.Errorf("RepoScopeNamespace = %s, want gitee", loaded.RepoScopeNamespace)
 	}
 }
 

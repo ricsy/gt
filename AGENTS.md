@@ -1,160 +1,194 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文档用于向 Claude Code（claude.ai/code）说明在本仓库中工作的约束与方式。
 
-## Tool Preference
+## 工具优先级
 
-**Prefer Goland MCP (`mcp__goland__*`) over direct file editing for code operations.** Use it for reading, searching, replacing, and navigating code. Only use direct file tools (Read, Edit, Write) when MCP tools are insufficient.
+**代码操作优先使用 Goland MCP（`mcp__goland__*`）。** 读取、搜索、替换、跳转时优先走 MCP。只有在
+MCP 不足以完成任务时，才使用直接文件工具（Read、Edit、Write）。
 
-## API Reference
+## API 参考
 
-**MCP `swagger-gitee`**: Query Gitee Open API v5 endpoints directly.
-- `mcp__swagger-gitee__list_api_groups` — list all API groups
-- `mcp__swagger-gitee__search_apis` — search APIs by keyword
-- `mcp__swagger-gitee__get_api_detail` — get full API definition (path, method, parameters, schema)
+**MCP `swagger-gitee`**：直接查询 Gitee Open API v5 接口定义。
 
-`data/api-1.json` is the local copy of the same specification (sourced from https://help.gitee.com/openapi/v5).
+- `mcp__swagger-gitee__list_api_groups`：列出所有 API 分组
+- `mcp__swagger-gitee__search_apis`：按关键字搜索 API
+- `mcp__swagger-gitee__get_api_detail`：获取完整 API 定义（路径、方法、参数、Schema）
 
-## Project Overview
+`data/api-1.json` 是同一份规范的本地副本（来源于 https://help.gitee.com/openapi/v5）。
 
-`gt` is a CLI tool for Gitee (gitee.com). It manages repos, issues, PRs, releases, and organizations via the Gitee API v5.
+## 项目概览
 
-## Common Commands
+`gt` 是一个面向 Gitee（gitee.com）的 CLI 工具。它通过 Gitee API v5 管理仓库、Issue、PR、Release
+和组织等能力。
+
+## 常用命令
 
 ```bash
-go build                          # Build binary (outputs gt/gt.exe)
-go test ./...                     # Run all tests
-go test -v ./internal/cmd        # Run cmd package tests
-go test -v ./pkg/api             # Run API package tests
-golangci-lint run ./...           # Lint all code
-pnpm run test:integration         # Run integration tests (requires built binary)
-pnpm run release:local            # Local release build
+go build                          # 构建二进制（输出 gt/gt.exe）
+go test ./...                     # 运行全部测试
+go test -v ./internal/cmd         # 运行 cmd 包测试
+go test -v ./pkg/api              # 运行 API 包测试
+golangci-lint run ./...           # 运行全部 lint
+pnpm run test:integration         # 运行集成测试（需要先构建 CLI）
+pnpm run release:local            # 本地发布构建
 ```
 
-## Architecture
+## 架构
 
+```text
+internal/cmd/    # CLI 命令实现（Cobra 命令）
+pkg/api/         # Gitee API Client（HTTP 调用与响应类型）
+pkg/auth/        # 认证（Token 存储与缓存）
+pkg/config/      # 配置文件与 hosts 文件管理
+pkg/util/        # 共享工具
 ```
-internal/cmd/    # CLI command implementations (Cobra commands)
-pkg/api/         # Gitee API client (HTTP calls + response types)
-pkg/auth/        # Authentication (token storage, cache)
-pkg/config/      # Config file and hosts file management
-pkg/util/        # Shared utilities
-```
 
-### API Client (`pkg/api/client.go`)
+### API Client（`pkg/api/client.go`）
 
-`Client` struct wraps HTTP calls to Gitee API v5. All API paths use `config.ApiUrl(host)` as base. Auth header format is `Authorization: token <token>`.
+`Client` 结构体封装了对 Gitee API v5 的 HTTP 调用。所有 API 路径都必须通过
+`config.ApiUrl(host)` 生成，不允许硬编码。认证头格式为 `Authorization: token <token>`。
 
-Each domain (issue, pr, repo, org, release) has its own file in `pkg/api/`.
+每个领域（issue、pr、repo、org、release）都在 `pkg/api/` 下拥有独立文件。
 
-### Auth Flow (`pkg/auth/auth.go`)
+### 认证流程（`pkg/auth/auth.go`）
 
-`GetToken(host)` checks `GITEE_TOKEN` env var first, then falls back to `config.LoadHosts()` (YAML file). Results are cached in-memory with double-checked locking.
+`GetToken(host)` 会先读取 `GITEE_TOKEN` 环境变量；如果没有，再回退到 `config.LoadHosts()`
+（YAML 配置文件）。结果会使用双检锁策略做内存缓存。
 
-### Repo Resolution (`internal/cmd/repo_helper.go`)
+### 仓库解析（`internal/cmd/repo_helper.go`）
 
-Use `getClient()` to get an authenticated API client. Use `resolveRepoFlag(flag)` to resolve repo from flag -> `GT_REPO` env var -> `default_repo` config. Use `ResolveRepo(owner/repo)` to parse and validate `owner/repo` strings.
+获取已认证 API Client 必须使用 `getClient()`。解析仓库必须使用 `resolveRepoFlag(flag)`
+，其解析顺序为：命令 flag -> `GT_REPO` 环境变量 -> `default_repo` 配置。解析 `owner/repo`
+字符串时使用 `ResolveRepo(owner/repo)`。
 
-## Key Patterns
+## 关键模式
 
-- All command handlers use `getClient()` + `resolveRepoFlag()` — never call `auth.GetToken` + `api.NewClient` directly
-- URL construction always goes through `config.ApiUrl(host)` — no hardcoded `https://gitee.com`
-- `api.StateOpen` constant exists for issue/PR state filtering (value: "open")
+- 所有命令处理函数都使用 `getClient()` + `resolveRepoFlag()`，不要直接调用
+  `auth.GetToken` + `api.NewClient`
+- URL 构造统一通过 `config.ApiUrl(host)`，不要硬编码 `https://gitee.com`
+- Issue / PR 状态过滤统一使用 `api.StateOpen` 常量（值为 `"open"`）
 
-## API Implementation Checklist
+## 示例数据规则
 
-When implementing or updating an API endpoint, verify against `data/api-1.json` or using `swagger-gitee` MCP:
+- 不要在产品代码、测试、夹具或示例中写死开发者个人仓库、组织或 namespace。
+- 当必须使用稳定示例 owner 或 namespace 时，优先使用官方公开标识，例如 `gitee`。
+- 如果仓库自身身份信息必须出现（例如 `go.mod`、import path、release URL、license
+  元数据），应将其视为项目元数据，而不是可复用示例数据；不要把这些值继续复制到新的夹具或示例里。
 
-### 1. Endpoint Definition (`pkg/api/endpoint.go`)
-- [ ] Path matches swagger: `/v5/repos/{owner}/{repo}/issues`
-- [ ] HTTP method matches swagger: GET, POST, PATCH, DELETE, PUT
-- [ ] EndpointGroup action name is correct
+## 变更管理规则
 
-### 2. Request Parameters (`pkg/api/response/{domain}.go`)
-For each query/path/form parameter in swagger:
-- [ ] Parameter name matches exactly (case-sensitive)
-- [ ] Parameter type matches: string, int, bool, array
-- [ ] Required vs optional is correct
-- [ ] Enum values are validated if specified
+- 任何新增功能或行为变更，在视为完成之前，都必须先做一轮对仓库文档与插件工作流的影响评估。
+- 如果变更影响命令用法、认证流程、配置、测试、发布流程，或 agent / plugin
+  行为，必须在同一次交付中同步更新相关文档、示例、夹具和插件工作流说明。
+- 不要把“代码改完”视为“工作完成”；在结束前必须显式检查 `README`、`AGENTS.md`
+  、测试夹具、集成流程，以及插件相关的配置或使用说明是否需要更新。
+- 对本仓库而言，新增或变更功能时，必须显式检查 `plugins/gitee` 以及相关插件工作流文档、示例是否需要同步更新。
 
-### 3. Request Body (`pkg/api/response/{domain}.go`)
-For POST/PATCH/PUT requests:
-- [ ] All form fields are defined in request struct
-- [ ] JSON tags match swagger field names
-- [ ] `omitempty` is used correctly for optional fields
-- [ ] Field types match swagger spec
+## API 实现检查清单
 
-### 4. Response Struct (`pkg/api/response/{domain}.go`)
-For each response field in swagger definition:
-- [ ] Field name matches exactly (case-sensitive)
-- [ ] JSON tag matches swagger
-- [ ] Field type is correct: string, int, bool, array, object
-- [ ] Nested objects have proper struct definitions
-- [ ] All optional fields have pointer types or omitempty
+实现或更新 API 接口时，必须对照 `data/api-1.json` 或 `swagger-gitee` MCP 进行核验：
 
-### 5. Verification Steps
+### 1. Endpoint 定义（`pkg/api/endpoint.go`）
+
+- [ ] 路径与 swagger 一致，例如：`/v5/repos/{owner}/{repo}/issues`
+- [ ] HTTP 方法与 swagger 一致：GET、POST、PATCH、DELETE、PUT
+- [ ] `EndpointGroup` 中的 action 名称正确
+
+### 2. 请求参数（`pkg/api/response/{domain}.go`）
+
+对 swagger 中每个 query/path/form 参数：
+
+- [ ] 参数名完全一致（区分大小写）
+- [ ] 参数类型一致：string、int、bool、array
+- [ ] 必填 / 可选定义正确
+- [ ] 如果 swagger 定义了枚举值，需正确校验
+
+### 3. 请求体（`pkg/api/response/{domain}.go`）
+
+对于 POST / PATCH / PUT 请求：
+
+- [ ] 所有表单字段都在请求结构体中定义
+- [ ] `json` tag 与 swagger 字段名完全一致
+- [ ] 可选字段正确使用 `omitempty`
+- [ ] 字段类型与 swagger 一致
+
+### 4. 响应结构（`pkg/api/response/{domain}.go`）
+
+对 swagger 响应定义中的每个字段：
+
+- [ ] 字段名完全一致（区分大小写）
+- [ ] `json` tag 与 swagger 一致
+- [ ] 字段类型正确：string、int、bool、array、object
+- [ ] 嵌套对象有正确的结构体定义
+- [ ] 所有可选字段使用了合适的指针类型或 `omitempty`
+
+### 5. 验证步骤
+
 ```bash
-# 1. Search swagger for the endpoint
+# 1. 搜索目标接口
 mcp__swagger-gitee__search_apis tag:"Issues"
 
-# 2. Get full API details
+# 2. 获取完整 API 定义
 mcp__swagger-gitee__get_api_detail --path "/v5/repos/{owner}/{repo}/issues" --method "get"
 
-# 3. Get response schema
+# 3. 获取响应 schema
 mcp__swagger-gitee__get_schema --ref "Issue"
 
-# 4. Verify build passes
+# 4. 验证构建通过
 go build ./...
 
-# 5. Verify lint passes
+# 5. 验证 lint 通过
 golangci-lint run ./...
 ```
 
-## New Module Development Workflow
+## 新模块开发工作流
 
-When implementing a new API module (e.g., milestones, labels), follow this directory structure:
+当实现新的 API 模块（例如 milestone、label）时，遵循以下目录结构：
 
-### File Locations
+### 文件位置
 
-| Purpose                | File Path                                                                         |
-|------------------------|-----------------------------------------------------------------------------------|
-| Endpoint definitions   | `pkg/api/endpoint.go` — add to `EndpointGroup` struct and `var XXX`               |
-| Request/Response types | `pkg/api/response/{domain}.go` — struct definitions for API responses and options |
-| API client methods     | `pkg/api/{domain}.go` — type aliases + client methods using `DoFromEndpoint`      |
-| CLI commands           | `internal/cmd/{domain}.go` — Cobra commands                                       |
-| CLI tests              | `internal/cmd/{domain}_test.go` — unit tests for commands and flags               |
+| 用途            | 文件路径                                                         |
+|---------------|--------------------------------------------------------------|
+| Endpoint 定义   | `pkg/api/endpoint.go`：向 `EndpointGroup` 结构体和 `var XXX` 中补充定义 |
+| 请求 / 响应类型     | `pkg/api/response/{domain}.go`：定义 API 响应与参数结构                |
+| API Client 方法 | `pkg/api/{domain}.go`：通过 `DoFromEndpoint` 实现类型别名与调用          |
+| CLI 命令        | `internal/cmd/{domain}.go`：Cobra 命令实现                        |
+| CLI 测试        | `internal/cmd/{domain}_test.go`：命令与 flag 的单元测试               |
 
-### Development Steps
+### 开发步骤
 
-1. **Add endpoints to `pkg/api/endpoint.go`**
-    - Add new fields to `EndpointGroup` struct if needed (rare, most use List/Get/Create/Update/Delete)
-    - Add `var XXX = EndpointGroup{...}` with all endpoint paths
+1. **向 `pkg/api/endpoint.go` 添加 endpoint**
+    - 如有必要，向 `EndpointGroup` 结构体增加新字段（通常很少，绝大多数可复用
+      List/Get/Create/Update/Delete）
+    - 增加 `var XXX = EndpointGroup{...}`，补齐对应路径
 
-2. **Define types in `pkg/api/response/{domain}.go`**
-    - Response structs (e.g., `Milestone`, `License`)
-    - Options structs (e.g., `ListXxxOptions`, `CreateXxxOptions`)
-    - Use `json:"field_name"` tags matching swagger exactly
+2. **在 `pkg/api/response/{domain}.go` 定义类型**
+    - 响应结构体（例如 `Milestone`、`License`）
+    - 参数结构体（例如 `ListXxxOptions`、`CreateXxxOptions`）
+    - `json:"field_name"` 必须与 swagger 完全一致
 
-3. **Implement API methods in `pkg/api/{domain}.go`**
-    - Use type aliases: `type ListXxxOptions = response.ListXxxOptions`
-    - Use `DoFromEndpoint()` for all API calls
-    - Return response types from `response` package
+3. **在 `pkg/api/{domain}.go` 实现 API 方法**
+    - 使用类型别名，例如：`type ListXxxOptions = response.ListXxxOptions`
+    - 所有 API 调用统一使用 `DoFromEndpoint()`
+    - 返回类型统一来自 `response` 包
 
-4. **Implement CLI in `internal/cmd/{domain}.go`**
-    - Follow existing patterns (see `issue.go`, `webhook.go`)
-    - Use `newXxxCmd()` pattern for command creation
-    - Group related flags and use `resolveRepoFlag()` for repo resolution
+4. **在 `internal/cmd/{domain}.go` 实现 CLI**
+    - 参考现有模式（例如 `issue.go`、`webhook.go`）
+    - 使用 `newXxxCmd()` 模式创建命令
+    - 合理组织 flags，并通过 `resolveRepoFlag()` 处理仓库解析
 
-5. **Add tests in `internal/cmd/{domain}_test.go`**
-    - Test command structure (Use string, number of subcommands)
-    - Test flags exist
-    - Reference `webhook_test.go` for patterns
+5. **在 `internal/cmd/{domain}_test.go` 添加测试**
+    - 测试命令结构（`Use`、子命令数量等）
+    - 测试 flags 是否存在
+    - 可以参考 `webhook_test.go` 的测试模式
 
-6. **Verify against [API Implementation Checklist](#api-implementation-checklist)**
+6. **对照上面的 API 实现检查清单完成验证**
 
-### Common Mistakes to Avoid
+## 常见错误
 
-- **Do NOT** define types in `pkg/api/{domain}.go` — they go in `pkg/api/response/{domain}.go`
-- **Do NOT** use `Do()` directly — use `DoFromEndpoint()` with endpoint definitions
-- **Do NOT** build query strings manually — use `util.BuildQuery()`
-- **Do NOT** print errors before `os.Exit()` — cobra handles error output
+- **不要**在 `pkg/api/{domain}.go` 中定义类型；类型应该放在
+  `pkg/api/response/{domain}.go`
+- **不要**直接使用 `Do()`；统一通过带 endpoint 定义的 `DoFromEndpoint()`
+- **不要**手写 query string；统一使用 `util.BuildQuery()`
+- **不要**在 `os.Exit()` 前自己打印错误；Cobra 会统一处理错误输出

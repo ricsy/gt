@@ -44,6 +44,13 @@ Gitee API Token 可从 [Gitee 个人设置](https://gitee.com/profile/personal_a
 export GITEE_TOKEN="your_token_here"
 ```
 
+也可以基于仓库提供的 `.env.example` 创建本地环境文件，再通过 `--env-file` 或 `GT_ENV_FILE` 临时加载：
+
+```bash
+cp .env.example .env.local
+gt --env-file .env.local repo list
+```
+
 或首次使用配置访问令牌：
 
 ```bash

@@ -49,6 +49,18 @@ func integrationTestsEnabled() bool {
 	return os.Getenv("GT_INTEGRATION_TESTS") == "1"
 }
 
+func applyTestConfigEnvOverrides(cfg *TestConfig) {
+	if owner := strings.TrimSpace(os.Getenv("GT_TEST_OWNER")); owner != "" {
+		cfg.Owner = owner
+	}
+	if repo := strings.TrimSpace(os.Getenv("GT_TEST_REPO")); repo != "" {
+		cfg.Repo = repo
+	}
+	if base := strings.TrimSpace(os.Getenv("GT_TEST_PR_BASE")); base != "" {
+		cfg.PR.Base = base
+	}
+}
+
 func requireIntegrationTests(t *testing.T) {
 	t.Helper()
 	if !integrationTestsEnabled() {
@@ -66,6 +78,7 @@ func loadTestConfig(t *testing.T) *TestConfig {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		t.Fatalf("Failed to parse test config: %v", err)
 	}
+	applyTestConfigEnvOverrides(&cfg)
 	return &cfg
 }
 
@@ -130,6 +143,10 @@ func TestMain(m *testing.M) {
 	if !integrationTestsEnabled() {
 		os.Exit(m.Run())
 	}
+	if err := config.LoadEnvFile(config.ResolveEnvFile("")); err != nil {
+		fmt.Printf("Skipping integration setup: failed to load env file: %v\n", err)
+		os.Exit(m.Run())
+	}
 	if _, err := auth.GetToken(config.DefaultHost); err != nil {
 		fmt.Printf("Skipping integration setup: authentication required: %v\n", err)
 		os.Exit(m.Run())
@@ -157,6 +174,7 @@ func TestMain(m *testing.M) {
 		fmt.Printf("Failed to parse test config: %v\n", err)
 		os.Exit(1)
 	}
+	applyTestConfigEnvOverrides(&config)
 	testOwner = config.Owner
 
 	// Create test repo
@@ -419,7 +437,7 @@ func TestIntegrationPRCreate(t *testing.T) {
 		"--title", cfg.PR.Title,
 		"--body", cfg.PR.Body,
 		"--head", cfg.PR.Head,
-		"--base", "master")
+		"--base", cfg.PR.Base)
 	if err != nil {
 		t.Errorf("pr create failed: %v\nOutput: %s", err, createOutput)
 	}

@@ -31,6 +31,10 @@ func newConfigCmd() *cobra.Command {
 				fmt.Println(cfg.DefaultOwner)
 			case "default_host":
 				fmt.Println(cfg.DefaultHost)
+			case "repo_scope_mode":
+				fmt.Println(cfg.RepoScopeMode)
+			case "repo_scope_namespace":
+				fmt.Println(cfg.RepoScopeNamespace)
 			default:
 				return fmt.Errorf("unknown key: %s", key)
 			}
@@ -55,6 +59,10 @@ func newConfigCmd() *cobra.Command {
 				cfg.DefaultOwner = value
 			case "default_host":
 				cfg.DefaultHost = value
+			case "repo_scope_mode":
+				cfg.RepoScopeMode = value
+			case "repo_scope_namespace":
+				cfg.RepoScopeNamespace = value
 			default:
 				return fmt.Errorf("unknown key: %s", key)
 			}
@@ -73,6 +81,8 @@ func newConfigCmd() *cobra.Command {
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_repo: %s\n", cfg.DefaultRepo)
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_owner: %s\n", cfg.DefaultOwner)
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "default_host: %s\n", cfg.DefaultHost)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "repo_scope_mode: %s\n", cfg.RepoScopeMode)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "repo_scope_namespace: %s\n", cfg.RepoScopeNamespace)
 			return nil
 		},
 	})

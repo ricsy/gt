@@ -23,7 +23,7 @@ func resetRepoCreateOpts() {
 
 func TestBuildAuthenticatedCloneURL(t *testing.T) {
 	const host = "gitee.com"
-	originalConfigDirFunc := config.ConfigDir
+	originalConfigDirFunc := config.ConfigDirImpl
 	configDir := t.TempDir()
 	config.SetConfigDirFunc(func() string { return configDir })
 	t.Cleanup(func() {
@@ -49,7 +49,7 @@ func TestBuildAuthenticatedCloneURL(t *testing.T) {
 }
 
 func TestBuildAuthenticatedCloneURLWithoutStoredUser(t *testing.T) {
-	originalConfigDirFunc := config.ConfigDir
+	originalConfigDirFunc := config.ConfigDirImpl
 	configDir := t.TempDir()
 	config.SetConfigDirFunc(func() string { return configDir })
 	t.Cleanup(func() {
@@ -74,6 +74,7 @@ func newRepoCreateTestCommand() *cobra.Command {
 	cmd.Flags().String("license-template", "", "")
 	cmd.Flags().String("homepage", "", "")
 	cmd.Flags().String("path", "", "")
+	cmd.Flags().String("namespace", "", "")
 	cmd.Flags().String("clone-url-mode", "https", "")
 	return cmd
 }
@@ -164,6 +165,7 @@ func TestBuildCreateRepoOptionsMapsAllSupportedPersonalFlags(t *testing.T) {
 		"gitignore-template": "Go",
 		"license-template":   "MIT",
 		"homepage":           "https://example.com",
+		"namespace":          "gitee",
 		"path":               "traceops-cli",
 	} {
 		if err := cmd.Flags().Set(name, value); err != nil {
@@ -183,6 +185,7 @@ func TestBuildCreateRepoOptionsMapsAllSupportedPersonalFlags(t *testing.T) {
 		AutoInit:          true,
 		GitignoreTemplate: "Go",
 		LicenseTemplate:   "MIT",
+		Namespace:         "gitee",
 		Path:              "traceops-cli",
 	}
 
@@ -199,6 +202,9 @@ func TestBuildCreateRepoOptionsMapsAllSupportedPersonalFlags(t *testing.T) {
 	}
 	if opts.Path != "traceops-cli" {
 		t.Fatalf("opts.Path = %q, want %q", opts.Path, "traceops-cli")
+	}
+	if opts.Namespace != "gitee" {
+		t.Fatalf("opts.Namespace = %q, want %q", opts.Namespace, "gitee")
 	}
 	if opts.GitignoreTemplate != "Go" {
 		t.Fatalf("opts.GitignoreTemplate = %q, want %q", opts.GitignoreTemplate, "Go")
@@ -218,7 +224,7 @@ func TestBuildCreateRepoOptionsMapsAllSupportedPersonalFlags(t *testing.T) {
 }
 
 func TestPrintRepoCreatePushDiagnosticsSuggestsAuthSetup(t *testing.T) {
-	originalConfigDirFunc := config.ConfigDir
+	originalConfigDirFunc := config.ConfigDirImpl
 	configDir := t.TempDir()
 	config.SetConfigDirFunc(func() string { return configDir })
 	t.Cleanup(func() {
@@ -258,7 +264,7 @@ func TestPrintRepoCreatePushDiagnosticsSuggestsAuthSetup(t *testing.T) {
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
 
-	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "", ""), cloneURLModeHTTPS)
+	printRepoCreatePushDiagnostics(cmd, newRepository("gitee", "traceops", "", ""), cloneURLModeHTTPS)
 
 	output := buf.String()
 	if !strings.Contains(output, "gt auth setup") {
@@ -267,7 +273,7 @@ func TestPrintRepoCreatePushDiagnosticsSuggestsAuthSetup(t *testing.T) {
 }
 
 func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
-	originalConfigDirFunc := config.ConfigDir
+	originalConfigDirFunc := config.ConfigDirImpl
 	configDir := t.TempDir()
 	config.SetConfigDirFunc(func() string { return configDir })
 	t.Cleanup(func() {
@@ -300,7 +306,7 @@ func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
 	}
 	gitIsInsideWorkTree = func() (bool, error) { return true, nil }
 	gitRemoteGetURL = func(name string) (string, error) {
-		return "https://gitee.com/ricsy/old.git", nil
+		return "https://gitee.com/gitee/old.git", nil
 	}
 	gitLsRemote = func(target string) error { return nil }
 
@@ -309,16 +315,16 @@ func TestPrintRepoCreatePushDiagnosticsDetectsRemoteMismatch(t *testing.T) {
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
 
-	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "https://gitee.com/ricsy/traceops.git", ""), cloneURLModeHTTPS)
+	printRepoCreatePushDiagnostics(cmd, newRepository("gitee", "traceops", "https://gitee.com/gitee/traceops.git", ""), cloneURLModeHTTPS)
 
 	output := buf.String()
-	if !strings.Contains(output, "git remote set-url origin https://gitee.com/ricsy/traceops.git") {
+	if !strings.Contains(output, "git remote set-url origin https://gitee.com/gitee/traceops.git") {
 		t.Fatalf("expected remote set-url guidance in output, got: %s", output)
 	}
 }
 
 func TestPrintRepoCreatePushDiagnosticsUsesCurrentBranchForPushHint(t *testing.T) {
-	originalConfigDirFunc := config.ConfigDir
+	originalConfigDirFunc := config.ConfigDirImpl
 	configDir := t.TempDir()
 	config.SetConfigDirFunc(func() string { return configDir })
 	t.Cleanup(func() {
@@ -361,7 +367,7 @@ func TestPrintRepoCreatePushDiagnosticsUsesCurrentBranchForPushHint(t *testing.T
 	cmd.SetOut(buf)
 	cmd.SetErr(buf)
 
-	printRepoCreatePushDiagnostics(cmd, newRepository("ricsy", "traceops", "https://gitee.com/ricsy/traceops.git", ""), cloneURLModeHTTPS)
+	printRepoCreatePushDiagnostics(cmd, newRepository("gitee", "traceops", "https://gitee.com/gitee/traceops.git", ""), cloneURLModeHTTPS)
 
 	output := buf.String()
 	if !strings.Contains(output, "git push -u origin master") {
@@ -384,24 +390,24 @@ func TestPreferredRepoPushBranchFallsBackToMain(t *testing.T) {
 }
 
 func TestResolveRepoCloneURLFallsBackWhenCreateResponseOmitsCloneURL(t *testing.T) {
-	got, err := resolveRepoCloneURL("gitee.com", "ricsy", "traceops", "", "", cloneURLModeHTTPS)
+	got, err := resolveRepoCloneURL("gitee.com", "gitee", "traceops", "", "", cloneURLModeHTTPS)
 	if err != nil {
 		t.Fatalf("resolveRepoCloneURL() returned error: %v", err)
 	}
 
-	want := "https://gitee.com/ricsy/traceops.git"
+	want := "https://gitee.com/gitee/traceops.git"
 	if got != want {
 		t.Fatalf("resolveRepoCloneURL() = %q, want %q", got, want)
 	}
 }
 
 func TestResolveRepoCloneURLSupportsSSHMode(t *testing.T) {
-	got, err := resolveRepoCloneURL("gitee.com", "ricsy", "traceops", "", "", cloneURLModeSSH)
+	got, err := resolveRepoCloneURL("gitee.com", "gitee", "traceops", "", "", cloneURLModeSSH)
 	if err != nil {
 		t.Fatalf("resolveRepoCloneURL() returned error: %v", err)
 	}
 
-	want := "git@gitee.com:ricsy/traceops.git"
+	want := "git@gitee.com:gitee/traceops.git"
 	if got != want {
 		t.Fatalf("resolveRepoCloneURL() = %q, want %q", got, want)
 	}

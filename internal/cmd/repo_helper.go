@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ricsy/gt/pkg/api"
 	"github.com/ricsy/gt/pkg/auth"
@@ -55,9 +56,27 @@ func ResolveRepo(repo string) (owner, repoName string, err error) {
 	if repo == "" {
 		return "", "", fmt.Errorf("repo is required: use --repo, set GT_REPO, or configure default_repo")
 	}
-	owner, repoName = util.SplitOwnerRepo(repo)
+
+	repo = strings.TrimSpace(repo)
+	if !strings.Contains(repo, "/") {
+		defaultOwner, err := resolveDefaultRepoOwner()
+		if err != nil {
+			return "", "", err
+		}
+		if defaultOwner == "" {
+			return "", "", fmt.Errorf("owner is required: use owner/repo, configure default_owner, or enter repo scope mode")
+		}
+		owner = defaultOwner
+		repoName = repo
+	} else {
+		owner, repoName = util.SplitOwnerRepo(repo)
+	}
+
 	if owner == "" || repoName == "" {
 		return "", "", fmt.Errorf("invalid repo format: owner/repo expected")
+	}
+	if err := enforceRepoScopeOwner(owner); err != nil {
+		return "", "", err
 	}
 	return owner, repoName, nil
 }

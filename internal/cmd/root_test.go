@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -59,6 +60,13 @@ func TestRootCommandHasHostFlag(t *testing.T) {
 	}
 }
 
+func TestRootCommandHasEnvFileFlag(t *testing.T) {
+	flag := rootCmd.PersistentFlags().Lookup("env-file")
+	if flag == nil {
+		t.Fatal("expected root command to define an env-file flag")
+	}
+}
+
 func TestCommandHTTPClientUsesRequestTimeout(t *testing.T) {
 	originalTimeout := requestTimeout
 	t.Cleanup(func() {
@@ -105,5 +113,50 @@ func TestResolveCommandHostPrecedence(t *testing.T) {
 	commandHost = "flag.example.com"
 	if got := resolveCommandHost(); got != "flag.example.com" {
 		t.Fatalf("resolveCommandHost() with flag = %s, want flag.example.com", got)
+	}
+}
+
+func TestResolveCommandEnvFilePrecedence(t *testing.T) {
+	originalCommandEnvFile := commandEnvFile
+	commandEnvFile = ""
+	t.Cleanup(func() {
+		commandEnvFile = originalCommandEnvFile
+		_ = os.Unsetenv("GT_ENV_FILE")
+	})
+
+	if err := os.Setenv("GT_ENV_FILE", "env.from.var"); err != nil {
+		t.Fatalf("Setenv() error = %v", err)
+	}
+	if got := resolveCommandEnvFile(); got != "env.from.var" {
+		t.Fatalf("resolveCommandEnvFile() with env = %s, want env.from.var", got)
+	}
+
+	commandEnvFile = "env.from.flag"
+	if got := resolveCommandEnvFile(); got != "env.from.flag" {
+		t.Fatalf("resolveCommandEnvFile() with flag = %s, want env.from.flag", got)
+	}
+}
+
+func TestLoadCommandEnvFileLoadsVariables(t *testing.T) {
+	originalCommandEnvFile := commandEnvFile
+	commandEnvFile = ""
+	t.Cleanup(func() {
+		commandEnvFile = originalCommandEnvFile
+		_ = os.Unsetenv("GT_ENV_FILE")
+		_ = os.Unsetenv("GT_SCOPE_CHECK")
+	})
+
+	tmpDir := t.TempDir()
+	envFile := filepath.Join(tmpDir, ".env.test")
+	if err := os.WriteFile(envFile, []byte("GT_SCOPE_CHECK=loaded\n"), 0644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	commandEnvFile = envFile
+
+	if err := loadCommandEnvFile(); err != nil {
+		t.Fatalf("loadCommandEnvFile() error = %v", err)
+	}
+	if got := os.Getenv("GT_SCOPE_CHECK"); got != "loaded" {
+		t.Fatalf("GT_SCOPE_CHECK = %q, want %q", got, "loaded")
 	}
 }

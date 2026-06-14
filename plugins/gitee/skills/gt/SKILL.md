@@ -29,13 +29,15 @@ Use `gt api` only when:
 
 1. Identify the resource type first:
    - `repo`, `branch`, `collaborator`, `fork`
+   - `to`
    - `issue`, `label`, `milestone`
    - `pr`
    - `release`, `webhook`, `check`
    - `notification`, `gist`, `user`, `org`, `activity`
-2. Route to a narrower GT skill when the request is clearly domain-specific.
-3. Route to `$gt-mode` when the request is about repository scope switching, personal-versus-organization context, `--env-file`, `GT_ENV_FILE`, or temporary live test account setup.
-4. Keep raw `gt api` out of the default path unless it is needed for verification or fallback.
+2. Route to `$gt-to` when the request is about opening a repo or namespace page in the browser.
+3. Route to a narrower GT skill when the request is clearly domain-specific.
+4. Route to `$gt-mode` when the request is about repository scope switching, personal-versus-organization context, `--env-file`, `GT_ENV_FILE`, or temporary live test account setup.
+5. Keep raw `gt api` out of the default path unless it is needed for verification or fallback.
 
 ## Output Expectations
 

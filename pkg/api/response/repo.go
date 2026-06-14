@@ -107,6 +107,12 @@ type CreateBranchOptions struct {
 	BranchName string `json:"branch_name"`
 }
 
+type ListRepoCommitsOptions struct {
+	SHA     string `json:"sha,omitempty"`
+	Page    int    `json:"page,omitempty"`
+	PerPage int    `json:"per_page,omitempty"`
+}
+
 // CreateRepoOptions contains options for creating a repository
 type CreateRepoOptions struct {
 	Name               string `json:"name"`

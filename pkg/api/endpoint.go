@@ -100,9 +100,10 @@ type EndpointGroup struct {
 
 // Repo endpoints
 var Repo = EndpointGroup{
-	Get:    Endpoint{GET, "/repos/%s/%s"},
-	Update: Endpoint{PATCH, "/repos/%s/%s"},
-	Delete: Endpoint{DELETE, "/repos/%s/%s"},
+	Get:     Endpoint{GET, "/repos/%s/%s"},
+	Update:  Endpoint{PATCH, "/repos/%s/%s"},
+	Delete:  Endpoint{DELETE, "/repos/%s/%s"},
+	Commits: Endpoint{GET, "/repos/%s/%s/commits"},
 }
 
 // Branches repository branch endpoints

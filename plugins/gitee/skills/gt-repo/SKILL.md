@@ -15,6 +15,7 @@ Use this skill for:
 - `gt repo fork *`
 
 Route to `$gt-mode` instead when the primary request is about repository scope switching, org-vs-personal execution context, or env-file driven temporary setup.
+Route to `$gt-to` instead when the primary request is browser navigation to a repository or namespace page.
 
 ## Workflow
 

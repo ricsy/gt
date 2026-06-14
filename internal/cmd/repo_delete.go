@@ -17,6 +17,13 @@ var repoDeleteOpts struct {
 	Yes bool
 }
 
+type repoDeletionCommitSummary struct {
+	Count         int
+	LatestAt      string
+	LatestTitle   string
+	HasLatestInfo bool
+}
+
 func repoDeleteCommand(cmd *cobra.Command, args []string) error {
 	owner, repoName, err := ResolveRepo(args[0])
 	if err != nil {
@@ -33,7 +40,16 @@ func repoDeleteCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get repo: %w", err)
 	}
 
-	if err := confirmRepositoryDeletion(cmd, repo, repoDeleteOpts.Yes); err != nil {
+	var commitSummary *repoDeletionCommitSummary
+	if repositoryHasCommitHistory(repo) {
+		historySummary, err := client.GetRepoCommitHistorySummary(owner, repoName, repo.DefaultBranch)
+		if err != nil {
+			return fmt.Errorf("failed to inspect repo commit history before deletion: %w", err)
+		}
+		commitSummary = buildRepoDeletionCommitSummary(historySummary)
+	}
+
+	if err := confirmRepositoryDeletion(cmd, repo, commitSummary, repoDeleteOpts.Yes); err != nil {
 		return err
 	}
 
@@ -52,7 +68,7 @@ func repositoryHasCommitHistory(repo *api.Repository) bool {
 	return strings.TrimSpace(repo.DefaultBranch) != "" || strings.TrimSpace(repo.PushedAt) != ""
 }
 
-func confirmRepositoryDeletion(cmd *cobra.Command, repo *api.Repository, allowNonInteractive bool) error {
+func confirmRepositoryDeletion(cmd *cobra.Command, repo *api.Repository, commitSummary *repoDeletionCommitSummary, allowNonInteractive bool) error {
 	if repo == nil {
 		return fmt.Errorf("repository is required")
 	}
@@ -63,26 +79,28 @@ func confirmRepositoryDeletion(cmd *cobra.Command, repo *api.Repository, allowNo
 	}
 
 	if !repositoryHasCommitHistory(repo) {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "No commit history detected for %s.\n", fullRepoName)
 		if allowNonInteractive {
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Proceeding with deletion because -y/--yes is allowed only for repositories without commit history.\n")
 			return nil
 		}
-		return promptRepositoryDeletionConfirmation(cmd, fullRepoName, false)
+		return promptRepositoryDeletionConfirmation(cmd, fullRepoName, nil)
 	}
 
-	return promptRepositoryDeletionConfirmation(cmd, fullRepoName, true)
+	return promptRepositoryDeletionConfirmation(cmd, fullRepoName, commitSummary)
 }
 
-func promptRepositoryDeletionConfirmation(cmd *cobra.Command, fullRepoName string, hasCommitHistory bool) error {
+func promptRepositoryDeletionConfirmation(cmd *cobra.Command, fullRepoName string, commitSummary *repoDeletionCommitSummary) error {
 	input := cmd.InOrStdin()
 	file, ok := input.(*os.File)
 	if !ok || !term.IsTerminal(int(file.Fd())) {
-		if hasCommitHistory {
-			return fmt.Errorf("repository %s has commit history; rerun in an interactive terminal and type the full repository name to confirm deletion", fullRepoName)
+		if commitSummary != nil {
+			return fmt.Errorf("repository %s has commit history (%s); rerun in an interactive terminal and type the full repository name to confirm deletion", fullRepoName, formatRepoDeletionCommitSummary(commitSummary))
 		}
 		return fmt.Errorf("repository deletion requires confirmation; rerun interactively or pass --yes only for repositories without commit history")
 	}
 
-	_, _ = fmt.Fprint(cmd.ErrOrStderr(), buildRepositoryDeletionPrompt(fullRepoName, hasCommitHistory))
+	_, _ = fmt.Fprint(cmd.ErrOrStderr(), buildRepositoryDeletionPrompt(fullRepoName, commitSummary))
 
 	reader := bufio.NewReader(input)
 	confirmation, err := reader.ReadString('\n')
@@ -97,12 +115,67 @@ func promptRepositoryDeletionConfirmation(cmd *cobra.Command, fullRepoName strin
 	return nil
 }
 
-func buildRepositoryDeletionPrompt(fullRepoName string, hasCommitHistory bool) string {
+func buildRepositoryDeletionPrompt(fullRepoName string, commitSummary *repoDeletionCommitSummary) string {
 	var builder strings.Builder
-	if hasCommitHistory {
+	if commitSummary != nil {
 		_, _ = fmt.Fprintf(&builder, "Repository %s has commit history and will be permanently deleted.\n", fullRepoName)
+		_, _ = fmt.Fprintf(&builder, "Commit history: %s.\n", formatRepoDeletionCommitSummary(commitSummary))
 	}
 	builder.WriteString("Do not type yes. Enter the full repository name to confirm deletion.\n")
 	_, _ = fmt.Fprintf(&builder, "Confirmation (expected: %s): ", fullRepoName)
 	return builder.String()
+}
+
+func buildRepoDeletionCommitSummary(historySummary *api.RepoCommitHistorySummary) *repoDeletionCommitSummary {
+	if historySummary == nil {
+		return nil
+	}
+
+	summary := &repoDeletionCommitSummary{Count: historySummary.Count}
+	if historySummary.Latest == nil {
+		return summary
+	}
+
+	latestAt := strings.TrimSpace(historySummary.Latest.Commit.Committer.Date)
+	if latestAt == "" {
+		latestAt = strings.TrimSpace(historySummary.Latest.Commit.Author.Date)
+	}
+
+	latestTitle := extractCommitTitle(historySummary.Latest.Commit.Message)
+	summary.LatestAt = latestAt
+	summary.LatestTitle = latestTitle
+	summary.HasLatestInfo = latestAt != "" || latestTitle != ""
+	return summary
+}
+
+func formatRepoDeletionCommitSummary(summary *repoDeletionCommitSummary) string {
+	if summary == nil {
+		return "commit history detected"
+	}
+
+	description := fmt.Sprintf("%d commits", summary.Count)
+	if summary.HasLatestInfo {
+		switch {
+		case summary.LatestAt != "" && summary.LatestTitle != "":
+			return fmt.Sprintf("%s; latest %s - %s", description, summary.LatestAt, summary.LatestTitle)
+		case summary.LatestAt != "":
+			return fmt.Sprintf("%s; latest %s", description, summary.LatestAt)
+		case summary.LatestTitle != "":
+			return fmt.Sprintf("%s; latest %s", description, summary.LatestTitle)
+		}
+	}
+	return description
+}
+
+func extractCommitTitle(message string) string {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return ""
+	}
+
+	if newlineIndex := strings.IndexByte(message, '\n'); newlineIndex >= 0 {
+		message = message[:newlineIndex]
+	}
+
+	return strings.TrimSpace(message)
 }

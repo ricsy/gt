@@ -49,19 +49,9 @@ func repoBootstrapCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	client, err := getClient()
+	repo, err := createRepoFromCommand(cmd)
 	if err != nil {
 		return err
-	}
-
-	opts, err := buildCreateRepoOptions(cmd)
-	if err != nil {
-		return err
-	}
-
-	repo, err := client.CreateRepo(opts)
-	if err != nil {
-		return fmt.Errorf("failed to create repo: %w", err)
 	}
 
 	cloneURL, err := resolveRepoCloneURL(host, repo.Owner.Login, repo.Name, repo.CloneURL, repo.SSHURL, repoCreateOpts.CloneURLMode)

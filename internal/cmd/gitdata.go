@@ -49,11 +49,7 @@ func init() {
 }
 
 func gitDataBlob(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(gitDataRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(gitDataRepo)
 	if err != nil {
 		return err
 	}
@@ -69,11 +65,7 @@ func gitDataBlob(cmd *cobra.Command, args []string) error {
 }
 
 func gitDataTree(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(gitDataRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(gitDataRepo)
 	if err != nil {
 		return err
 	}
@@ -92,11 +84,7 @@ func gitDataTree(cmd *cobra.Command, args []string) error {
 }
 
 func gitDataMetrics(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(gitDataRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(gitDataRepo)
 	if err != nil {
 		return err
 	}

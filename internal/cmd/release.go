@@ -15,12 +15,7 @@ func newReleaseCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List releases for a repository",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -44,12 +39,7 @@ func newReleaseCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tag := args[0]
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -71,7 +61,7 @@ func newReleaseCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tag := args[0]
-			owner, repoName, err := resolveRepoFlag(repoFlag)
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -84,11 +74,6 @@ func newReleaseCmd() *cobra.Command {
 			target := targetCommitFlag
 			if target == "" {
 				target = "main"
-			}
-
-			client, err := getClient()
-			if err != nil {
-				return err
 			}
 
 			release, err := client.CreateRelease(owner, repoName, api.CreateReleaseOptions{
@@ -116,12 +101,7 @@ func newReleaseCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tag := args[0]
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}

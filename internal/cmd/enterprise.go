@@ -310,13 +310,7 @@ func enterpriseRepoList(cmd *cobra.Command, args []string) error {
 		opts.Direct = api.BoolPtr(enterpriseDirect)
 	}
 	repos, err := client.ListEnterpriseRepos(args[0], opts)
-	if err != nil {
-		return err
-	}
-	for _, repo := range repos {
-		fmt.Printf("%s\t%s\n", repo.FullName, repo.Description)
-	}
-	return nil
+	return printRepositoriesResult(repos, err)
 }
 
 func enterprisePRList(cmd *cobra.Command, args []string) error {

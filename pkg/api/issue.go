@@ -76,12 +76,7 @@ func buildQuery(opts ListIssuesOptions) string {
 	if opts.SecurityHole != nil {
 		params = append(params, "security_hole", fmt.Sprintf("%t", *opts.SecurityHole))
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", fmt.Sprintf("%d", opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", fmt.Sprintf("%d", opts.PerPage))
-	}
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
 	if opts.Since != "" {
 		params = append(params, "since", opts.Since)
 	}

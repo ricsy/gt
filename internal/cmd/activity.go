@@ -145,22 +145,11 @@ func activityWatchList(cmd *cobra.Command, args []string) error {
 	} else {
 		repos, err = client.ListSubscriptions(activityListOptions())
 	}
-	if err != nil {
-		return err
-	}
-
-	for _, repo := range repos {
-		fmt.Printf("%s\t%s\n", repo.FullName, repo.Description)
-	}
-	return nil
+	return printRepositoriesResult(repos, err)
 }
 
 func activityWatchRepo(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(activityRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(activityRepo)
 	if err != nil {
 		return err
 	}
@@ -172,11 +161,7 @@ func activityWatchRepo(cmd *cobra.Command, args []string) error {
 }
 
 func activityUnwatchRepo(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(activityRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(activityRepo)
 	if err != nil {
 		return err
 	}
@@ -188,18 +173,10 @@ func activityUnwatchRepo(cmd *cobra.Command, args []string) error {
 }
 
 func activitySubscribers(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := resolveRepoFlag(activityRepo)
-	if err != nil {
-		return err
-	}
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClient(activityRepo)
 	if err != nil {
 		return err
 	}
 	users, err := client.ListSubscribers(owner, repoName, activityListOptions())
-	if err != nil {
-		return err
-	}
-	printUsers(users)
-	return nil
+	return printUsersResult(users, err)
 }

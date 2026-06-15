@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/ricsy/gt/pkg/api/response"
-	"github.com/ricsy/gt/pkg/util"
 )
 
 // Repository is an alias for response.Repository
@@ -233,11 +232,7 @@ func (c *Client) ForkRepository(owner, repo string) (*ForkRepository, error) {
 func buildListForksQuery(opts ListForksOptions) string {
 	params := []string{"sort", opts.Sort}
 	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
-	query := util.BuildQuery(params...)
-	if query == "" {
-		return ""
-	}
-	return "?" + query
+	return buildOptionalQuery(params...)
 }
 
 func (c *Client) listRepoCommits(owner, repo string, opts ListRepoCommitsOptions) ([]BranchCommit, error) {
@@ -252,9 +247,5 @@ func (c *Client) listRepoCommits(owner, repo string, opts ListRepoCommitsOptions
 func buildListBranchesQuery(opts ListBranchesOptions) string {
 	params := []string{"sort", opts.Sort, "direction", opts.Direction}
 	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
-	query := util.BuildQuery(params...)
-	if query == "" {
-		return ""
-	}
-	return "?" + query
+	return buildOptionalQuery(params...)
 }

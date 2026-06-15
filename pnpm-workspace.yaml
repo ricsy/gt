@@ -1,0 +1,8 @@
+allowBuilds:
+  better-sqlite3: false
+  tree-sitter: false
+  tree-sitter-go: false
+  tree-sitter-java: false
+  tree-sitter-kotlin: false
+  tree-sitter-python: false
+  tree-sitter-rust: false

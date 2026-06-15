@@ -1,11 +1,6 @@
 package api
 
-import (
-	"strconv"
-
-	"github.com/ricsy/gt/pkg/api/response"
-	"github.com/ricsy/gt/pkg/util"
-)
+import "github.com/ricsy/gt/pkg/api/response"
 
 // Event is an alias for response.Event.
 type Event = response.Event
@@ -17,7 +12,7 @@ type ListActivityOptions = response.ListActivityOptions
 func (c *Client) ListRepoEvents(owner, repo string, opts ListActivityOptions) ([]Event, error) {
 	var events []Event
 	path := Activity.List.Build(owner, repo)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &events)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &events)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +23,7 @@ func (c *Client) ListRepoEvents(owner, repo string, opts ListActivityOptions) ([
 func (c *Client) ListNetworkEvents(owner, repo string, opts ListActivityOptions) ([]Event, error) {
 	var events []Event
 	path := Activity.NetworkEvents.Build(owner, repo)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &events)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &events)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +34,7 @@ func (c *Client) ListNetworkEvents(owner, repo string, opts ListActivityOptions)
 func (c *Client) ListOrgEvents(org string, opts ListActivityOptions) ([]Event, error) {
 	var events []Event
 	path := Activity.OrgEvents.Build(org)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &events)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &events)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +49,7 @@ func (c *Client) ListUserEvents(username string, publicOnly bool, opts ListActiv
 		endpoint = Activity.PublicEvents
 	}
 	path := endpoint.Build(username)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &events)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &events)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +64,7 @@ func (c *Client) ListUserReceivedEvents(username string, publicOnly bool, opts L
 		endpoint = Activity.ReceivedPublicEvents
 	}
 	path := endpoint.Build(username)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &events)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &events)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +74,7 @@ func (c *Client) ListUserReceivedEvents(username string, publicOnly bool, opts L
 // ListSubscriptions lists repositories watched by the authenticated user.
 func (c *Client) ListSubscriptions(opts ListActivityOptions) ([]Repository, error) {
 	var repos []Repository
-	err := c.Do("GET", Activity.Subscriptions.Path+buildActivityQuery(opts), nil, &repos)
+	err := c.doGetWithQuery(Activity.Subscriptions.Path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &repos)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +85,7 @@ func (c *Client) ListSubscriptions(opts ListActivityOptions) ([]Repository, erro
 func (c *Client) ListUserSubscriptions(username string, opts ListActivityOptions) ([]Repository, error) {
 	var repos []Repository
 	path := Activity.Get.Build(username)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &repos)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &repos)
 	if err != nil {
 		return nil, err
 	}
@@ -115,25 +110,6 @@ func (c *Client) UnwatchRepo(owner, repo string) error {
 
 // ListSubscribers lists users watching a repository.
 func (c *Client) ListSubscribers(owner, repo string, opts ListActivityOptions) ([]User, error) {
-	var users []User
 	path := Activity.Subscribers.Build(owner, repo)
-	err := c.Do("GET", path+buildActivityQuery(opts), nil, &users)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
-func buildActivityQuery(opts ListActivityOptions) string {
-	var params []string
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
-	if len(params) == 0 {
-		return ""
-	}
-	return "?" + util.BuildQuery(params...)
+	return c.listUsersByPath(path, opts.Page, opts.PerPage)
 }

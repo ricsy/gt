@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/ricsy/gt/pkg/api/response"
-	"github.com/ricsy/gt/pkg/util"
 )
 
 // SearchReposOptions is an alias for response.SearchReposOptions
@@ -83,15 +82,6 @@ func buildSearchQuery(qKey, qVal, sort, order string, page, perPage int, kvPairs
 	if order != "" {
 		params = append(params, "order", order)
 	}
-	if page > 0 {
-		params = append(params, "page", strconv.Itoa(page))
-	}
-	if perPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(perPage))
-	}
-	query := util.BuildQuery(params...)
-	if query == "" {
-		return ""
-	}
-	return "?" + query
+	params = append(params, paginationParams(page, perPage)...)
+	return buildOptionalQuery(params...)
 }

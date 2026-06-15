@@ -3,10 +3,7 @@ package api
 import "testing"
 
 func TestBuildActivityQuery(t *testing.T) {
-	got := buildActivityQuery(ListActivityOptions{
-		Page:    1,
-		PerPage: 20,
-	})
+	got := buildOptionalQuery(paginationParams(1, 20)...)
 
 	want := "?page=1&per_page=20"
 	if got != want {

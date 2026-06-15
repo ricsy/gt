@@ -18,6 +18,7 @@
     "format": "golangci-lint fmt",
     "lint": "npm-run-all2 lint:*",
     "lint:go": "pnpm run format && golangci-lint run",
+    "lint:agent": "agentlint check",
     "lint:action": "github-actionlint",
     "lint:goreleaser": "goreleaser check",
     "release": "node scripts/release.js",
@@ -31,6 +32,8 @@
     "test:api-docs": "node --test scripts/compare-api-docs.test.js scripts/sync-openapi-json.test.js"
   },
   "devDependencies": {
+    "@agentlint/language-go": "file:../../WebstormProjects/agentlint/packages/language-go",
+    "agentlint": "file:../../WebstormProjects/agentlint/packages/agentlint",
     "github-actionlint": "^1.7.12",
     "npm-run-all2": "^8.0.4"
   }

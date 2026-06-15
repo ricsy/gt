@@ -1,11 +1,6 @@
 package api
 
-import (
-	"strconv"
-
-	"github.com/ricsy/gt/pkg/api/response"
-	"github.com/ricsy/gt/pkg/util"
-)
+import "github.com/ricsy/gt/pkg/api/response"
 
 // CreateCheckRunOptions is an alias for response.CreateCheckRunOptions
 type CreateCheckRunOptions = response.CreateCheckRunOptions
@@ -50,7 +45,7 @@ func (c *Client) UpdateCheckRun(owner, repo string, checkRunID int64, opts Updat
 func (c *Client) GetCheckRunAnnotations(owner, repo string, checkRunID int64, opts ListCheckRunsOptions) ([]response.CheckAnnotation, error) {
 	var annotations []response.CheckAnnotation
 	path := CheckRuns.GetAnnotations.Build(owner, repo, checkRunID)
-	query := buildCheckRunsQuery(opts)
+	query := buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...)
 	err := c.Do("GET", path+query, nil, &annotations)
 	if err != nil {
 		return nil, err
@@ -62,24 +57,10 @@ func (c *Client) GetCheckRunAnnotations(owner, repo string, checkRunID int64, op
 func (c *Client) ListCommitCheckRuns(owner, repo, ref string, opts ListCheckRunsOptions) ([]response.CheckRun, error) {
 	var result response.CheckRunList
 	path := CheckRuns.GetCommitCheckRuns.Build(owner, repo, ref)
-	query := buildCheckRunsQuery(opts)
+	query := buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...)
 	err := c.Do("GET", path+query, nil, &result)
 	if err != nil {
 		return nil, err
 	}
 	return result.CheckRuns, nil
-}
-
-func buildCheckRunsQuery(opts ListCheckRunsOptions) string {
-	var params []string
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
-	if len(params) == 0 {
-		return ""
-	}
-	return "?" + util.BuildQuery(params...)
 }

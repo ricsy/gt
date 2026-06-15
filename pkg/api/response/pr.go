@@ -145,16 +145,10 @@ type ListPRsOptions struct {
 
 // PullRequestComment represents a comment on a pull request
 type PullRequestComment struct {
-	ID          int64     `json:"id"`
-	Body        string    `json:"body"`
-	BodyHTML    string    `json:"body_html"`
-	CreatedAt   string    `json:"created_at"`
-	UpdatedAt   string    `json:"updated_at"`
-	User        UserBasic `json:"user"`
-	Position    int       `json:"position,omitempty"`
-	Line        int       `json:"line,omitempty"`
-	TreeID      string    `json:"tree_id,omitempty"`
-	InReplyToID int64     `json:"in_reply_to_id,omitempty"`
+	BasicComment
+	Position int    `json:"position,omitempty"`
+	Line     int    `json:"line,omitempty"`
+	TreeID   string `json:"tree_id,omitempty"`
 }
 
 // PullRequestCommit represents a commit in a pull request

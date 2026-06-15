@@ -125,13 +125,6 @@ func (c *Client) ListEnterprisePullRequests(enterprise string, opts ListEnterpri
 	return prs, nil
 }
 
-func (c *Client) doFromEndpointWithQuery(e Endpoint, pathArgs []interface{}, query string, body interface{}, response interface{}) error {
-	if query != "" {
-		e.Path += "?" + query
-	}
-	return c.DoFromEndpoint(e, pathArgs, body, response)
-}
-
 func buildListEnterprisesQuery(opts ListEnterprisesOptions) string {
 	params := paginationParams(opts.Page, opts.PerPage)
 	if opts.Admin != nil {
@@ -175,15 +168,4 @@ func buildEnterprisePullRequestsQuery(opts ListEnterprisePullRequestsOptions) st
 	}
 	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
 	return util.BuildQuery(params...)
-}
-
-func paginationParams(page, perPage int) []string {
-	var params []string
-	if page > 0 {
-		params = append(params, "page", strconv.Itoa(page))
-	}
-	if perPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(perPage))
-	}
-	return params
 }

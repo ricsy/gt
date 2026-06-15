@@ -227,11 +227,7 @@ func userFollowers(cmd *cobra.Command, args []string) error {
 	} else {
 		users, err = client.ListFollowers(userListOptions())
 	}
-	if err != nil {
-		return err
-	}
-	printUsers(users)
-	return nil
+	return printUsersResult(users, err)
 }
 
 func userFollowing(cmd *cobra.Command, args []string) error {
@@ -246,11 +242,7 @@ func userFollowing(cmd *cobra.Command, args []string) error {
 	} else {
 		users, err = client.ListFollowing(userListOptions())
 	}
-	if err != nil {
-		return err
-	}
-	printUsers(users)
-	return nil
+	return printUsersResult(users, err)
 }
 
 func userFollow(cmd *cobra.Command, args []string) error {

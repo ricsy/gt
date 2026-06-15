@@ -72,12 +72,7 @@ func buildPRQuery(opts ListPRsOptions) string {
 	if opts.MilestoneNumber > 0 {
 		params = append(params, "milestone_number", fmt.Sprintf("%d", opts.MilestoneNumber))
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", fmt.Sprintf("%d", opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", fmt.Sprintf("%d", opts.PerPage))
-	}
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
 	return util.BuildQuery(params...)
 }
 

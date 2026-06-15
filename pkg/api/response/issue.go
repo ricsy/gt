@@ -73,17 +73,22 @@ type Milestone struct {
 	DueOn        string `json:"due_on"`
 }
 
-// IssueComment represents a comment on an issue (uses Note schema)
-type IssueComment struct {
+// BasicComment represents the shared fields returned by issue and pull request comments.
+type BasicComment struct {
 	ID          int64     `json:"id"`
 	Body        string    `json:"body"`
 	BodyHTML    string    `json:"body_html"`
 	CreatedAt   string    `json:"created_at"`
 	UpdatedAt   string    `json:"updated_at"`
 	User        UserBasic `json:"user"`
-	Source      any       `json:"source,omitempty"`
-	Target      any       `json:"target,omitempty"`
 	InReplyToID int64     `json:"in_reply_to_id,omitempty"`
+}
+
+// IssueComment represents a comment on an issue (uses Note schema)
+type IssueComment struct {
+	BasicComment
+	Source any `json:"source,omitempty"`
+	Target any `json:"target,omitempty"`
 }
 
 // ListIssuesOptions contains the optional parameters for ListIssues

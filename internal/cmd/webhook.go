@@ -19,12 +19,7 @@ func newWebhookCmd() *cobra.Command {
 		Use:   "list",
 		Short: "List webhooks for a repository",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -57,12 +52,7 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -82,18 +72,13 @@ func newWebhookCmd() *cobra.Command {
 		Use:   "create",
 		Short: "Create a webhook",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			owner, repoName, err := resolveRepoFlag(repoFlag)
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
 
 			if webhookURL == "" {
 				return fmt.Errorf("url is required: use --url")
-			}
-
-			client, err := getClient()
-			if err != nil {
-				return err
 			}
 
 			opts := buildWebhookCreateOpts(webhookURL, webhookTitle, encryptionType, password,
@@ -120,12 +105,7 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -154,12 +134,7 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}
@@ -184,12 +159,7 @@ func newWebhookCmd() *cobra.Command {
 				return err
 			}
 
-			owner, repoName, err := resolveRepoFlag(repoFlag)
-			if err != nil {
-				return err
-			}
-
-			client, err := getClient()
+			owner, repoName, client, err := resolveRepoClient(repoFlag)
 			if err != nil {
 				return err
 			}

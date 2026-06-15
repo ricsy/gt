@@ -24,12 +24,7 @@ type repoDeletionCommitSummary struct {
 }
 
 func repoDeleteCommand(cmd *cobra.Command, args []string) error {
-	owner, repoName, err := ResolveRepo(args[0])
-	if err != nil {
-		return err
-	}
-
-	client, err := getClient()
+	owner, repoName, client, err := resolveRepoClientWith(args[0], ResolveRepo)
 	if err != nil {
 		return err
 	}

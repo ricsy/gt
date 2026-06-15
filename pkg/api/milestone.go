@@ -1,11 +1,6 @@
 package api
 
-import (
-	"strconv"
-
-	"github.com/ricsy/gt/pkg/api/response"
-	"github.com/ricsy/gt/pkg/util"
-)
+import "github.com/ricsy/gt/pkg/api/response"
 
 // ListMilestonesOptions is an alias for response.ListMilestonesOptions
 type ListMilestonesOptions = response.ListMilestonesOptions
@@ -74,15 +69,6 @@ func buildMilestonesQuery(opts ListMilestonesOptions) string {
 	if opts.Direction != "" {
 		params = append(params, "direction", opts.Direction)
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
-	query := util.BuildQuery(params...)
-	if query == "" {
-		return ""
-	}
-	return "?" + query
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
+	return buildOptionalQuery(params...)
 }

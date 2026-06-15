@@ -1,8 +1,6 @@
 package api
 
 import (
-	"strconv"
-
 	"github.com/ricsy/gt/pkg/api/response"
 	"github.com/ricsy/gt/pkg/util"
 )
@@ -77,12 +75,7 @@ func buildListOrgMembersQuery(opts ListOrgMembersOptions) string {
 	if opts.Role != "" {
 		params = append(params, "role", opts.Role)
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
 	return util.BuildQuery(params...)
 }
 
@@ -91,9 +84,7 @@ func buildListOrgReposQuery(opts ListOrgReposOptions) string {
 	if opts.Type != "" {
 		params = append(params, "type", opts.Type)
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
+	params = append(params, paginationParams(opts.Page, 0)...)
 	return util.BuildQuery(params...)
 }
 
@@ -102,11 +93,6 @@ func buildListOrgsQuery(opts ListOrgsOptions) string {
 	if opts.Admin {
 		params = append(params, "admin", "true")
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
 	return util.BuildQuery(params...)
 }

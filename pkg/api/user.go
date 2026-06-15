@@ -1,8 +1,6 @@
 package api
 
 import (
-	"strconv"
-
 	"github.com/ricsy/gt/pkg/api/response"
 	"github.com/ricsy/gt/pkg/util"
 )
@@ -51,7 +49,7 @@ func (c *Client) UpdateAuthenticatedUser(opts UpdateUserOptions) (*User, error) 
 // ListFollowers lists followers for the authenticated user.
 func (c *Client) ListFollowers(opts ListUsersOptions) ([]User, error) {
 	var users []User
-	err := c.Do("GET", Users.Followers.Path+buildUsersQuery(opts), nil, &users)
+	err := c.doGetWithQuery(Users.Followers.Path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &users)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +59,7 @@ func (c *Client) ListFollowers(opts ListUsersOptions) ([]User, error) {
 // ListFollowing lists users followed by the authenticated user.
 func (c *Client) ListFollowing(opts ListUsersOptions) ([]User, error) {
 	var users []User
-	err := c.Do("GET", Users.Following.Path+buildUsersQuery(opts), nil, &users)
+	err := c.doGetWithQuery(Users.Following.Path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &users)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +84,7 @@ func (c *Client) UnfollowUser(username string) error {
 // ListSSHKeys lists SSH keys for the authenticated user.
 func (c *Client) ListSSHKeys(opts ListUsersOptions) ([]SSHKey, error) {
 	var keys []SSHKey
-	err := c.Do("GET", Users.Keys.Path+buildUsersQuery(opts), nil, &keys)
+	err := c.doGetWithQuery(Users.Keys.Path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &keys)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +119,7 @@ func (c *Client) DeleteSSHKey(id int64) error {
 // ListNamespaces lists namespaces for the authenticated user.
 func (c *Client) ListNamespaces(opts ListNamespacesOptions) ([]Namespace, error) {
 	var namespaces []Namespace
-	err := c.Do("GET", Users.Namespaces.Path+buildNamespacesQuery(opts), nil, &namespaces)
+	err := c.doGetWithQuery(Users.Namespaces.Path, buildNamespacesQuery(opts), &namespaces)
 	if err != nil {
 		return nil, err
 	}
@@ -151,24 +149,14 @@ func (c *Client) GetUser(username string) (*response.UserInfo, error) {
 
 // ListUserFollowers lists followers for username.
 func (c *Client) ListUserFollowers(username string, opts ListUsersOptions) ([]User, error) {
-	var users []User
 	path := PublicUsers.Followers.Build(username)
-	err := c.Do("GET", path+buildUsersQuery(opts), nil, &users)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
+	return c.listUsersByPath(path, opts.Page, opts.PerPage)
 }
 
 // ListUserFollowing lists users followed by username.
 func (c *Client) ListUserFollowing(username string, opts ListUsersOptions) ([]User, error) {
-	var users []User
 	path := PublicUsers.Following.Build(username)
-	err := c.Do("GET", path+buildUsersQuery(opts), nil, &users)
-	if err != nil {
-		return nil, err
-	}
-	return users, nil
+	return c.listUsersByPath(path, opts.Page, opts.PerPage)
 }
 
 // CheckUserFollowing checks whether username follows targetUser.
@@ -180,25 +168,20 @@ func (c *Client) CheckUserFollowing(username, targetUser string) error {
 func (c *Client) ListUserSSHKeys(username string, opts ListUsersOptions) ([]response.SSHKeyBasic, error) {
 	var keys []response.SSHKeyBasic
 	path := PublicUsers.Keys.Build(username)
-	err := c.Do("GET", path+buildUsersQuery(opts), nil, &keys)
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(opts.Page, opts.PerPage)...), &keys)
 	if err != nil {
 		return nil, err
 	}
 	return keys, nil
 }
 
-func buildUsersQuery(opts ListUsersOptions) string {
-	var params []string
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
+func (c *Client) listUsersByPath(path string, page, perPage int) ([]User, error) {
+	var users []User
+	err := c.doGetWithQuery(path, buildOptionalQuery(paginationParams(page, perPage)...), &users)
+	if err != nil {
+		return nil, err
 	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
-	if len(params) == 0 {
-		return ""
-	}
-	return "?" + util.BuildQuery(params...)
+	return users, nil
 }
 
 func buildNamespacesQuery(opts ListNamespacesOptions) string {
@@ -206,14 +189,6 @@ func buildNamespacesQuery(opts ListNamespacesOptions) string {
 	if opts.Mode != "" {
 		params = append(params, "mode", opts.Mode)
 	}
-	if opts.Page > 0 {
-		params = append(params, "page", strconv.Itoa(opts.Page))
-	}
-	if opts.PerPage > 0 {
-		params = append(params, "per_page", strconv.Itoa(opts.PerPage))
-	}
-	if len(params) == 0 {
-		return ""
-	}
-	return "?" + util.BuildQuery(params...)
+	params = append(params, paginationParams(opts.Page, opts.PerPage)...)
+	return buildOptionalQuery(params...)
 }
